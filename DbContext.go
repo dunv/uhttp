@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"unverricht.net/mongo"
+	"github.com/dunv/umongo"
 )
 
 // CtxKeyDB is the context key to retrieve the db-info

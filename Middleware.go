@@ -3,7 +3,7 @@ package uhttp
 import (
 	"net/http"
 
-	"unverricht.net/mongo"
+	"github.com/dunv/umongo"
 )
 
 // Middleware define type
