@@ -2,8 +2,6 @@ package uhttp
 
 import (
 	"net/http"
-
-	"github.com/dunv/umongo"
 )
 
 // Middleware define type
@@ -13,7 +11,7 @@ type Middleware func(next http.HandlerFunc) http.HandlerFunc
 type ContextKey string
 
 // Config vars
-var dbSession *umongo.DbSession
+var dbSession *uumongo.DbSession
 var disableCors bool
 var bCryptSecret string
 var authMiddleware *Middleware
@@ -45,7 +43,7 @@ type Handler struct {
 }
 
 // SetConfig set config for all handlers
-func SetConfig(_dbSession *umongo.DbSession, _disableCors bool, _bCryptSecret string) {
+func SetConfig(_dbSession *uumongo.DbSession, _disableCors bool, _bCryptSecret string) {
 	dbSession = _dbSession
 	disableCors = _disableCors
 	bCryptSecret = _bCryptSecret
