@@ -13,7 +13,7 @@ type Middleware func(next http.HandlerFunc) http.HandlerFunc
 type ContextKey string
 
 // Config vars
-var dbSession *mongo.DbSession
+var dbSession *umongo.DbSession
 var disableCors bool
 var bCryptSecret string
 var authMiddleware *Middleware
@@ -45,7 +45,7 @@ type Handler struct {
 }
 
 // SetConfig set config for all handlers
-func SetConfig(_dbSession *mongo.DbSession, _disableCors bool, _bCryptSecret string) {
+func SetConfig(_dbSession *umongo.DbSession, _disableCors bool, _bCryptSecret string) {
 	dbSession = _dbSession
 	disableCors = _disableCors
 	bCryptSecret = _bCryptSecret

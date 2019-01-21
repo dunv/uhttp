@@ -11,7 +11,7 @@ import (
 const CtxKeyDB = ContextKey("database")
 
 // WithDB attaches a dbSession object to the http-request context
-func WithDB(session *mongo.DbSession) Middleware {
+func WithDB(session *umongo.DbSession) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			sessionCopy := session.Copy()
