@@ -42,6 +42,7 @@ type Handler struct {
 	Methods        []string
 	DbRequired     bool
 	AuthRequired   bool
+	AuthMiddleware *Middleware
 }
 
 // SetConfig set config for all handlers
@@ -66,10 +67,17 @@ func Handle(pattern string, handler Handler) {
 	chain := Chain(SetCors(disableCors), AddBCryptSecret(bCryptSecret), SetJSONResponse, Enforce(handler.Methods), WithRequiredParams(handler.RequiredParams), WithOptionalParams(handler.OptionalParams))
 
 	if handler.AuthRequired {
-		if authMiddleware == nil {
-			panic("Tried to use auth without setting auth-middleware first")
+		if handler.AuthMiddleware != nil {
+			// Use custom auth for this one handler if one is provided
+			chain = Chain(chain, *handler.AuthMiddleware)
+		} else {
+			// If not custom auth is provided: try to use default and fail if there is no default
+			if authMiddleware == nil {
+				panic("Tried to use auth without setting auth-middleware first")
+			} else {
+				chain = Chain(chain, *authMiddleware)
+			}
 		}
-		chain = Chain(chain, *authMiddleware)
 	}
 
 	if handler.DbRequired {
