@@ -2,22 +2,31 @@ package uhttp
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/dunv/umongo"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 // CtxKeyDB is the context key to retrieve the db-info
 const CtxKeyDB = ContextKey("database")
 
 // WithDB attaches a dbSession object to the http-request context
-func WithDB(session *umongo.DbSession) Middleware {
+func WithDB(mongoClient *mongo.Client) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			sessionCopy := session.Copy()
-			ctx := context.WithValue(r.Context(), CtxKeyDB, sessionCopy)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			sessionCopy.Close()
+			ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+			err := mongoClient.Ping(ctx, readpref.Primary())
+			if err != nil {
+				js, _ := json.Marshal(Error{"Could not connect to db"})
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				w.Write(js)
+			}
+
+			httpContext := context.WithValue(r.Context(), CtxKeyDB, mongoClient)
+			next.ServeHTTP(w, r.WithContext(httpContext))
 		}
 	}
 }

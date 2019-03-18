@@ -3,7 +3,7 @@ package uhttp
 import (
 	"net/http"
 
-	"github.com/dunv/umongo"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Middleware define type
@@ -13,7 +13,7 @@ type Middleware func(next http.HandlerFunc) http.HandlerFunc
 type ContextKey string
 
 // Config vars
-var dbSession *umongo.DbSession
+var mongoClient *mongo.Client
 var disableCors bool
 var bCryptSecret string
 var authMiddleware *Middleware
@@ -46,8 +46,8 @@ type Handler struct {
 }
 
 // SetConfig set config for all handlers
-func SetConfig(_dbSession *umongo.DbSession, _disableCors bool, _bCryptSecret string) {
-	dbSession = _dbSession
+func SetConfig(_mongoClient *mongo.Client, _disableCors bool, _bCryptSecret string) {
+	mongoClient = _mongoClient
 	disableCors = _disableCors
 	bCryptSecret = _bCryptSecret
 }
@@ -81,7 +81,7 @@ func Handle(pattern string, handler Handler) {
 	}
 
 	if handler.DbRequired {
-		chain = Chain(chain, WithDB(dbSession))
+		chain = Chain(chain, WithDB(mongoClient))
 	}
 
 	// Do logging here so we have all contexts available
