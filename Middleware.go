@@ -13,7 +13,7 @@ type Middleware func(next http.HandlerFunc) http.HandlerFunc
 type ContextKey string
 
 // Config vars
-var mongoClient *mongo.Client
+var mongoClients map[string]*mongo.Client
 var disableCors bool
 var bCryptSecret string
 var authMiddleware *Middleware
@@ -40,14 +40,14 @@ type Handler struct {
 	RequiredParams Params
 	OptionalParams Params
 	Methods        []string
-	DbRequired     bool
+	DbRequired     []string
 	AuthRequired   bool
 	AuthMiddleware *Middleware
 }
 
 // SetConfig set config for all handlers
-func SetConfig(_mongoClient *mongo.Client, _disableCors bool, _bCryptSecret string) {
-	mongoClient = _mongoClient
+func SetConfig(_mongoClients map[string]*mongo.Client, _disableCors bool, _bCryptSecret string) {
+	mongoClients = _mongoClients
 	disableCors = _disableCors
 	bCryptSecret = _bCryptSecret
 }
@@ -80,8 +80,8 @@ func Handle(pattern string, handler Handler) {
 		}
 	}
 
-	if handler.DbRequired {
-		chain = Chain(chain, WithDB(mongoClient))
+	for _, dbName := range handler.DbRequired {
+		chain = Chain(chain, WithDB(dbName, mongoClients[dbName]))
 	}
 
 	// Do logging here so we have all contexts available

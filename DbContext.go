@@ -14,7 +14,7 @@ import (
 const CtxKeyDB = ContextKey("database")
 
 // WithDB attaches a dbSession object to the http-request context
-func WithDB(mongoClient *mongo.Client) Middleware {
+func WithDB(dbName string, mongoClient *mongo.Client) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
@@ -25,7 +25,7 @@ func WithDB(mongoClient *mongo.Client) Middleware {
 				w.Write(js)
 			}
 
-			httpContext := context.WithValue(r.Context(), CtxKeyDB, mongoClient)
+			httpContext := context.WithValue(r.Context(), ContextKey(dbName), mongoClient)
 			next.ServeHTTP(w, r.WithContext(httpContext))
 		}
 	}
