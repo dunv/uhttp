@@ -1,6 +1,7 @@
 package uhttp
 
 import (
+	"log"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -9,15 +10,17 @@ import (
 // Middleware define type
 type Middleware func(next http.HandlerFunc) http.HandlerFunc
 
-// ContextKey so go does not throw an error
+// ContextKey define type
 type ContextKey string
 
 // Config vars
-var mongoClients map[string]*mongo.Client
+var mongoClients map[ContextKey]*mongo.Client
 var disableCors bool
 var bCryptSecret string
 var authMiddleware *Middleware
 var authUserResolver *func(*http.Request) string
+var additionalContext map[ContextKey]interface{}
+var customLog *CustomLogger
 
 // Chain chain multiple middlewares
 // copied from: https://hackernoon.com/simple-http-middleware-with-go-79a4ad62889b
@@ -35,21 +38,24 @@ func Chain(mw ...Middleware) Middleware {
 
 // Handler configured
 type Handler struct {
-	Pattern        string
-	Handler        http.HandlerFunc
-	RequiredParams Params
-	OptionalParams Params
-	Methods        []string
-	DbRequired     []string
-	AuthRequired   bool
-	AuthMiddleware *Middleware
+	Pattern                   string
+	Handler                   http.HandlerFunc
+	RequiredParams            Params
+	OptionalParams            Params
+	Methods                   []string
+	DbRequired                []ContextKey
+	AdditionalContextRequired []ContextKey
+	AuthRequired              bool
+	AuthMiddleware            *Middleware
 }
 
 // SetConfig set config for all handlers
-func SetConfig(_mongoClients map[string]*mongo.Client, _disableCors bool, _bCryptSecret string) {
+func SetConfig(_mongoClients map[ContextKey]*mongo.Client, _additionalContext map[ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog *CustomLogger) {
 	mongoClients = _mongoClients
+	additionalContext = _additionalContext
 	disableCors = _disableCors
 	bCryptSecret = _bCryptSecret
+	customLog = _customLog
 }
 
 // SetAuthMiddleware <-
@@ -64,7 +70,14 @@ func SetAuthUserResolver(resolver *func(*http.Request) string) {
 
 // Handle configuration
 func Handle(pattern string, handler Handler) {
-	chain := Chain(SetCors(disableCors), AddBCryptSecret(bCryptSecret), SetJSONResponse, Enforce(handler.Methods), WithRequiredParams(handler.RequiredParams), WithOptionalParams(handler.OptionalParams))
+	chain := Chain(
+		SetCors(disableCors),
+		AddBCryptSecret(bCryptSecret),
+		SetJSONResponse,
+		Enforce(handler.Methods),
+		WithRequiredParams(handler.RequiredParams, customLog),
+		WithOptionalParams(handler.OptionalParams, customLog),
+	)
 
 	if handler.AuthRequired {
 		if handler.AuthMiddleware != nil {
@@ -84,8 +97,16 @@ func Handle(pattern string, handler Handler) {
 		chain = Chain(chain, WithDB(dbName, mongoClients[dbName]))
 	}
 
+	for _, additionalContextKey := range handler.AdditionalContextRequired {
+		if value, ok := additionalContext[additionalContextKey]; ok {
+			chain = Chain(chain, WithContext(additionalContextKey, value))
+		} else {
+			log.Panicf("Tried to use context %s without configuring it first", string(additionalContextKey))
+		}
+	}
+
 	// Do logging here so we have all contexts available
-	chain = Chain(chain, Logging(authUserResolver))
+	chain = Chain(chain, Logging(authUserResolver, customLog))
 
 	http.Handle(pattern, chain(handler.Handler))
 }

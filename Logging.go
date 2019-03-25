@@ -28,7 +28,7 @@ func fmtDuration(d time.Duration) string {
 }
 
 // Logging log time, method and path of an HTTP-Request
-func Logging(resolver *func(*http.Request) string) Middleware {
+func Logging(resolver *func(*http.Request) string, customLog *CustomLogger) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			lrw := newLoggingResponseWriter(w)
@@ -47,8 +47,13 @@ func Logging(resolver *func(*http.Request) string) Middleware {
 				resolverFunc := *resolver
 				user = resolverFunc(r)
 			}
+
 			// Do this after "all other middleware went through". That way we can catch the correct statusCode
-			log.Printf("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]\n", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
+			if customLog != nil {
+				(*customLog).Infof("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
+			} else {
+				log.Printf("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]\n", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
+			}
 		}
 	}
 }

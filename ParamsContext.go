@@ -25,7 +25,7 @@ type ParamRequirement struct {
 const CtxKeyParams = ContextKey("params")
 
 // WithParams parses and adds params to request
-func withParams(params Params, required bool) Middleware {
+func withParams(params Params, required bool, customLog *CustomLogger) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			paramMap := r.Context().Value(CtxKeyParams)
@@ -37,7 +37,7 @@ func withParams(params Params, required bool) Middleware {
 				keys, ok := r.URL.Query()[paramName]
 				if !ok || len(keys) < 1 {
 					if required {
-						RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s is required", paramName))
+						RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s is required", paramName), customLog)
 						return
 					}
 				} else {
@@ -58,7 +58,7 @@ func withParams(params Params, required bool) Middleware {
 							parsedValue, err = time.Parse(time.RFC3339, paramValue)
 
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err))
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err), customLog)
 								return
 							}
 
@@ -67,14 +67,14 @@ func withParams(params Params, required bool) Middleware {
 							var err error
 							parsedValue, err = strconv.ParseInt(paramValue, 10, 64)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be an integer (%s), error %s", paramName, paramValue, err))
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be an integer (%s), error %s", paramName, paramValue, err), customLog)
 								return
 							}
 							validated = true
 						}
 
 						if !validated {
-							RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s can only assume these values %s", paramName, paramRequirement.Enum))
+							RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s can only assume these values %s", paramName, paramRequirement.Enum), customLog)
 							return
 						}
 					} else {
@@ -90,11 +90,11 @@ func withParams(params Params, required bool) Middleware {
 }
 
 // WithOptionalParams parses and adds optional params to request
-func WithOptionalParams(params Params) Middleware {
-	return withParams(params, false)
+func WithOptionalParams(params Params, customLog *CustomLogger) Middleware {
+	return withParams(params, false, customLog)
 }
 
 // WithRequiredParams parses and adds required params to request
-func WithRequiredParams(params Params) Middleware {
-	return withParams(params, true)
+func WithRequiredParams(params Params, customLog *CustomLogger) Middleware {
+	return withParams(params, true, customLog)
 }

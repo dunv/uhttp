@@ -10,14 +10,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// CtxKeyDB is the context key to retrieve the db-info
-const CtxKeyDB = ContextKey("database")
-
 // WithDB attaches a dbSession object to the http-request context
-func WithDB(dbName string, mongoClient *mongo.Client) Middleware {
+func WithDB(dbName ContextKey, mongoClient *mongo.Client) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
 			err := mongoClient.Ping(ctx, readpref.Primary())
 			if err != nil {
 				js, _ := json.Marshal(Error{"Could not connect to db"})
@@ -25,7 +23,7 @@ func WithDB(dbName string, mongoClient *mongo.Client) Middleware {
 				w.Write(js)
 			}
 
-			httpContext := context.WithValue(r.Context(), ContextKey(dbName), mongoClient)
+			httpContext := context.WithValue(r.Context(), dbName, mongoClient)
 			next.ServeHTTP(w, r.WithContext(httpContext))
 		}
 	}
