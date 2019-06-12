@@ -40,6 +40,19 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 						RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s is required", paramName), customLog)
 						return
 					}
+					if paramRequirement.AllValues {
+						var tmp *string
+						paramMap.(map[string]interface{})[paramName] = tmp
+					} else if paramRequirement.Enum != nil {
+						var tmp *string
+						paramMap.(map[string]interface{})[paramName] = tmp
+					} else if paramRequirement.Date {
+						var tmp *time.Time
+						paramMap.(map[string]interface{})[paramName] = tmp
+					} else if paramRequirement.Int {
+						var tmp *int
+						paramMap.(map[string]interface{})[paramName] = tmp
+					}
 				} else {
 					paramValue := keys[0]
 					var parsedValue interface{}
@@ -80,7 +93,12 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 					} else {
 						parsedValue = paramValue
 					}
-					paramMap.(map[string]interface{})[paramName] = parsedValue
+
+					if required {
+						paramMap.(map[string]interface{})[paramName] = parsedValue
+					} else {
+						paramMap.(map[string]interface{})[paramName] = &parsedValue
+					}
 				}
 			}
 			ctx := context.WithValue(r.Context(), CtxKeyParams, paramMap)
