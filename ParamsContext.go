@@ -50,7 +50,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 						var tmp *time.Time
 						paramMap.(map[string]interface{})[paramName] = tmp
 					} else if paramRequirement.Int {
-						var tmp *int
+						var tmp *int64
 						paramMap.(map[string]interface{})[paramName] = tmp
 					}
 				} else {
