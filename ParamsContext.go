@@ -55,7 +55,6 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 					}
 				} else {
 					paramValue := keys[0]
-					var parsedValue interface{}
 					if !paramRequirement.AllValues {
 						validated := false
 
@@ -63,25 +62,37 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 							for _, enumValue := range paramRequirement.Enum {
 								if enumValue == paramValue {
 									validated = true
-									parsedValue = enumValue
+									if required {
+										paramMap.(map[string]interface{})[paramName] = enumValue
+									} else {
+										paramMap.(map[string]interface{})[paramName] = &enumValue
+									}
 								}
 							}
 						} else if paramRequirement.Date {
 							var err error
-							parsedValue, err = time.Parse(time.RFC3339, paramValue)
-
+							timeValue, err := time.Parse(time.RFC3339, paramValue)
 							if err != nil {
 								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err), customLog)
 								return
 							}
-
+							if required {
+								paramMap.(map[string]interface{})[paramName] = timeValue
+							} else {
+								paramMap.(map[string]interface{})[paramName] = &timeValue
+							}
 							validated = true
 						} else if paramRequirement.Int {
 							var err error
-							parsedValue, err = strconv.ParseInt(paramValue, 10, 64)
+							intValue, err := strconv.ParseInt(paramValue, 10, 64)
 							if err != nil {
 								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be an integer (%s), error %s", paramName, paramValue, err), customLog)
 								return
+							}
+							if required {
+								paramMap.(map[string]interface{})[paramName] = intValue
+							} else {
+								paramMap.(map[string]interface{})[paramName] = &intValue
 							}
 							validated = true
 						}
@@ -91,13 +102,11 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 							return
 						}
 					} else {
-						parsedValue = paramValue
-					}
-
-					if required {
-						paramMap.(map[string]interface{})[paramName] = parsedValue
-					} else {
-						paramMap.(map[string]interface{})[paramName] = &parsedValue
+						if required {
+							paramMap.(map[string]interface{})[paramName] = paramValue
+						} else {
+							paramMap.(map[string]interface{})[paramName] = &paramValue
+						}
 					}
 				}
 			}
