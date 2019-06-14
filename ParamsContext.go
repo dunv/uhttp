@@ -17,6 +17,7 @@ type Params struct {
 type ParamRequirement struct {
 	AllValues bool
 	Date      bool
+	ShortDate bool
 	Enum      []string
 	Int       bool
 	Float     bool
@@ -50,6 +51,9 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 					} else if paramRequirement.Date {
 						var tmp *time.Time
 						paramMap.(map[string]interface{})[paramName] = tmp
+					} else if paramRequirement.ShortDate {
+						var tmp *time.Time
+						paramMap.(map[string]interface{})[paramName] = tmp
 					} else if paramRequirement.Int {
 						var tmp *int64
 						paramMap.(map[string]interface{})[paramName] = tmp
@@ -77,6 +81,19 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 						} else if paramRequirement.Date {
 							var err error
 							timeValue, err := time.Parse(time.RFC3339, paramValue)
+							if err != nil {
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err), customLog)
+								return
+							}
+							if required {
+								paramMap.(map[string]interface{})[paramName] = timeValue
+							} else {
+								paramMap.(map[string]interface{})[paramName] = &timeValue
+							}
+							validated = true
+						} else if paramRequirement.ShortDate {
+							var err error
+							timeValue, err := time.Parse("2006-01-02", paramValue)
 							if err != nil {
 								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err), customLog)
 								return
