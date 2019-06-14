@@ -40,6 +40,9 @@ func Chain(mw ...Middleware) Middleware {
 type Handler struct {
 	Pattern                   string
 	Handler                   http.HandlerFunc
+	PostHandler               http.HandlerFunc
+	GetHandler                http.HandlerFunc
+	DeleteHandler             http.HandlerFunc
 	RequiredParams            Params
 	OptionalParams            Params
 	Methods                   []string
@@ -74,10 +77,13 @@ func Handle(pattern string, handler Handler) {
 		SetCors(disableCors),
 		AddBCryptSecret(bCryptSecret),
 		SetJSONResponse,
-		Enforce(handler.Methods),
 		WithRequiredParams(handler.RequiredParams, customLog),
 		WithOptionalParams(handler.OptionalParams, customLog),
 	)
+
+	if handler.Methods != nil {
+		chain = Chain(chain, Enforce(handler.Methods))
+	}
 
 	if handler.AuthRequired {
 		if handler.AuthMiddleware != nil {
@@ -108,5 +114,5 @@ func Handle(pattern string, handler Handler) {
 	// Do logging here so we have all contexts available
 	chain = Chain(chain, Logging(authUserResolver, customLog))
 
-	http.Handle(pattern, chain(handler.Handler))
+	http.Handle(pattern, SelectMethod(chain, handler))
 }

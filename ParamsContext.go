@@ -19,6 +19,7 @@ type ParamRequirement struct {
 	Date      bool
 	Enum      []string
 	Int       bool
+	Float     bool
 }
 
 // CtxKeyParams is the context key to retrieve the params
@@ -52,7 +53,11 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 					} else if paramRequirement.Int {
 						var tmp *int64
 						paramMap.(map[string]interface{})[paramName] = tmp
+					} else if paramRequirement.Float {
+						var tmp *float64
+						paramMap.(map[string]interface{})[paramName] = tmp
 					}
+
 				} else {
 					paramValue := keys[0]
 					if !paramRequirement.AllValues {
@@ -93,6 +98,19 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 								paramMap.(map[string]interface{})[paramName] = intValue
 							} else {
 								paramMap.(map[string]interface{})[paramName] = &intValue
+							}
+							validated = true
+						} else if paramRequirement.Float {
+							var err error
+							floatValue, err := strconv.ParseFloat(paramValue, 64)
+							if err != nil {
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a float (%s), error %s", paramName, paramValue, err), customLog)
+								return
+							}
+							if required {
+								paramMap.(map[string]interface{})[paramName] = floatValue
+							} else {
+								paramMap.(map[string]interface{})[paramName] = &floatValue
 							}
 							validated = true
 						}
