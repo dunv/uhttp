@@ -44,7 +44,6 @@ type Handler struct {
 	DeleteHandler             http.HandlerFunc
 	RequiredParams            Params
 	OptionalParams            Params
-	Methods                   []string
 	DbRequired                []ContextKey
 	AdditionalContextRequired []ContextKey
 	AuthRequired              bool
@@ -79,10 +78,6 @@ func Handle(pattern string, handler Handler) {
 		WithRequiredParams(handler.RequiredParams, customLog),
 		WithOptionalParams(handler.OptionalParams, customLog),
 	)
-
-	if handler.Methods != nil {
-		chain = Chain(chain, Enforce(handler.Methods))
-	}
 
 	if handler.AuthRequired {
 		if handler.AuthMiddleware != nil {
