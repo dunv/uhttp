@@ -39,7 +39,6 @@ func Chain(mw ...Middleware) Middleware {
 // Handler configured
 type Handler struct {
 	Pattern                   string
-	Handler                   http.HandlerFunc
 	PostHandler               http.HandlerFunc
 	GetHandler                http.HandlerFunc
 	DeleteHandler             http.HandlerFunc
