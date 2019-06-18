@@ -108,5 +108,27 @@ func Handle(pattern string, handler Handler) {
 	// Do logging here so we have all contexts available
 	chain = Chain(chain, Logging(authUserResolver, customLog))
 
+	if handler.GetHandler != nil {
+		if customLog != nil {
+			customLog.Infof("Registered http GET %s", pattern)
+		} else {
+			log.Printf("Registered http GET %s", pattern)
+		}
+	} else if handler.PostHandler != nil {
+		if customLog != nil {
+			customLog.Infof("Registered on http POST %s", pattern)
+		} else {
+			log.Printf("Registered http POST %s", pattern)
+		}
+
+	} else if handler.DeleteHandler != nil {
+		if customLog != nil {
+			customLog.Infof("Registered on http DELETE %s", pattern)
+		} else {
+			log.Printf("Registered http DELETE %s", pattern)
+		}
+
+	}
+
 	http.Handle(pattern, SelectMethod(chain, handler))
 }
