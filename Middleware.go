@@ -116,14 +116,14 @@ func Handle(pattern string, handler Handler) {
 		}
 	} else if handler.PostHandler != nil {
 		if customLog != nil {
-			customLog.Infof("Registered on http POST %s", pattern)
+			customLog.Infof("Registered http POST %s", pattern)
 		} else {
 			log.Printf("Registered http POST %s", pattern)
 		}
 
 	} else if handler.DeleteHandler != nil {
 		if customLog != nil {
-			customLog.Infof("Registered on http DELETE %s", pattern)
+			customLog.Infof("Registered http DELETE %s", pattern)
 		} else {
 			log.Printf("Registered http DELETE %s", pattern)
 		}
