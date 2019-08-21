@@ -61,6 +61,9 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 					} else if paramRequirement.Float {
 						var tmp *float64
 						paramMap.(map[string]interface{})[paramName] = tmp
+					} else if paramRequirement.Bool {
+						var tmp *bool
+						paramMap.(map[string]interface{})[paramName] = tmp
 					}
 
 				} else {
