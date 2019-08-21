@@ -21,6 +21,7 @@ type ParamRequirement struct {
 	Enum      []string
 	Int       bool
 	Float     bool
+	Bool      bool
 }
 
 // CtxKeyParams is the context key to retrieve the params
@@ -68,13 +69,13 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 						validated := false
 
 						if paramRequirement.Enum != nil {
-							for _, enumValue := range paramRequirement.Enum {
+							for index, enumValue := range paramRequirement.Enum {
 								if enumValue == paramValue {
 									validated = true
 									if required {
-										paramMap.(map[string]interface{})[paramName] = enumValue
+										paramMap.(map[string]interface{})[paramName] = paramRequirement.Enum[index]
 									} else {
-										paramMap.(map[string]interface{})[paramName] = &enumValue
+										paramMap.(map[string]interface{})[paramName] = &paramRequirement.Enum[index]
 									}
 								}
 							}
@@ -128,6 +129,19 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 								paramMap.(map[string]interface{})[paramName] = floatValue
 							} else {
 								paramMap.(map[string]interface{})[paramName] = &floatValue
+							}
+							validated = true
+						} else if paramRequirement.Bool {
+							var err error
+							boolValue, err := strconv.ParseBool(paramValue)
+							if err != nil {
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a bool (%s), error %s", paramName, paramValue, err), customLog)
+								return
+							}
+							if required {
+								paramMap.(map[string]interface{})[paramName] = boolValue
+							} else {
+								paramMap.(map[string]interface{})[paramName] = &boolValue
 							}
 							validated = true
 						}
