@@ -20,6 +20,6 @@ func SelectMethod(chain Middleware, handler Handler) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(Error{"Method not allowed"})
+		CheckAndLogError(json.NewEncoder(w).Encode(Error{"Method not allowed"}))
 	})
 }

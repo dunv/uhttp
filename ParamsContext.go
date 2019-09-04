@@ -40,7 +40,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 				keys, ok := r.URL.Query()[paramName]
 				if !ok || len(keys) < 1 {
 					if required {
-						RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s is required", paramName), customLog)
+						RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s is required", paramName))
 						return
 					}
 					if paramRequirement.AllValues {
@@ -86,7 +86,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 							var err error
 							timeValue, err := time.Parse(time.RFC3339, paramValue)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err), customLog)
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -99,7 +99,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 							var err error
 							timeValue, err := time.Parse("2006-01-02", paramValue)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err), customLog)
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -112,7 +112,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 							var err error
 							intValue, err := strconv.ParseInt(paramValue, 10, 64)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be an integer (%s), error %s", paramName, paramValue, err), customLog)
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be an integer (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -125,7 +125,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 							var err error
 							floatValue, err := strconv.ParseFloat(paramValue, 64)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a float (%s), error %s", paramName, paramValue, err), customLog)
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a float (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -138,7 +138,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 							var err error
 							boolValue, err := strconv.ParseBool(paramValue)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a bool (%s), error %s", paramName, paramValue, err), customLog)
+								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a bool (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -150,7 +150,7 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 						}
 
 						if !validated {
-							RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s can only assume these values %s", paramName, paramRequirement.Enum), customLog)
+							RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s can only assume these values %s", paramName, paramRequirement.Enum))
 							return
 						}
 					} else {

@@ -10,7 +10,7 @@ func PreProcess(handler Handler) Middleware {
 			if handler.PreProcess != nil {
 				err := (handler.PreProcess)(r.Context())
 				if err != nil {
-					RenderError(w, r, err, customLog)
+					RenderError(w, r, err)
 					return
 				}
 			}

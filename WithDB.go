@@ -20,7 +20,7 @@ func WithDB(dbName ContextKey, mongoClient *mongo.Client) Middleware {
 			if err != nil {
 				js, _ := json.Marshal(Error{"Could not connect to db"})
 				w.WriteHeader(http.StatusMethodNotAllowed)
-				w.Write(js)
+				CheckAndLogErrorSecondArg(w.Write(js))
 			}
 
 			httpContext := context.WithValue(r.Context(), dbName, mongoClient)

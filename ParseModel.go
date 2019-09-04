@@ -31,7 +31,7 @@ func ParseModel(handler Handler) Middleware {
 				modelInterface := reflectModel.Interface()
 				err := json.NewDecoder(r.Body).Decode(modelInterface)
 				if err != nil {
-					RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err), customLog)
+					RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
 					return
 				}
 				ctx := context.WithValue(r.Context(), CtxKeyPostModel, modelInterface)
