@@ -7,7 +7,7 @@ import (
 	"runtime"
 )
 
-func RenderError(w http.ResponseWriter, r *http.Request, err error, customLog *CustomLogger) {
+func RenderError(w http.ResponseWriter, r *http.Request, err error) {
 	if err != nil {
 		js, _ := json.Marshal(Error{
 			Error: err.Error(),
@@ -26,7 +26,7 @@ func RenderError(w http.ResponseWriter, r *http.Request, err error, customLog *C
 	}
 }
 
-func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, code int, msg string, customLog *CustomLogger) {
+func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, code int, msg string) {
 	myMap := map[string]string{"msg": msg}
 	js, _ := json.Marshal(myMap)
 	w.WriteHeader(code)
