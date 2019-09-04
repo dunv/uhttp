@@ -1,6 +1,7 @@
 package uhttp
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -40,14 +41,18 @@ func Chain(mw ...Middleware) Middleware {
 type Handler struct {
 	Pattern                   string
 	PostHandler               http.HandlerFunc
+	PostModel                 interface{}
 	GetHandler                http.HandlerFunc
+	GetModel                  interface{}
 	DeleteHandler             http.HandlerFunc
+	DeleteModel               interface{}
 	RequiredParams            Params
 	OptionalParams            Params
 	DbRequired                []ContextKey
 	AdditionalContextRequired []ContextKey
 	AuthRequired              bool
 	AuthMiddleware            *Middleware
+	PreProcess                func(ctx context.Context) error
 }
 
 // SetConfig set config for all handlers
@@ -77,6 +82,7 @@ func Handle(pattern string, handler Handler) {
 		SetJSONResponse,
 		WithRequiredParams(handler.RequiredParams, customLog),
 		WithOptionalParams(handler.OptionalParams, customLog),
+		ParseModel(handler),
 	)
 
 	if handler.AuthRequired {
@@ -104,6 +110,8 @@ func Handle(pattern string, handler Handler) {
 			log.Panicf("Tried to use context %s without configuring it first", string(additionalContextKey))
 		}
 	}
+
+	chain = Chain(chain, PreProcess(handler))
 
 	// Do logging here so we have all contexts available
 	chain = Chain(chain, Logging(authUserResolver, customLog))
