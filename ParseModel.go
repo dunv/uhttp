@@ -1,9 +1,11 @@
 package uhttp
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 )
@@ -28,12 +30,27 @@ func ParseModel(handler Handler) Middleware {
 			}
 
 			if doParsing {
+				// TODO: maybe find more efficient way of restoring body
+
+				// save body
+				var bodyBytes []byte
+				if r.Body != nil {
+					bodyBytes, _ = ioutil.ReadAll(r.Body)
+					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+				}
+
 				modelInterface := reflectModel.Interface()
 				err := json.NewDecoder(r.Body).Decode(modelInterface)
 				if err != nil {
 					RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
 					return
 				}
+
+				// restore body
+				if r.Body != nil {
+					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+				}
+
 				ctx := context.WithValue(r.Context(), CtxKeyPostModel, modelInterface)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
