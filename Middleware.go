@@ -22,6 +22,7 @@ import (
 // TODO: add license stuff to the repos
 // TODO: add readme to repos
 // TODO: write tests?!
+// TODO: move all mongo-specific things into umongo -> ALL libs should not have to rely on mongo
 
 // Middleware define type
 type Middleware func(next http.HandlerFunc) http.HandlerFunc
