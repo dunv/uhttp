@@ -21,6 +21,7 @@ import (
 // TODO: create logging-lib which does not log out logging helper locations, but the actual origin. Additionally it should support loggin to influx
 // TODO: add license stuff to the repos
 // TODO: add readme to repos
+// TODO: write tests?!
 
 // Middleware define type
 type Middleware func(next http.HandlerFunc) http.HandlerFunc
