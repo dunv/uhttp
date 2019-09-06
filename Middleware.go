@@ -8,6 +8,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// TODO: enhance customLogger, add to uhelpers
+// TODO: move logAndSend, etc. methods to uhelpers
+// TODO: change setters into a single config object (all pointers for nilchecking)
+// TODO: make cors more configurable
+// TODO: create uwebsocket lib
+// TODO: remove error-struct
+// TODO: move sliceContains item into helpers
+// TODO: move mongo out of this lib -> add hooks for "preEveryRequest"
+// TODO: add filters for logging (i.e. do not log everything, or only user etc)
+// TODO: make statistics trackable
+// TODO: create logging-lib which does not log out logging helper locations, but the actual origin. Additionally it should support loggin to influx
+
 // Middleware define type
 type Middleware func(next http.HandlerFunc) http.HandlerFunc
 
