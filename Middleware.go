@@ -19,6 +19,8 @@ import (
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
 // TODO: make statistics trackable
 // TODO: create logging-lib which does not log out logging helper locations, but the actual origin. Additionally it should support loggin to influx
+// TODO: add license stuff to the repos
+// TODO: add readme to repos
 
 // Middleware define type
 type Middleware func(next http.HandlerFunc) http.HandlerFunc
