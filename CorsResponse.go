@@ -2,6 +2,8 @@ package uhttp
 
 import (
 	"net/http"
+
+	"github.com/dunv/ulog"
 )
 
 // SetCors set response headers
@@ -17,7 +19,7 @@ func SetCors(disable bool) func(next http.HandlerFunc) http.HandlerFunc {
 					w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Request-Headers"))
 					w.Header().Set("Access-Control-Allow-Credentials", "true")
 					w.Header().Set("Access-Control-Allow-Max-Age", "86400")
-					CheckAndLogErrorSecondArg(w.Write([]byte{}))
+					ulog.LogIfErrorSecondArg(w.Write([]byte{}))
 				} else {
 					w.Header().Set("Access-Control-Allow-Origin", "*")
 					next.ServeHTTP(w, r)

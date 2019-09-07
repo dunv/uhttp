@@ -28,7 +28,7 @@ type ParamRequirement struct {
 const CtxKeyParams = ContextKey("params")
 
 // WithParams parses and adds params to request
-func withParams(params Params, required bool, customLog *CustomLogger) Middleware {
+func withParams(params Params, required bool) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			paramMap := r.Context().Value(CtxKeyParams)
@@ -169,11 +169,11 @@ func withParams(params Params, required bool, customLog *CustomLogger) Middlewar
 }
 
 // WithOptionalParams parses and adds optional params to request
-func WithOptionalParams(params Params, customLog *CustomLogger) Middleware {
-	return withParams(params, false, customLog)
+func WithOptionalParams(params Params) Middleware {
+	return withParams(params, false)
 }
 
 // WithRequiredParams parses and adds required params to request
-func WithRequiredParams(params Params, customLog *CustomLogger) Middleware {
-	return withParams(params, true, customLog)
+func WithRequiredParams(params Params) Middleware {
+	return withParams(params, true)
 }

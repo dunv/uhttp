@@ -2,28 +2,23 @@ package uhttp
 
 import (
 	"context"
-	"log"
 	"net/http"
+
+	"github.com/dunv/ulog"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// TODO: enhance customLogger, add to uhelpers
-// TODO: move logAndSend, etc. methods to uhelpers
 // TODO: change setters into a single config object (all pointers for nilchecking)
 // TODO: make cors more configurable
 // TODO: create uwebsocket lib
-// TODO: remove error-struct
-// TODO: move sliceContains item into helpers
 // TODO: move mongo out of this lib -> add hooks for "preEveryRequest"
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
 // TODO: make statistics trackable
-// TODO: create logging-lib which does not log out logging helper locations, but the actual origin. Additionally it should support loggin to influx
 // TODO: add license stuff to the repos
 // TODO: add readme to repos
 // TODO: write tests?!
 // TODO: move all mongo-specific things into umongo -> ALL libs should not have to rely on mongo
-// TODO: migrate to gitlab?
 
 // Middleware define type
 type Middleware func(next http.HandlerFunc) http.HandlerFunc
@@ -38,7 +33,7 @@ var bCryptSecret string
 var authMiddleware *Middleware
 var authUserResolver *func(*http.Request) string
 var additionalContext map[ContextKey]interface{}
-var customLog *CustomLogger
+var customLog ulog.ULogger
 
 // Chain chain multiple middlewares
 // copied from: https://hackernoon.com/simple-http-middleware-with-go-79a4ad62889b
@@ -73,12 +68,21 @@ type Handler struct {
 }
 
 // SetConfig set config for all handlers
-func SetConfig(_mongoClients map[ContextKey]*mongo.Client, _additionalContext map[ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog *CustomLogger) {
+func SetConfig(_mongoClients map[ContextKey]*mongo.Client, _additionalContext map[ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog ulog.ULogger) {
 	mongoClients = _mongoClients
 	additionalContext = _additionalContext
 	disableCors = _disableCors
 	bCryptSecret = _bCryptSecret
 	customLog = _customLog
+
+	ulog.AddSkipFunctions(
+		"github.com/dunv/uhttp.RenderError",
+		"github.com/dunv/uhttp.RenderErrorWithStatusCode",
+		"github.com/dunv/uhttp.renderErrorWithStatusCode",
+		"github.com/dunv/uhttp.RenderMessage",
+		"github.com/dunv/uhttp.RenderMessageWithStatusCode",
+		"github.com/dunv/uhttp.renderMessageWithStatusCode",
+	)
 }
 
 // SetAuthMiddleware <-
@@ -97,8 +101,8 @@ func Handle(pattern string, handler Handler) {
 		SetCors(disableCors),
 		AddBCryptSecret(bCryptSecret),
 		SetJSONResponse,
-		WithRequiredParams(handler.RequiredParams, customLog),
-		WithOptionalParams(handler.OptionalParams, customLog),
+		WithRequiredParams(handler.RequiredParams),
+		WithOptionalParams(handler.OptionalParams),
 		ParseModel(handler),
 	)
 
@@ -124,33 +128,33 @@ func Handle(pattern string, handler Handler) {
 		if value, ok := additionalContext[additionalContextKey]; ok {
 			chain = Chain(chain, WithContext(additionalContextKey, value))
 		} else {
-			log.Panicf("Tried to use context %s without configuring it first", string(additionalContextKey))
+			ulog.Panicf("Tried to use context %s without configuring it first", string(additionalContextKey))
 		}
 	}
 
 	chain = Chain(chain, PreProcess(handler))
 
 	// Do logging here so we have all contexts available
-	chain = Chain(chain, Logging(authUserResolver, customLog))
+	chain = Chain(chain, Logging(authUserResolver))
 
 	if handler.GetHandler != nil {
 		if customLog != nil {
 			customLog.Infof("Registered http GET %s", pattern)
 		} else {
-			log.Printf("Registered http GET %s", pattern)
+			ulog.Infof("Registered http GET %s", pattern)
 		}
 	} else if handler.PostHandler != nil {
 		if customLog != nil {
 			customLog.Infof("Registered http POST %s", pattern)
 		} else {
-			log.Printf("Registered http POST %s", pattern)
+			ulog.Infof("Registered http POST %s", pattern)
 		}
 
 	} else if handler.DeleteHandler != nil {
 		if customLog != nil {
 			customLog.Infof("Registered http DELETE %s", pattern)
 		} else {
-			log.Printf("Registered http DELETE %s", pattern)
+			ulog.Infof("Registered http DELETE %s", pattern)
 		}
 
 	}

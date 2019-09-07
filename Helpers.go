@@ -2,40 +2,53 @@ package uhttp
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"runtime"
+
+	"github.com/dunv/ulog"
 )
 
-func RenderError(w http.ResponseWriter, r *http.Request, err error) {
-	if err != nil {
-		js, _ := json.Marshal(Error{
-			Error: err.Error(),
-		})
+func Render(w http.ResponseWriter, r *http.Request, model interface{}) {
+	ulog.LogIfError(json.NewEncoder(w).Encode(model))
+}
 
-		_, fn, line, _ := runtime.Caller(1)
-		w.WriteHeader(http.StatusBadRequest)
-		CheckAndLogErrorSecondArg(w.Write(js))
-		if customLog != nil {
-			customLog.Errorf("Error in %s (%s:%d): %s", r.RequestURI, fn, line, err.Error())
-		} else {
-			log.Printf("Error in %s (%s:%d): %s", r.RequestURI, fn, line, err.Error())
-		}
+func RenderError(w http.ResponseWriter, r *http.Request, err error) {
+	renderErrorWithStatusCode(w, r, http.StatusBadRequest, err)
+}
+
+func RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
+	renderErrorWithStatusCode(w, r, statusCode, err)
+}
+
+func RenderMessage(w http.ResponseWriter, r *http.Request, msg string) {
+	renderMessageWithStatusCode(w, r, http.StatusOK, msg)
+}
+
+func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
+	renderMessageWithStatusCode(w, r, statusCode, msg)
+}
+
+func renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
+	js, _ := json.Marshal(map[string]string{"msg": msg})
+	w.WriteHeader(statusCode)
+	ulog.LogIfErrorSecondArg(w.Write(js))
+	if customLog != nil {
+		customLog.Errorf("Msg in %s: %s", r.RequestURI, msg)
 	} else {
-		log.Panic("Error is nil, and trying to RenderError")
+		ulog.Errorf("Msg in %s: %s", r.RequestURI, msg)
 	}
 }
 
-func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, code int, msg string) {
-	myMap := map[string]string{"msg": msg}
-	js, _ := json.Marshal(myMap)
-	w.WriteHeader(code)
-	CheckAndLogErrorSecondArg(w.Write(js))
-
-	_, fn, line, _ := runtime.Caller(1)
-	if customLog != nil {
-		customLog.Errorf("Msg in %s (%s:%d): %s", r.RequestURI, fn, line, msg)
+func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
+	if err != nil {
+		js, _ := json.Marshal(map[string]string{"error": err.Error()})
+		w.WriteHeader(statusCode)
+		ulog.LogIfErrorSecondArg(w.Write(js))
+		if customLog != nil {
+			customLog.Errorf("Error in %s: %s", r.RequestURI, err.Error())
+		} else {
+			ulog.Errorf("Error in %s: %s", r.RequestURI, err.Error())
+		}
 	} else {
-		log.Printf("Msg in %s (%s:%d): %s", r.RequestURI, fn, line, msg)
+		ulog.Panic("Error to be rendered is nil")
 	}
 }

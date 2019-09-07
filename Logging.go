@@ -2,9 +2,10 @@ package uhttp
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/dunv/ulog"
 )
 
 type loggingResponseWriter struct {
@@ -28,7 +29,7 @@ func fmtDuration(d time.Duration) string {
 }
 
 // Logging log time, method and path of an HTTP-Request
-func Logging(resolver *func(*http.Request) string, customLog *CustomLogger) Middleware {
+func Logging(resolver *func(*http.Request) string) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			lrw := newLoggingResponseWriter(w)
@@ -50,9 +51,9 @@ func Logging(resolver *func(*http.Request) string, customLog *CustomLogger) Midd
 
 			// Do this after "all other middleware went through". That way we can catch the correct statusCode
 			if customLog != nil {
-				(*customLog).Infof("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
+				customLog.Infof("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
 			} else {
-				log.Printf("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]\n", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
+				ulog.Infof("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]\n", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
 			}
 		}
 	}

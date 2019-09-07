@@ -2,7 +2,7 @@ package uhttp
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,9 +18,7 @@ func WithDB(dbName ContextKey, mongoClient *mongo.Client) Middleware {
 			defer cancel()
 			err := mongoClient.Ping(ctx, readpref.Primary())
 			if err != nil {
-				js, _ := json.Marshal(Error{"Could not connect to db"})
-				w.WriteHeader(http.StatusMethodNotAllowed)
-				CheckAndLogErrorSecondArg(w.Write(js))
+				RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not connect to db"))
 			}
 
 			httpContext := context.WithValue(r.Context(), dbName, mongoClient)

@@ -1,7 +1,7 @@
 package uhttp
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -20,6 +20,6 @@ func SelectMethod(chain Middleware, handler Handler) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		CheckAndLogError(json.NewEncoder(w).Encode(Error{"Method not allowed"}))
+		RenderError(w, r, fmt.Errorf("Method not allowed"))
 	})
 }
