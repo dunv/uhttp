@@ -41,6 +41,7 @@ func ParseModel(handler Handler) Middleware {
 
 				modelInterface := reflectModel.Interface()
 				err := json.NewDecoder(r.Body).Decode(modelInterface)
+				defer r.Body.Close()
 				if err != nil {
 					RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
 					return
