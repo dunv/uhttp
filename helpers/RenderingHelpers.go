@@ -1,4 +1,4 @@
-package uhttp
+package helpers
 
 import (
 	"encoding/json"
@@ -8,11 +8,13 @@ import (
 )
 
 func Render(w http.ResponseWriter, r *http.Request, model interface{}) {
+	// TODO: fix logging
 	ulog.LogIfError(json.NewEncoder(w).Encode(model))
 }
 
 func RenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, model interface{}) {
 	w.WriteHeader(statusCode)
+	// TODO: fix logging
 	ulog.LogIfError(json.NewEncoder(w).Encode(model))
 }
 
@@ -35,24 +37,18 @@ func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusC
 func renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
 	js, _ := json.Marshal(map[string]string{"msg": msg})
 	w.WriteHeader(statusCode)
+	// TODO: fix logging
 	ulog.LogIfErrorSecondArg(w.Write(js))
-	if customLog != nil {
-		customLog.Errorf("Msg in %s: %s", r.RequestURI, msg)
-	} else {
-		ulog.Errorf("Msg in %s: %s", r.RequestURI, msg)
-	}
+	ulog.Errorf("Msg in %s: %s", r.RequestURI, msg)
 }
 
 func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
 	if err != nil {
 		js, _ := json.Marshal(map[string]string{"error": err.Error()})
 		w.WriteHeader(statusCode)
+		// TODO: fix logging
 		ulog.LogIfErrorSecondArg(w.Write(js))
-		if customLog != nil {
-			customLog.Errorf("Error in %s: %s", r.RequestURI, err.Error())
-		} else {
-			ulog.Errorf("Error in %s: %s", r.RequestURI, err.Error())
-		}
+		ulog.Errorf("Error in %s: %s", r.RequestURI, err.Error())
 	} else {
 		ulog.Panic("Error to be rendered is nil")
 	}

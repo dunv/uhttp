@@ -1,4 +1,4 @@
-package uhttp
+package middlewares 
 
 import (
 	"net/http"

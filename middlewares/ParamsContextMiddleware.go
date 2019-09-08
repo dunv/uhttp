@@ -1,4 +1,4 @@
-package uhttp
+package middlewares
 
 import (
 	"context"
@@ -6,32 +6,17 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/dunv/uhttp/contextkeys"
+	"github.com/dunv/uhttp/helpers"
+	"github.com/dunv/uhttp/models"
 )
 
-// Params <-
-type Params struct {
-	ParamMap map[string]ParamRequirement
-}
-
-// ParamRequirement <-
-type ParamRequirement struct {
-	AllValues bool
-	Date      bool
-	ShortDate bool
-	Enum      []string
-	Int       bool
-	Float     bool
-	Bool      bool
-}
-
-// CtxKeyParams is the context key to retrieve the params
-const CtxKeyParams = ContextKey("params")
-
 // WithParams parses and adds params to request
-func withParams(params Params, required bool) Middleware {
+func withParams(params models.Params, required bool) models.Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			paramMap := r.Context().Value(CtxKeyParams)
+			paramMap := r.Context().Value(contextkeys.CtxKeyParams)
 			if paramMap == nil {
 				paramMap = map[string]interface{}{}
 			}
@@ -40,7 +25,7 @@ func withParams(params Params, required bool) Middleware {
 				keys, ok := r.URL.Query()[paramName]
 				if !ok || len(keys) < 1 {
 					if required {
-						RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s is required", paramName))
+						helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s is required", paramName))
 						return
 					}
 					if paramRequirement.AllValues {
@@ -86,7 +71,7 @@ func withParams(params Params, required bool) Middleware {
 							var err error
 							timeValue, err := time.Parse(time.RFC3339, paramValue)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err))
+								helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -99,7 +84,7 @@ func withParams(params Params, required bool) Middleware {
 							var err error
 							timeValue, err := time.Parse("2006-01-02", paramValue)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err))
+								helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a date (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -112,7 +97,7 @@ func withParams(params Params, required bool) Middleware {
 							var err error
 							intValue, err := strconv.ParseInt(paramValue, 10, 64)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be an integer (%s), error %s", paramName, paramValue, err))
+								helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be an integer (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -125,7 +110,7 @@ func withParams(params Params, required bool) Middleware {
 							var err error
 							floatValue, err := strconv.ParseFloat(paramValue, 64)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a float (%s), error %s", paramName, paramValue, err))
+								helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a float (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -138,7 +123,7 @@ func withParams(params Params, required bool) Middleware {
 							var err error
 							boolValue, err := strconv.ParseBool(paramValue)
 							if err != nil {
-								RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a bool (%s), error %s", paramName, paramValue, err))
+								helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s has to be a bool (%s), error %s", paramName, paramValue, err))
 								return
 							}
 							if required {
@@ -150,7 +135,7 @@ func withParams(params Params, required bool) Middleware {
 						}
 
 						if !validated {
-							RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s can only assume these values %s", paramName, paramRequirement.Enum))
+							helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Param %s can only assume these values %s", paramName, paramRequirement.Enum))
 							return
 						}
 					} else {
@@ -162,18 +147,18 @@ func withParams(params Params, required bool) Middleware {
 					}
 				}
 			}
-			ctx := context.WithValue(r.Context(), CtxKeyParams, paramMap)
+			ctx := context.WithValue(r.Context(), contextkeys.CtxKeyParams, paramMap)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
 }
 
 // WithOptionalParams parses and adds optional params to request
-func WithOptionalParams(params Params) Middleware {
+func WithOptionalParams(params models.Params) models.Middleware {
 	return withParams(params, false)
 }
 
 // WithRequiredParams parses and adds required params to request
-func WithRequiredParams(params Params) Middleware {
+func WithRequiredParams(params models.Params) models.Middleware {
 	return withParams(params, true)
 }

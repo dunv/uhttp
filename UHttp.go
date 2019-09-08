@@ -1,9 +1,10 @@
 package uhttp
 
 import (
-	"context"
 	"net/http"
 
+	"github.com/dunv/uhttp/middlewares"
+	"github.com/dunv/uhttp/models"
 	"github.com/dunv/ulog"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,56 +20,19 @@ import (
 // TODO: add readme to repos
 // TODO: write tests?!
 // TODO: move all mongo-specific things into umongo -> ALL libs should not have to rely on mongo
-
-// Middleware define type
-type Middleware func(next http.HandlerFunc) http.HandlerFunc
-
-// ContextKey define type
-type ContextKey string
+// TODO: simplify param-requirements declaration
 
 // Config vars
-var mongoClients map[ContextKey]*mongo.Client
+var mongoClients map[models.ContextKey]*mongo.Client
 var disableCors bool
 var bCryptSecret string
-var authMiddleware *Middleware
+var authMiddleware *models.Middleware
 var authUserResolver *func(*http.Request) string
-var additionalContext map[ContextKey]interface{}
+var additionalContext map[models.ContextKey]interface{}
 var customLog ulog.ULogger
 
-// Chain chain multiple middlewares
-// copied from: https://hackernoon.com/simple-http-middleware-with-go-79a4ad62889b
-func Chain(mw ...Middleware) Middleware {
-	return func(final http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			last := final
-			for i := len(mw) - 1; i >= 0; i-- {
-				last = mw[i](last)
-			}
-			last(w, r)
-		}
-	}
-}
-
-// Handler configured
-type Handler struct {
-	Pattern                   string
-	PostHandler               http.HandlerFunc
-	PostModel                 interface{}
-	GetHandler                http.HandlerFunc
-	GetModel                  interface{}
-	DeleteHandler             http.HandlerFunc
-	DeleteModel               interface{}
-	RequiredParams            Params
-	OptionalParams            Params
-	DbRequired                []ContextKey
-	AdditionalContextRequired []ContextKey
-	AuthRequired              bool
-	AuthMiddleware            *Middleware
-	PreProcess                func(ctx context.Context) error
-}
-
 // SetConfig set config for all handlers
-func SetConfig(_mongoClients map[ContextKey]*mongo.Client, _additionalContext map[ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog ulog.ULogger) {
+func SetConfig(_mongoClients map[models.ContextKey]*mongo.Client, _additionalContext map[models.ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog ulog.ULogger) {
 	mongoClients = _mongoClients
 	additionalContext = _additionalContext
 	disableCors = _disableCors
@@ -84,12 +48,12 @@ func SetConfig(_mongoClients map[ContextKey]*mongo.Client, _additionalContext ma
 		"github.com/dunv/uhttp.RenderMessageWithStatusCode",
 		"github.com/dunv/uhttp.renderMessageWithStatusCode",
 	)
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.Logging.func1.1", "uhttp.Logging")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp/middlewares.AddLogging.func1.1", "uhttp.Logging")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.Handle", "uhttp.Handle")
 }
 
 // SetAuthMiddleware <-
-func SetAuthMiddleware(mw Middleware) {
+func SetAuthMiddleware(mw models.Middleware) {
 	authMiddleware = &mw
 }
 
@@ -99,14 +63,14 @@ func SetAuthUserResolver(resolver *func(*http.Request) string) {
 }
 
 // Handle configuration
-func Handle(pattern string, handler Handler) {
+func Handle(pattern string, handler models.Handler) {
 	chain := Chain(
-		SetCors(disableCors),
-		AddBCryptSecret(bCryptSecret),
-		SetJSONResponse,
-		WithRequiredParams(handler.RequiredParams),
-		WithOptionalParams(handler.OptionalParams),
-		ParseModel(handler),
+		middlewares.SetCors(disableCors),
+		middlewares.AddBCryptSecret(bCryptSecret),
+		middlewares.SetJSONResponse,
+		middlewares.WithRequiredParams(handler.RequiredParams),
+		middlewares.WithOptionalParams(handler.OptionalParams),
+		middlewares.ParseModel(handler),
 	)
 
 	if handler.AuthRequired {
@@ -123,22 +87,18 @@ func Handle(pattern string, handler Handler) {
 		}
 	}
 
-	for _, dbName := range handler.DbRequired {
-		chain = Chain(chain, WithDB(dbName, mongoClients[dbName]))
-	}
-
 	for _, additionalContextKey := range handler.AdditionalContextRequired {
 		if value, ok := additionalContext[additionalContextKey]; ok {
-			chain = Chain(chain, WithContext(additionalContextKey, value))
+			chain = Chain(chain, middlewares.WithContext(additionalContextKey, value))
 		} else {
 			ulog.Panicf("Tried to use context %s without configuring it first", string(additionalContextKey))
 		}
 	}
 
-	chain = Chain(chain, PreProcess(handler))
+	chain = Chain(chain, middlewares.PreProcess(handler))
 
 	// Do logging here so we have all contexts available
-	chain = Chain(chain, Logging(authUserResolver))
+	chain = Chain(chain, middlewares.AddLogging(authUserResolver))
 
 	if handler.GetHandler != nil {
 		if customLog != nil {

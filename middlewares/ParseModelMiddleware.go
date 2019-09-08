@@ -1,4 +1,4 @@
-package uhttp
+package middlewares
 
 import (
 	"bytes"
@@ -8,12 +8,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+
+	"github.com/dunv/uhttp/contextkeys"
+	"github.com/dunv/uhttp/helpers"
+	"github.com/dunv/uhttp/models"
 )
 
-const CtxKeyPostModel = ContextKey("postModel")
-
 // ParseModel parses and adds a model from a requestbody if wanted
-func ParseModel(handler Handler) Middleware {
+func ParseModel(handler models.Handler) models.Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var reflectModel reflect.Value
@@ -43,7 +45,7 @@ func ParseModel(handler Handler) Middleware {
 				err := json.NewDecoder(r.Body).Decode(modelInterface)
 				defer r.Body.Close()
 				if err != nil {
-					RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
+					helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
 					return
 				}
 
@@ -52,7 +54,7 @@ func ParseModel(handler Handler) Middleware {
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 
-				ctx := context.WithValue(r.Context(), CtxKeyPostModel, modelInterface)
+				ctx := context.WithValue(r.Context(), contextkeys.CtxKeyPostModel, modelInterface)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
