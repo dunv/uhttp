@@ -11,6 +11,11 @@ func Render(w http.ResponseWriter, r *http.Request, model interface{}) {
 	ulog.LogIfError(json.NewEncoder(w).Encode(model))
 }
 
+func RenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, model interface{}) {
+	w.WriteHeader(statusCode)
+	ulog.LogIfError(json.NewEncoder(w).Encode(model))
+}
+
 func RenderError(w http.ResponseWriter, r *http.Request, err error) {
 	renderErrorWithStatusCode(w, r, http.StatusBadRequest, err)
 }
