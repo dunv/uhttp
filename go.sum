@@ -1,9 +1,13 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dunv/uhelpers v1.0.4 h1:EdxjjhT0n9CfpqQuA4V0A+GAxmFhbtNg9CB8EsHoCH8=
+github.com/dunv/uhelpers v1.0.4/go.mod h1:e01Y+aVv/p2Te+5P5pZb6GiaOBce9jxDXE7bpJaBez4=
 github.com/dunv/ulog v0.0.2 h1:gN2Ycy9lw3C3TOQzQ4dbKLcCO0raBza7i7+T5VBxZ/I=
 github.com/dunv/ulog v0.0.2/go.mod h1:9WOgavOm7uFClydmGepJTrNZbtgQKSUNn5FM9Dvvy9Y=
 github.com/dunv/ulog v0.0.4 h1:GT4DOK2LBP1RvxxU1hMDZrpEzgNSwfC4ptKW3frF+LU=
 github.com/dunv/ulog v0.0.4/go.mod h1:9WOgavOm7uFClydmGepJTrNZbtgQKSUNn5FM9Dvvy9Y=
+github.com/dunv/ulog v0.0.5 h1:oMQAeIEK0jHwv4kt4Fi4kBFH7SpMrIcyAytBmaGP8Jo=
+github.com/dunv/ulog v0.0.5/go.mod h1:tLx87vZIy7+srmB52LJ8U6Exqnkj5jJ8AaA8cWQp6xs=
 github.com/go-stack/stack v1.8.0 h1:5SgMzNM5HxrEjV0ww2lTmX6E2Izsfxas4+YHWRs3Lsk=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
 github.com/golang/snappy v0.0.1 h1:Qgr9rKW7uDUkrbSmQeiDsGa8SjGyCOGtuasMWwvp2P4=

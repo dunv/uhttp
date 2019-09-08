@@ -75,6 +75,7 @@ func SetConfig(_mongoClients map[ContextKey]*mongo.Client, _additionalContext ma
 	bCryptSecret = _bCryptSecret
 	customLog = _customLog
 
+	// Make expected output (which is only for info, not for debugging) more readable
 	ulog.AddSkipFunctions(
 		"github.com/dunv/uhttp.RenderError",
 		"github.com/dunv/uhttp.RenderErrorWithStatusCode",
@@ -83,6 +84,8 @@ func SetConfig(_mongoClients map[ContextKey]*mongo.Client, _additionalContext ma
 		"github.com/dunv/uhttp.RenderMessageWithStatusCode",
 		"github.com/dunv/uhttp.renderMessageWithStatusCode",
 	)
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.Logging.func1.1", "uhttp.Logging")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.Handle", "uhttp.Handle")
 }
 
 // SetAuthMiddleware <-
