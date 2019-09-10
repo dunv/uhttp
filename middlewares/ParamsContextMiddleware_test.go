@@ -30,9 +30,12 @@ func testRequirementSuccess(requirement params.R, actual map[string]string, expe
 
 	if expectedTime, ok := expectedValue.(time.Time); ok {
 		if actualTime, ok := validatedMap[expectedKey].(time.Time); ok {
-			if !expectedTime.Equal(actualTime) {
+			if expectedTime.Equal(actualTime) {
 				t.Error(fmt.Errorf("incorrect paramValue in validated map actual: %v expected: %v", validatedMap[expectedKey], expectedValue))
+				// TODO: finish this
 			}
+		} else {
+
 		}
 	} else if validatedMap[expectedKey] != expectedValue {
 		t.Error(fmt.Errorf("incorrect paramValue in validated map actual: %v expected: %v", validatedMap[expectedKey], expectedValue))
