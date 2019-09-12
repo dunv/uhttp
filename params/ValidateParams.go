@@ -5,13 +5,19 @@ import (
 	"time"
 
 	"github.com/dunv/uhelpers"
+	"github.com/dunv/ulog"
 )
 
-func ValidateParams(requirement R, actual map[string]string, required bool) (R, error) {
+func ValidateParams(requirement R, actual map[string]string, destination R, required bool) error {
 	errors := []error{}
 	keys := uhelpers.StringKeysFromMap(requirement)
-	validatedMap := map[string]interface{}{}
 	for _, key := range keys {
+		// Publish an error only in the logs, if a param does already exist in the destination map
+		// it obviously points to a bug in the code not an error on the user's side
+		if _, ok := destination[key]; ok {
+			ulog.Errorf("key %s already present when parsing more params, check the requirements in the handler's definition", key)
+		}
+
 		var actualValue string
 		var ok bool
 		if actualValue, ok = actual[key]; !ok {
@@ -23,37 +29,37 @@ func ValidateParams(requirement R, actual map[string]string, required bool) (R, 
 		case string:
 			switch requirement[key] {
 			case STRING:
-				validatedMap[key] = actualValue
+				destination[key] = actualValue
 			case BOOL:
-				ParseBool(actual[key], key, validatedMap, &errors)
+				ParseBool(actual[key], key, destination, &errors)
 			case INT:
-				ParseInt(actual[key], key, 0, validatedMap, &errors)
+				ParseInt(actual[key], key, 0, destination, &errors)
 			case INT32:
-				ParseInt(actual[key], key, 32, validatedMap, &errors)
+				ParseInt(actual[key], key, 32, destination, &errors)
 			case INT64:
-				ParseInt(actual[key], key, 64, validatedMap, &errors)
+				ParseInt(actual[key], key, 64, destination, &errors)
 			case FLOAT32:
-				ParseFloat(actual[key], key, 32, validatedMap, &errors)
+				ParseFloat(actual[key], key, 32, destination, &errors)
 			case FLOAT64:
-				ParseFloat(actual[key], key, 64, validatedMap, &errors)
+				ParseFloat(actual[key], key, 64, destination, &errors)
 			case SHORT_DATE:
-				ParseDate(actual[key], key, "2006-01-02", validatedMap, &errors)
+				ParseDate(actual[key], key, "2006-01-02", destination, &errors)
 			case RFC3339_DATE:
-				ParseDate(actual[key], key, time.RFC3339, validatedMap, &errors)
+				ParseDate(actual[key], key, time.RFC3339, destination, &errors)
 			default:
-				return nil, fmt.Errorf("unknown param requirement")
+				return fmt.Errorf("unknown param requirement")
 			}
 		case []string:
-			ParseEnum(actual[key], requirement[key].([]string), key, validatedMap, &errors)
+			ParseEnum(actual[key], requirement[key].([]string), key, destination, &errors)
 		default:
-			// fmt.Printf("don't know %+v \n", wished_required["userId"])
+			errors = append(errors, fmt.Errorf("don't know what to do with %+v \n", requirement[key]))
 		}
 
 	}
 
 	if required && len(errors) != 0 {
-		return nil, fmt.Errorf("could not parse %v", errors)
+		return fmt.Errorf("could not parse %v", errors)
 	}
 
-	return validatedMap, nil
+	return nil
 }

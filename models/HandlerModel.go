@@ -3,6 +3,9 @@ package models
 import (
 	"context"
 	"net/http"
+
+	"github.com/dunv/uhttp/contextkeys"
+	"github.com/dunv/uhttp/params"
 )
 
 // Handler configured
@@ -14,9 +17,11 @@ type Handler struct {
 	GetModel                  interface{}
 	DeleteHandler             http.HandlerFunc
 	DeleteModel               interface{}
+	RequiredGet               params.R
+	OptionalGet               params.R
 	RequiredParams            Params
 	OptionalParams            Params
-	AdditionalContextRequired []ContextKey
+	AdditionalContextRequired []contextkeys.ContextKey
 	AuthRequired              bool
 	AuthMiddleware            *Middleware
 	PreProcess                func(ctx context.Context) error

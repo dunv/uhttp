@@ -3,6 +3,7 @@ package uhttp
 import (
 	"net/http"
 
+	"github.com/dunv/uhttp/contextkeys"
 	"github.com/dunv/uhttp/middlewares"
 	"github.com/dunv/uhttp/models"
 	"github.com/dunv/ulog"
@@ -23,16 +24,16 @@ import (
 // TODO: simplify param-requirements declaration
 
 // Config vars
-var mongoClients map[models.ContextKey]*mongo.Client
+var mongoClients map[contextkeys.ContextKey]*mongo.Client
 var disableCors bool
 var bCryptSecret string
 var authMiddleware *models.Middleware
 var authUserResolver *func(*http.Request) string
-var additionalContext map[models.ContextKey]interface{}
+var additionalContext map[contextkeys.ContextKey]interface{}
 var customLog ulog.ULogger
 
 // SetConfig set config for all handlers
-func SetConfig(_mongoClients map[models.ContextKey]*mongo.Client, _additionalContext map[models.ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog ulog.ULogger) {
+func SetConfig(_mongoClients map[contextkeys.ContextKey]*mongo.Client, _additionalContext map[contextkeys.ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog ulog.ULogger) {
 	mongoClients = _mongoClients
 	additionalContext = _additionalContext
 	disableCors = _disableCors
@@ -71,6 +72,7 @@ func Handle(pattern string, handler models.Handler) {
 		middlewares.WithRequiredParams(handler.RequiredParams),
 		middlewares.WithOptionalParams(handler.OptionalParams),
 		middlewares.ParseModel(handler),
+		middlewares.GetParams(handler),
 	)
 
 	if handler.AuthRequired {

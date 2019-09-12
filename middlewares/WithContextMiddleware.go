@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/dunv/uhttp/contextkeys"
 	"github.com/dunv/uhttp/models"
 )
 
 // WithContext attaches any object to the context
-func WithContext(key models.ContextKey, value interface{}) models.Middleware {
+func WithContext(key contextkeys.ContextKey, value interface{}) models.Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			httpContext := context.WithValue(r.Context(), key, value)

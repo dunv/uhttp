@@ -1,9 +1,10 @@
 package contextkeys
 
-import "github.com/dunv/uhttp/models"
+type ContextKey string
 
 const (
-	CtxKeyBCryptSecret models.ContextKey = "bCryptSecret"
-	CtxKeyPostModel    models.ContextKey = "postModel"
-	CtxKeyParams       models.ContextKey = "params"
+	CtxKeyBCryptSecret ContextKey = "bCryptSecret"
+	CtxKeyPostModel    ContextKey = "postModel"
+	CtxKeyParams       ContextKey = "params"
+	CtxKeyGetParams    ContextKey = "getParams"
 )
