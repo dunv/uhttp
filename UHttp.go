@@ -7,24 +7,19 @@ import (
 	"github.com/dunv/uhttp/middlewares"
 	"github.com/dunv/uhttp/models"
 	"github.com/dunv/ulog"
-
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // TODO: change setters into a single config object (all pointers for nilchecking)
 // TODO: make cors more configurable
 // TODO: create uwebsocket lib
-// TODO: move mongo out of this lib -> add hooks for "preEveryRequest"
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
 // TODO: make statistics trackable
 // TODO: add license stuff to the repos
 // TODO: add readme to repos
 // TODO: write tests?!
 // TODO: move all mongo-specific things into umongo -> ALL libs should not have to rely on mongo
-// TODO: simplify param-requirements declaration
 
 // Config vars
-var mongoClients map[contextkeys.ContextKey]*mongo.Client
 var disableCors bool
 var bCryptSecret string
 var authMiddleware *models.Middleware
@@ -33,8 +28,7 @@ var additionalContext map[contextkeys.ContextKey]interface{}
 var customLog ulog.ULogger
 
 // SetConfig set config for all handlers
-func SetConfig(_mongoClients map[contextkeys.ContextKey]*mongo.Client, _additionalContext map[contextkeys.ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog ulog.ULogger) {
-	mongoClients = _mongoClients
+func SetConfig(_additionalContext map[contextkeys.ContextKey]interface{}, _disableCors bool, _bCryptSecret string, _customLog ulog.ULogger) {
 	additionalContext = _additionalContext
 	disableCors = _disableCors
 	bCryptSecret = _bCryptSecret
@@ -69,8 +63,6 @@ func Handle(pattern string, handler models.Handler) {
 		middlewares.SetCors(disableCors),
 		middlewares.AddBCryptSecret(bCryptSecret),
 		middlewares.SetJSONResponse,
-		middlewares.WithRequiredParams(handler.RequiredParams),
-		middlewares.WithOptionalParams(handler.OptionalParams),
 		middlewares.ParseModel(handler),
 		middlewares.GetParams(handler),
 	)
@@ -89,12 +81,8 @@ func Handle(pattern string, handler models.Handler) {
 		}
 	}
 
-	for _, additionalContextKey := range handler.AdditionalContextRequired {
-		if value, ok := additionalContext[additionalContextKey]; ok {
-			chain = Chain(chain, middlewares.WithContext(additionalContextKey, value))
-		} else {
-			ulog.Panicf("Tried to use context %s without configuring it first", string(additionalContextKey))
-		}
+	for key, value := range additionalContext {
+		chain = Chain(chain, middlewares.WithContext(key, value))
 	}
 
 	chain = Chain(chain, middlewares.PreProcess(handler))

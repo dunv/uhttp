@@ -3,8 +3,8 @@ package contextkeys
 type ContextKey string
 
 const (
-	CtxKeyBCryptSecret ContextKey = "bCryptSecret"
-	CtxKeyPostModel    ContextKey = "postModel"
-	CtxKeyParams       ContextKey = "params"
-	CtxKeyGetParams    ContextKey = "getParams"
+	// TODO: move into uauth, provide generic mechanism for adding context
+	CtxKeyBCryptSecret ContextKey = "uauth__bCryptSecret"
+	CtxKeyPostModel    ContextKey = "uhttp__postModel"
+	CtxKeyGetParams    ContextKey = "uhttp__getParams"
 )

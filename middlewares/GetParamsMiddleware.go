@@ -34,7 +34,7 @@ func GetParams(h models.Handler) models.Middleware {
 				helpers.RenderError(w, r, fmt.Errorf("%v", err))
 			}
 
-			ctx := context.WithValue(r.Context(), contextkeys.CtxKeyParams, paramMap)
+			ctx := context.WithValue(r.Context(), contextkeys.CtxKeyGetParams, paramMap)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 	}
