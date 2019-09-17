@@ -18,7 +18,7 @@ type Handler struct {
 	DeleteModel    interface{}
 	RequiredGet    params.R
 	OptionalGet    params.R
-	AuthRequired   bool
-	AuthMiddleware *Middleware
+	AddMiddlewares []Middleware
+	AddMiddleware  *Middleware
 	PreProcess     func(ctx context.Context) error
 }

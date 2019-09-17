@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/dunv/uhttp/contextkeys"
-	"github.com/dunv/ulog"
+	"github.com/dunv/uhttp/logging"
 )
 
 // A long list of helpers with identical code... I am missing generics here
@@ -16,7 +16,7 @@ func GetAsString(key string, r *http.Request) *string {
 	// it obviously points to a bug in the code not an error on the user's side
 	paramMap, ok := r.Context().Value(contextkeys.CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Error("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		logging.Logger.Errorf("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -31,7 +31,7 @@ func GetAsString(key string, r *http.Request) *string {
 func GetAsBool(key string, r *http.Request) *bool {
 	paramMap, ok := r.Context().Value(contextkeys.CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Error("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		logging.Logger.Errorf("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -46,7 +46,7 @@ func GetAsBool(key string, r *http.Request) *bool {
 func GetAsInt(key string, r *http.Request) *int {
 	paramMap, ok := r.Context().Value(contextkeys.CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Error("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		logging.Logger.Errorf("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -61,7 +61,7 @@ func GetAsInt(key string, r *http.Request) *int {
 func GetAsInt32(key string, r *http.Request) *int32 {
 	paramMap, ok := r.Context().Value(contextkeys.CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Error("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		logging.Logger.Errorf("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -76,7 +76,7 @@ func GetAsInt32(key string, r *http.Request) *int32 {
 func GetAsInt64(key string, r *http.Request) *int64 {
 	paramMap, ok := r.Context().Value(contextkeys.CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Error("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		logging.Logger.Errorf("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -91,7 +91,7 @@ func GetAsInt64(key string, r *http.Request) *int64 {
 func GetAsFloat32(key string, r *http.Request) *float32 {
 	paramMap, ok := r.Context().Value(contextkeys.CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Error("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		logging.Logger.Errorf("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -106,7 +106,7 @@ func GetAsFloat32(key string, r *http.Request) *float32 {
 func GetAsTime(key string, r *http.Request) *time.Time {
 	paramMap, ok := r.Context().Value(contextkeys.CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Error("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		logging.Logger.Errorf("contextkeys.ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 

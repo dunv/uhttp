@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/dunv/uhelpers"
-	"github.com/dunv/ulog"
+	"github.com/dunv/uhttp/logging"
 )
 
 func ValidateParams(requirement R, actual map[string]string, destination R, required bool) error {
@@ -15,7 +15,7 @@ func ValidateParams(requirement R, actual map[string]string, destination R, requ
 		// Publish an error only in the logs, if a param does already exist in the destination map
 		// it obviously points to a bug in the code not an error on the user's side
 		if _, ok := destination[key]; ok {
-			ulog.Errorf("key %s already present when parsing more params, check the requirements in the handler's definition", key)
+			logging.Logger.Errorf("key %s already present when parsing more params, check the requirements in the handler's definition", key)
 		}
 
 		var actualValue string

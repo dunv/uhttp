@@ -4,18 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dunv/ulog"
+	"github.com/dunv/uhttp/logging"
 )
 
 func Render(w http.ResponseWriter, r *http.Request, model interface{}) {
-	// TODO: fix logging
-	ulog.LogIfError(json.NewEncoder(w).Encode(model))
+	logging.Logger.LogIfError(json.NewEncoder(w).Encode(model))
 }
 
 func RenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, model interface{}) {
 	w.WriteHeader(statusCode)
-	// TODO: fix logging
-	ulog.LogIfError(json.NewEncoder(w).Encode(model))
+	logging.Logger.LogIfError(json.NewEncoder(w).Encode(model))
 }
 
 func RenderError(w http.ResponseWriter, r *http.Request, err error) {
@@ -37,19 +35,17 @@ func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusC
 func renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
 	js, _ := json.Marshal(map[string]string{"msg": msg})
 	w.WriteHeader(statusCode)
-	// TODO: fix logging
-	ulog.LogIfErrorSecondArg(w.Write(js))
-	ulog.Errorf("Msg in %s: %s", r.RequestURI, msg)
+	logging.Logger.LogIfErrorSecondArg(w.Write(js))
+	logging.Logger.Errorf("Msg in %s: %s", r.RequestURI, msg)
 }
 
 func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
 	if err != nil {
 		js, _ := json.Marshal(map[string]string{"error": err.Error()})
 		w.WriteHeader(statusCode)
-		// TODO: fix logging
-		ulog.LogIfErrorSecondArg(w.Write(js))
-		ulog.Errorf("Error in %s: %s", r.RequestURI, err.Error())
+		logging.Logger.LogIfErrorSecondArg(w.Write(js))
+		logging.Logger.Errorf("Error in %s: %s", r.RequestURI, err.Error())
 	} else {
-		ulog.Panic("Error to be rendered is nil")
+		logging.Logger.Panic("Error to be rendered is nil")
 	}
 }

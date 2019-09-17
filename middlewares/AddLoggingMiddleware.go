@@ -3,10 +3,13 @@ package middlewares
 import (
 	"fmt"
 	"net/http"
+	"sort"
+	"strconv"
 	"time"
 
-	"github.com/dunv/uhttp/models"
-	"github.com/dunv/ulog"
+	"github.com/dunv/uhelpers"
+	"github.com/dunv/uhttp/helpers"
+	"github.com/dunv/uhttp/logging"
 )
 
 type loggingResponseWriter struct {
@@ -30,28 +33,30 @@ func fmtDuration(d time.Duration) string {
 }
 
 // Logging log time, method and path of an HTTP-Request
-func AddLogging(resolver *func(*http.Request) string) models.Middleware {
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			lrw := newLoggingResponseWriter(w)
-			start := time.Now()
+func AddLogging(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		lrw := newLoggingResponseWriter(w)
+		start := time.Now()
 
-			next.ServeHTTP(lrw, r)
+		next.ServeHTTP(lrw, r)
 
-			elapsed := time.Since(start)
-			var user string
-			realIP := r.Header.Get("X-Real-IP") // nginx-proxy adds this header
-			if realIP == "" {
-				realIP = r.RemoteAddr
-			}
-
-			if resolver != nil {
-				resolverFunc := *resolver
-				user = resolverFunc(r)
-			}
-
-			// Do this after "all other middleware went through". That way we can catch the correct statusCode
-			ulog.Infof("Uhttp [from: %s] [user: %s] [time: %s] [status: %d] [method: %s] [uri: %s]", realIP, user, fmtDuration(elapsed), lrw.statusCode, r.Method, r.RequestURI)
+		logLineParams := helpers.LogLineParams(r)
+		logLineParams["duration"] = fmtDuration(time.Since(start))
+		realIP := r.Header.Get("X-Real-IP") // nginx-proxy adds this header
+		if realIP == "" {
+			realIP = r.RemoteAddr
 		}
+		logLineParams["from"] = realIP
+		logLineParams["status"] = strconv.Itoa(lrw.statusCode)
+		logLineParams["method"] = r.Method
+		logLineParams["uri"] = r.URL.EscapedPath()
+		logString := "Uhttp"
+
+		keys := uhelpers.StringKeysFromMap(logLineParams)
+		sort.Strings(keys)
+		for _, key := range keys {
+			logString = fmt.Sprintf("%s [%s: %s]", logString, key, logLineParams[key])
+		}
+		logging.Logger.Info(logString)
 	}
 }
