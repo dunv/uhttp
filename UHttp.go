@@ -11,7 +11,6 @@ import (
 // TODO: create uwebsocket lib
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
 // TODO: make statistics trackable
-// TODO: add license stuff to the repos
 // TODO: add readme to repos
 
 func init() {
