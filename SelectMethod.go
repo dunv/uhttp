@@ -3,11 +3,9 @@ package uhttp
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/dunv/uhttp/models"
 )
 
-func SelectMethod(chain models.Middleware, handler models.Handler) http.HandlerFunc {
+func SelectMethod(chain Middleware, handler Handler) http.HandlerFunc {
 	return chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet && handler.GetHandler != nil {
 			handler.GetHandler(w, r)

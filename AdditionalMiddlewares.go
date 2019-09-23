@@ -3,16 +3,15 @@ package uhttp
 import (
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/uhttp/logging"
-	"github.com/dunv/uhttp/models"
 )
 
-var additionalMiddlewares []models.Middleware = []models.Middleware{}
+var additionalMiddlewares []Middleware = []Middleware{}
 
-func AdditionalMiddlewares() []models.Middleware {
+func AdditionalMiddlewares() []Middleware {
 	return additionalMiddlewares
 }
 
-func AddMiddleware(mw models.Middleware) {
+func AddMiddleware(mw Middleware) {
 	if !uhelpers.SliceContainsItem(additionalMiddlewares, mw) {
 		additionalMiddlewares = append(additionalMiddlewares, mw)
 		return

@@ -11,23 +11,22 @@ import (
 
 	"github.com/dunv/uhttp/contextkeys"
 	"github.com/dunv/uhttp/helpers"
-	"github.com/dunv/uhttp/models"
 )
 
 // ParseModel parses and adds a model from a requestbody if wanted
-func ParseModel(handler models.Handler) models.Middleware {
+func ParseModel(postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var reflectModel reflect.Value
 			doParsing := false
-			if r.Method == http.MethodPost && handler.PostModel != nil {
-				reflectModel = reflect.New(reflect.TypeOf(handler.PostModel))
+			if r.Method == http.MethodPost && postModel != nil {
+				reflectModel = reflect.New(reflect.TypeOf(postModel))
 				doParsing = true
-			} else if r.Method == http.MethodGet && handler.GetModel != nil {
-				reflectModel = reflect.New(reflect.TypeOf(handler.GetModel))
+			} else if r.Method == http.MethodGet && getModel != nil {
+				reflectModel = reflect.New(reflect.TypeOf(getModel))
 				doParsing = true
-			} else if r.Method == http.MethodDelete && handler.DeleteModel != nil {
-				reflectModel = reflect.New(reflect.TypeOf(handler.DeleteModel))
+			} else if r.Method == http.MethodDelete && deleteModel != nil {
+				reflectModel = reflect.New(reflect.TypeOf(deleteModel))
 				doParsing = true
 			}
 

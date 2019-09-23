@@ -7,11 +7,10 @@ import (
 
 	"github.com/dunv/uhttp/contextkeys"
 	"github.com/dunv/uhttp/helpers"
-	"github.com/dunv/uhttp/models"
 	"github.com/dunv/uhttp/params"
 )
 
-func GetParams(h models.Handler) models.Middleware {
+func GetParams(optionalGet params.R, requiredGet params.R) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			// Discard values if they occur more than once ("my" design decision here)
@@ -24,12 +23,12 @@ func GetParams(h models.Handler) models.Middleware {
 			}
 
 			paramMap := params.R{}
-			err := params.ValidateParams(h.RequiredGet, actual, paramMap, true)
+			err := params.ValidateParams(requiredGet, actual, paramMap, true)
 			if err != nil {
 				helpers.RenderError(w, r, fmt.Errorf("%v", err))
 			}
 
-			err = params.ValidateParams(h.OptionalGet, actual, paramMap, false)
+			err = params.ValidateParams(optionalGet, actual, paramMap, false)
 			if err != nil {
 				helpers.RenderError(w, r, fmt.Errorf("%v", err))
 			}
