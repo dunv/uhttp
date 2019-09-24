@@ -3,6 +3,7 @@ package uhttp
 import (
 	"net/http"
 
+	"github.com/dunv/uhttp/contextkeys"
 	"github.com/dunv/uhttp/logging"
 	"github.com/dunv/ulog"
 )
@@ -38,4 +39,13 @@ func Handle(pattern string, handler Handler) {
 		logging.Logger.Infof("Registered http DELETE %s", pattern)
 	}
 	http.Handle(pattern, handlerFunc)
+}
+
+func ParsedModel(r *http.Request) interface{} {
+	parsedModel := r.Context().Value(contextkeys.CtxKeyPostModel)
+	if parsedModel != nil {
+		return parsedModel
+	}
+	logging.Logger.Error("Using parsedModel in a request without parsedModel")
+	return nil
 }
