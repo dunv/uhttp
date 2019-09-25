@@ -29,7 +29,7 @@ func (h Handler) HandlerFunc() http.HandlerFunc {
 		middlewares.SetCors(*config.DisableCORS),
 		middlewares.SetJSONResponse,
 		middlewares.ParseModel(h.PostModel, h.GetModel, h.DeleteModel),
-		middlewares.GetParams(h.RequiredGet, h.OptionalGet),
+		middlewares.GetParams(h.OptionalGet, h.RequiredGet),
 	)
 
 	// Add contexts

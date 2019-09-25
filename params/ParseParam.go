@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+func ParseString(value string, key string, validatedMap R, errors *[]error) {
+	if value != "" {
+		validatedMap[key] = value
+		return
+	}
+	*errors = append(*errors, fmt.Errorf("could not validate string. needs to be not empty"))
+}
+
 func ParseEnum(value string, enum []string, key string, validatedMap R, errors *[]error) {
 	for _, enumValue := range enum {
 		if enumValue == value {

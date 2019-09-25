@@ -26,6 +26,7 @@ func GetParams(optionalGet params.R, requiredGet params.R) func(next http.Handle
 			err := params.ValidateParams(requiredGet, actual, paramMap, true)
 			if err != nil {
 				helpers.RenderError(w, r, fmt.Errorf("%v", err))
+				return
 			}
 
 			err = params.ValidateParams(optionalGet, actual, paramMap, false)

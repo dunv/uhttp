@@ -18,9 +18,9 @@ func ValidateParams(requirement R, actual map[string]string, destination R, requ
 			logging.Logger.Errorf("key %s already present when parsing more params, check the requirements in the handler's definition", key)
 		}
 
-		var actualValue string
-		var ok bool
-		if actualValue, ok = actual[key]; !ok {
+		// var actualValue string
+		// var ok bool
+		if _, ok := actual[key]; !ok && required {
 			errors = append(errors, fmt.Errorf("required param %s not present", key))
 			continue
 		}
@@ -29,7 +29,7 @@ func ValidateParams(requirement R, actual map[string]string, destination R, requ
 		case string:
 			switch requirement[key] {
 			case STRING:
-				destination[key] = actualValue
+				ParseString(actual[key], key, destination, &errors)
 			case BOOL:
 				ParseBool(actual[key], key, destination, &errors)
 			case INT:
