@@ -7,13 +7,13 @@ import (
 )
 
 var config Config = Config{
-	DisableCORS: uhelpers.PtrToBool(false),
-	CustomLog:   ulog.NewUlog(),
+	CORS:      uhelpers.PtrToString("*"),
+	CustomLog: ulog.NewUlog(),
 }
 
 type Config struct {
-	DisableCORS *bool
-	CustomLog   ulog.ULogger
+	CORS      *string
+	CustomLog ulog.ULogger
 }
 
 func GetConfig() Config {
@@ -29,7 +29,7 @@ func SetConfig(_config Config) {
 		logging.Logger = _config.CustomLog
 	}
 
-	if _config.DisableCORS != nil {
-		config.DisableCORS = _config.DisableCORS
+	if _config.CORS != nil {
+		config.CORS = _config.CORS
 	}
 }
