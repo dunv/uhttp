@@ -18,11 +18,17 @@ func init() {
 	// Make expected output (which is only for info, not for debugging) more readable
 	ulog.AddSkipFunctions(
 		"github.com/dunv/uhttp.RenderError",
+		"github.com/dunv/uhttp/helpers.RenderError",
 		"github.com/dunv/uhttp.RenderErrorWithStatusCode",
-		"github.com/dunv/uhttp.renderErrorWithStatusCode",
+		"github.com/dunv/uhttp/helpers.RenderErrorWithStatusCode",
 		"github.com/dunv/uhttp.RenderMessage",
+		"github.com/dunv/uhttp/helpers.RenderMessage",
 		"github.com/dunv/uhttp.RenderMessageWithStatusCode",
+		"github.com/dunv/uhttp/helpers.RenderMessageWithStatusCode",
 		"github.com/dunv/uhttp.renderMessageWithStatusCode",
+		"github.com/dunv/uhttp/helpers.renderMessageWithStatusCode",
+		"github.com/dunv/uhttp/helpers.renderErrorWithStatusCode",
+		"github.com/dunv/uhttp.renderErrorWithStatusCode",
 	)
 	ulog.AddReplaceFunction("github.com/dunv/uhttp/middlewares.AddLogging.func1", "uhttp.Logging")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.Handle", "uhttp.Handle")
