@@ -21,7 +21,7 @@ func ValidateParams(requirement R, actual map[string]string, destination R, requ
 		// var actualValue string
 		// var ok bool
 		if _, ok := actual[key]; !ok && required {
-			errors = append(errors, fmt.Errorf("required param %s not present", key))
+			errors = append(errors, fmt.Errorf("required param %s (%s) not present", key, requirement[key]))
 			continue
 		}
 
