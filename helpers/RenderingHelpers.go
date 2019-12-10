@@ -36,7 +36,7 @@ func renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusC
 	js, _ := json.Marshal(map[string]string{"msg": msg})
 	w.WriteHeader(statusCode)
 	logging.Logger.LogIfErrorSecondArg(w.Write(js))
-	logging.Logger.Errorf("Msg in %s: %s", r.RequestURI, msg)
+	logging.Logger.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
 }
 
 func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
@@ -44,7 +44,7 @@ func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCod
 		js, _ := json.Marshal(map[string]string{"error": err.Error()})
 		w.WriteHeader(statusCode)
 		logging.Logger.LogIfErrorSecondArg(w.Write(js))
-		logging.Logger.Errorf("Error in %s: %s", r.RequestURI, err.Error())
+		logging.Logger.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
 	} else {
 		logging.Logger.Panic("Error to be rendered is nil")
 	}
