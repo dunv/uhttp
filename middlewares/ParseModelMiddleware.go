@@ -36,7 +36,11 @@ func ParseModel(postModel interface{}, getModel interface{}, deleteModel interfa
 				// save body
 				var bodyBytes []byte
 				if r.Body != nil {
-					bodyBytes, _ = ioutil.ReadAll(r.Body)
+					bodyBytes, err := ioutil.ReadAll(r.Body)
+					if err != nil {
+						helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
+						return
+					}
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 
