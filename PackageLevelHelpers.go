@@ -1,6 +1,7 @@
 package uhttp
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/dunv/uhttp/helpers"
@@ -28,4 +29,16 @@ func RenderMessage(w http.ResponseWriter, r *http.Request, msg string) {
 
 func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
 	helpers.RenderMessageWithStatusCode(w, r, statusCode, msg)
+}
+
+// Returns a reader for an http.Request or http.Response body
+// Will regard the "Content-Encoding" header
+func ReaderHelper(header http.Header, body io.ReadCloser) (io.Reader, error) {
+	return helpers.ReaderHelper(header, body)
+}
+
+// Parses a json http.Request body while taking gzip-encoding into account
+// Will regard the "Content-Encoding" header
+func ParseBody(r *http.Request, model interface{}) error {
+	return helpers.ParseBody(r, model)
 }

@@ -3,7 +3,6 @@ package middlewares
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -31,29 +30,28 @@ func ParseModel(postModel interface{}, getModel interface{}, deleteModel interfa
 			}
 
 			if doParsing {
-				// TODO: maybe find more efficient way of restoring body
-
-				// save body
+				// Save body
 				var bodyBytes []byte
 				if r.Body != nil {
-					bodyBytes, err := ioutil.ReadAll(r.Body)
+					var err error
+					bodyBytes, err = ioutil.ReadAll(r.Body)
 					defer r.Body.Close()
 					if err != nil {
-						helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
+						helpers.RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err))
 						return
 					}
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 
+				// Parse body
 				modelInterface := reflectModel.Interface()
-				err := json.NewDecoder(r.Body).Decode(modelInterface)
-				defer r.Body.Close()
+				err := helpers.ParseBody(r, modelInterface)
 				if err != nil {
-					helpers.RenderMessageWithStatusCode(w, r, 400, fmt.Sprintf("Could not decode request body (%s)", err))
+					helpers.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err))
 					return
 				}
 
-				// restore body
+				// Restore body
 				if r.Body != nil {
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 				}

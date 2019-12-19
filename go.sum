@@ -1,5 +1,7 @@
 github.com/dunv/uhelpers v1.0.4 h1:EdxjjhT0n9CfpqQuA4V0A+GAxmFhbtNg9CB8EsHoCH8=
 github.com/dunv/uhelpers v1.0.4/go.mod h1:e01Y+aVv/p2Te+5P5pZb6GiaOBce9jxDXE7bpJaBez4=
+github.com/dunv/uhelpers v1.0.11 h1:oaiayyaotrgSmhvUm0tFv+IyIhgTM7g211rx1Tv3hcM=
+github.com/dunv/uhelpers v1.0.11/go.mod h1:Y8BAqY06wly5JR18Yh7vpPSZ7aR950QoxTAQZD5lE9E=
 github.com/dunv/ulog v0.0.8 h1:t18Z1ZPJdemIkCr9jJy/Pept6mpC2tPxGoABsUTLY5E=
 github.com/dunv/ulog v0.0.8/go.mod h1:tLx87vZIy7+srmB52LJ8U6Exqnkj5jJ8AaA8cWQp6xs=
 github.com/dunv/ulog v0.0.9 h1:hQRQsfLJFPaGDSbxIjgazdBSOXnnVQICf/8K1FVNm/8=

@@ -7,13 +7,15 @@ import (
 )
 
 var config Config = Config{
-	CORS:      uhelpers.PtrToString("*"),
-	CustomLog: ulog.NewUlog(),
+	CORS:                 uhelpers.PtrToString("*"),
+	CustomLog:            ulog.NewUlog(),
+	GzipCompressionLevel: uhelpers.PtrToInt(4),
 }
 
 type Config struct {
-	CORS      *string
-	CustomLog ulog.ULogger
+	CORS                 *string
+	CustomLog            ulog.ULogger
+	GzipCompressionLevel *int
 }
 
 func GetConfig() Config {
@@ -31,5 +33,9 @@ func SetConfig(_config Config) {
 
 	if _config.CORS != nil {
 		config.CORS = _config.CORS
+	}
+
+	if _config.GzipCompressionLevel != nil {
+		config.GzipCompressionLevel = _config.GzipCompressionLevel
 	}
 }
