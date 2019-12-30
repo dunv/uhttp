@@ -4,5 +4,5 @@ go 1.13
 
 require (
 	github.com/dunv/uhelpers v1.0.11
-	github.com/dunv/ulog v0.0.13
+	github.com/dunv/ulog v1.0.8
 )

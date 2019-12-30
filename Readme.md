@@ -3,3 +3,5 @@
 # uhttp
 
 A simple http-framework
+
+Documentation (and hopefully soon examples) can be found here: https://godoc.org/github.com/dunv/uhttp
