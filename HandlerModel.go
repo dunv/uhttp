@@ -60,6 +60,7 @@ func (h Handler) HandlerFunc() http.HandlerFunc {
 		middlewares.SetJSONResponse,
 		middlewares.ParseModel(h.PostModel, h.GetModel, h.DeleteModel),
 		middlewares.GetParams(h.OptionalGet, h.RequiredGet),
+		middlewares.AddLogging,
 	)
 
 	// Add contexts
@@ -85,7 +86,5 @@ func (h Handler) HandlerFunc() http.HandlerFunc {
 	// Add preProcess
 	chain = Chain(chain, middlewares.PreProcess(h.PreProcess))
 
-	// Do logging here so we have all contexts available
-	chain = Chain(chain, middlewares.AddLogging)
 	return SelectMethod(chain, h)
 }

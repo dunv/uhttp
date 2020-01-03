@@ -1,18 +1,18 @@
 package uhttp
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/dunv/uhttp/contextkeys"
 	"github.com/dunv/uhttp/logging"
+	"github.com/dunv/uhttp/middlewares"
 	"github.com/dunv/ulog"
 )
 
 // TODO: make cors more configurable
-// TODO: create uwebsocket lib
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
 // TODO: make statistics trackable
-// TODO: add readme to repos
 
 func init() {
 	// Make expected output (which is only for info, not for debugging) more readable
@@ -53,5 +53,14 @@ func ParsedModel(r *http.Request) interface{} {
 		return parsedModel
 	}
 	logging.Logger.Error("Using parsedModel in a request without parsedModel")
+	return nil
+}
+
+func AddLogOutput(w interface{}, key, value string) error {
+	writer, ok := w.(*middlewares.LoggingResponseWriter)
+	if !ok {
+		return fmt.Errorf("passed in parameter was not of type LoggingResponseWriter (%T)", w)
+	}
+	writer.AddLogOutput(key, value)
 	return nil
 }

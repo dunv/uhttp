@@ -13,11 +13,14 @@ import (
 func GetParams(optionalGet params.R, requiredGet params.R) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			// Discard values if they occur more than once ("my" design decision here)
 			actualRaw := r.URL.Query() // map[string][]string
 			actual := map[string]string{}
 			for key, values := range actualRaw {
 				if len(values) > 0 {
+					if len(values) > 1 {
+						helpers.RenderError(w, r, fmt.Errorf("param %s has more than one value (given multiple times), this is not supported", key))
+						return
+					}
 					actual[key] = values[0]
 				}
 			}

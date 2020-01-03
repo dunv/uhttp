@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-// ServeSinglePageApp <-
+// ServeSinglePageApp
 func ServeSinglePageApp(path string, mainHTMLFile string) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		extension, _ := regexp.MatchString("\\.+[a-zA-Z]+", r.URL.EscapedPath())
