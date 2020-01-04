@@ -1,4 +1,4 @@
-package middlewares
+package uhttp 
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 )
 
 // SetCors set response headers
-func SetCors(CORSString *string) func(next http.HandlerFunc) http.HandlerFunc {
+func SetCorsMiddleware(CORSString *string) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			if CORSString == nil {

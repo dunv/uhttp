@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dunv/uhttp/contextkeys"
-	"github.com/dunv/uhttp/logging"
-	"github.com/dunv/uhttp/middlewares"
 	"github.com/dunv/ulog"
 )
 
@@ -40,26 +37,26 @@ func init() {
 func Handle(pattern string, handler Handler) {
 	handlerFunc := handler.HandlerFunc()
 	if handler.GetHandler != nil {
-		logging.Logger.Infof("Registered http GET %s", pattern)
+		Logger.Infof("Registered http GET %s", pattern)
 	} else if handler.PostHandler != nil {
-		logging.Logger.Infof("Registered http POST %s", pattern)
+		Logger.Infof("Registered http POST %s", pattern)
 	} else if handler.DeleteHandler != nil {
-		logging.Logger.Infof("Registered http DELETE %s", pattern)
+		Logger.Infof("Registered http DELETE %s", pattern)
 	}
 	http.Handle(pattern, handlerFunc)
 }
 
 func ParsedModel(r *http.Request) interface{} {
-	parsedModel := r.Context().Value(contextkeys.CtxKeyPostModel)
+	parsedModel := r.Context().Value(CtxKeyPostModel)
 	if parsedModel != nil {
 		return parsedModel
 	}
-	logging.Logger.Error("Using parsedModel in a request without parsedModel")
+	Logger.Error("Using parsedModel in a request without parsedModel")
 	return nil
 }
 
 func AddLogOutput(w interface{}, key, value string) error {
-	writer, ok := w.(*middlewares.LoggingResponseWriter)
+	writer, ok := w.(*LoggingResponseWriter)
 	if !ok {
 		return fmt.Errorf("passed in parameter was not of type LoggingResponseWriter (%T)", w)
 	}

@@ -1,4 +1,4 @@
-package helpers
+package uhttp
 
 import (
 	"compress/gzip"

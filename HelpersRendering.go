@@ -1,12 +1,10 @@
-package helpers
+package uhttp 
 
 import (
 	"compress/gzip"
 	"encoding/json"
 	"io"
 	"net/http"
-
-	"github.com/dunv/uhttp/logging"
 )
 
 func Render(w http.ResponseWriter, r *http.Request, model interface{}) {
@@ -35,15 +33,15 @@ func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusC
 
 func renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
 	rawRenderWithStatusCode(w, r, statusCode, map[string]string{"msg": msg})
-	logging.Logger.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
+	Logger.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
 }
 
 func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
 	if err != nil {
 		rawRenderWithStatusCode(w, r, statusCode, map[string]string{"error": err.Error()})
-		logging.Logger.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
+		Logger.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
 	} else {
-		logging.Logger.Panic("Error to be rendered is nil")
+		Logger.Panic("Error to be rendered is nil")
 	}
 }
 
@@ -56,7 +54,7 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 		// TODO: find a way to use config for compressionLevel and enabling and disabling
 		writer, err = gzip.NewWriterLevel(w, 5)
 		if err != nil {
-			logging.Logger.Panicf("could not initialize gzip writer (%s)", err)
+			Logger.Panicf("could not initialize gzip writer (%s)", err)
 		}
 	default:
 		writer = w
@@ -66,7 +64,7 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 
 	err := json.NewEncoder(writer).Encode(model)
 	if err != nil {
-		logging.Logger.Error("err encoding http response (%s)", err)
+		Logger.Error("err encoding http response (%s)", err)
 		return
 	}
 
@@ -74,7 +72,7 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 	case *gzip.Writer:
 		err = typedWriter.Close()
 		if err != nil {
-			logging.Logger.Error("err closing gzip writer (%s)", err)
+			Logger.Error("err closing gzip writer (%s)", err)
 		}
 	}
 }

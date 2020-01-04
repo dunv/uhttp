@@ -1,4 +1,4 @@
-package logging
+package uhttp
 
 import "github.com/dunv/ulog"
 

@@ -1,4 +1,4 @@
-package params
+package uhttp
 
 import (
 	"fmt"

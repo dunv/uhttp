@@ -2,7 +2,6 @@ package uhttp
 
 import (
 	"github.com/dunv/uhelpers"
-	"github.com/dunv/uhttp/logging"
 )
 
 var additionalMiddlewares []Middleware = []Middleware{}
@@ -16,5 +15,5 @@ func AddMiddleware(mw Middleware) {
 		additionalMiddlewares = append(additionalMiddlewares, mw)
 		return
 	}
-	logging.Logger.Warnf("middleware already added", mw)
+	Logger.Warnf("middleware already added", mw)
 }

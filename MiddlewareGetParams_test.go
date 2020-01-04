@@ -1,16 +1,15 @@
-package middlewares
+package uhttp 
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/dunv/uhttp/params"
 )
 
-func testRequirementFail(requirement params.R, actual map[string]string, unexpectedKey string, t *testing.T) {
-	validatedMap := params.R{}
-	err := params.ValidateParams(requirement, actual, validatedMap, true)
+func testRequirementFail(requirement R, actual map[string]string, unexpectedKey string, t *testing.T) {
+	validatedMap := R{}
+	err := ValidateParams(requirement, actual, validatedMap, true)
 	if err == nil {
 		t.Error(fmt.Errorf("validation mistakenly succeeded"))
 	}
@@ -19,9 +18,9 @@ func testRequirementFail(requirement params.R, actual map[string]string, unexpec
 	}
 }
 
-func testRequirementSuccess(requirement params.R, actual map[string]string, expectedKey string, expectedValue interface{}, t *testing.T) {
-	validatedMap := params.R{}
-	err := params.ValidateParams(requirement, actual, validatedMap, true)
+func testRequirementSuccess(requirement R, actual map[string]string, expectedKey string, expectedValue interface{}, t *testing.T) {
+	validatedMap := R{}
+	err := ValidateParams(requirement, actual, validatedMap, true)
 	if err != nil {
 		t.Error(fmt.Errorf("validation mistakenly failed"))
 	}
@@ -43,7 +42,7 @@ func testRequirementSuccess(requirement params.R, actual map[string]string, expe
 
 func TestEnumRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.ENUM("test1", "test2")},
+		R{"test": ENUM("test1", "test2")},
 		map[string]string{"test": "test2"},
 		"test",
 		"test2",
@@ -53,7 +52,7 @@ func TestEnumRequirementSuccess(t *testing.T) {
 
 func TestEnumRequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.ENUM("test1", "test2")},
+		R{"test": ENUM("test1", "test2")},
 		map[string]string{"test": "test3"},
 		"test",
 		t,
@@ -62,7 +61,7 @@ func TestEnumRequirementFail(t *testing.T) {
 
 func TestStringRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.STRING},
+		R{"test": STRING},
 		map[string]string{"test": "test2"},
 		"test",
 		"test2",
@@ -72,7 +71,7 @@ func TestStringRequirementSuccess(t *testing.T) {
 
 func TestBoolRequirementSuccess1(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.BOOL},
+		R{"test": BOOL},
 		map[string]string{"test": "true"},
 		"test",
 		true,
@@ -82,7 +81,7 @@ func TestBoolRequirementSuccess1(t *testing.T) {
 
 func TestBoolRequirementSuccess2(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.BOOL},
+		R{"test": BOOL},
 		map[string]string{"test": "false"},
 		"test",
 		false,
@@ -92,7 +91,7 @@ func TestBoolRequirementSuccess2(t *testing.T) {
 
 func TestBoolRequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.BOOL},
+		R{"test": BOOL},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -101,7 +100,7 @@ func TestBoolRequirementFail(t *testing.T) {
 
 func TestIntRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.INT},
+		R{"test": INT},
 		map[string]string{"test": "2"},
 		"test",
 		int(2),
@@ -111,7 +110,7 @@ func TestIntRequirementSuccess(t *testing.T) {
 
 func TestIntRequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.INT},
+		R{"test": INT},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -120,7 +119,7 @@ func TestIntRequirementFail(t *testing.T) {
 
 func TestInt32RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.INT32},
+		R{"test": INT32},
 		map[string]string{"test": "2"},
 		"test",
 		int32(2),
@@ -130,7 +129,7 @@ func TestInt32RequirementSuccess(t *testing.T) {
 
 func TestInt32RequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.INT32},
+		R{"test": INT32},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -139,7 +138,7 @@ func TestInt32RequirementFail(t *testing.T) {
 
 func TestInt64RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.INT64},
+		R{"test": INT64},
 		map[string]string{"test": "2"},
 		"test",
 		int64(2),
@@ -149,7 +148,7 @@ func TestInt64RequirementSuccess(t *testing.T) {
 
 func TestInt64RequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.INT64},
+		R{"test": INT64},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -158,7 +157,7 @@ func TestInt64RequirementFail(t *testing.T) {
 
 func TestFloat32RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.FLOAT32},
+		R{"test": FLOAT32},
 		map[string]string{"test": "2.2"},
 		"test",
 		float32(2.2),
@@ -168,7 +167,7 @@ func TestFloat32RequirementSuccess(t *testing.T) {
 
 func TestFloat32RequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.FLOAT32},
+		R{"test": FLOAT32},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -177,7 +176,7 @@ func TestFloat32RequirementFail(t *testing.T) {
 
 func TestFloat64RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.FLOAT64},
+		R{"test": FLOAT64},
 		map[string]string{"test": "2.2"},
 		"test",
 		float64(2.2),
@@ -187,7 +186,7 @@ func TestFloat64RequirementSuccess(t *testing.T) {
 
 func TestFloat64RequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.FLOAT64},
+		R{"test": FLOAT64},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -196,7 +195,7 @@ func TestFloat64RequirementFail(t *testing.T) {
 
 func TestShortDateRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.SHORT_DATE},
+		R{"test": SHORT_DATE},
 		map[string]string{"test": "2019-08-09"},
 		"test",
 		time.Date(2019, 8, 9, 0, 0, 0, 0, time.UTC),
@@ -206,7 +205,7 @@ func TestShortDateRequirementSuccess(t *testing.T) {
 
 func TestShortDateRequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.SHORT_DATE},
+		R{"test": SHORT_DATE},
 		map[string]string{"test": "2019-13-30"},
 		"test",
 		t,
@@ -215,7 +214,7 @@ func TestShortDateRequirementFail(t *testing.T) {
 
 func TestRFC3339DateRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		params.R{"test": params.RFC3339_DATE},
+		R{"test": RFC3339_DATE},
 		map[string]string{"test": "2002-10-02T10:00:00-05:00"},
 		"test",
 		time.Date(2002, 10, 2, 10, 0, 0, 0, time.FixedZone("UTC-5", -5*60*60)),
@@ -225,7 +224,7 @@ func TestRFC3339DateRequirementSuccess(t *testing.T) {
 
 func TestRFC3339DateRequirementFail(t *testing.T) {
 	testRequirementFail(
-		params.R{"test": params.RFC3339_DATE},
+		R{"test": RFC3339_DATE},
 		map[string]string{"test": "2002-10-02T30:00:00-05:00"},
 		"test",
 		t,

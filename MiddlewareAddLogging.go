@@ -1,4 +1,4 @@
-package middlewares
+package uhttp 
 
 import (
 	"errors"
@@ -9,10 +9,6 @@ import (
 	"time"
 
 	"github.com/dunv/uhelpers"
-	"github.com/dunv/uhttp/contextkeys"
-	"github.com/dunv/uhttp/helpers"
-	"github.com/dunv/uhttp/logging"
-	"github.com/dunv/uhttp/params"
 	"github.com/dunv/ulog"
 )
 
@@ -51,7 +47,7 @@ func fmtDuration(d time.Duration) string {
 }
 
 // Logging log time, method and path of an HTTP-Request
-func AddLogging(next http.HandlerFunc) http.HandlerFunc {
+func AddLoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		lrw := newLoggingResponseWriter(w)
@@ -71,10 +67,10 @@ func AddLogging(next http.HandlerFunc) http.HandlerFunc {
 		logLineParams["uri"] = r.URL.EscapedPath()
 		logString := "Uhttp"
 
-		params, err := r.Context().Value(contextkeys.CtxKeyGetParams).(params.R).Printable()
+		params, err := r.Context().Value(CtxKeyGetParams).(R).Printable()
 		if err != nil {
 			ulog.Errorf("error when trying to log %s", err)
-			helpers.RenderError(w, r, errors.New("internal server error"))
+			RenderError(w, r, errors.New("internal server error"))
 			return
 		}
 		for key, value := range params {
@@ -94,6 +90,6 @@ func AddLogging(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		logging.Logger.Info(logString)
+		Logger.Info(logString)
 	}
 }

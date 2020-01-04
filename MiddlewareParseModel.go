@@ -1,4 +1,4 @@
-package middlewares
+package uhttp 
 
 import (
 	"bytes"
@@ -8,12 +8,10 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/dunv/uhttp/contextkeys"
-	"github.com/dunv/uhttp/helpers"
 )
 
 // ParseModel parses and adds a model from a requestbody if wanted
-func ParseModel(postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
+func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var reflectModel reflect.Value
@@ -37,7 +35,7 @@ func ParseModel(postModel interface{}, getModel interface{}, deleteModel interfa
 					bodyBytes, err = ioutil.ReadAll(r.Body)
 					defer r.Body.Close()
 					if err != nil {
-						helpers.RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err))
+						RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err))
 						return
 					}
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -45,9 +43,9 @@ func ParseModel(postModel interface{}, getModel interface{}, deleteModel interfa
 
 				// Parse body
 				modelInterface := reflectModel.Interface()
-				err := helpers.ParseBody(r, modelInterface)
+				err := ParseBody(r, modelInterface)
 				if err != nil {
-					helpers.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err))
+					RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err))
 					return
 				}
 
@@ -56,7 +54,7 @@ func ParseModel(postModel interface{}, getModel interface{}, deleteModel interfa
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 
-				ctx := context.WithValue(r.Context(), contextkeys.CtxKeyPostModel, modelInterface)
+				ctx := context.WithValue(r.Context(), CtxKeyPostModel, modelInterface)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}

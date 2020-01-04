@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/dunv/uhttp/middlewares"
-	"github.com/dunv/uhttp/params"
 )
 
 // Handler configured
@@ -17,8 +15,8 @@ type Handler struct {
 	GetModel       interface{}
 	DeleteHandler  http.HandlerFunc
 	DeleteModel    interface{}
-	RequiredGet    params.R
-	OptionalGet    params.R
+	RequiredGet    R
+	OptionalGet    R
 	AddMiddlewares []Middleware
 	AddMiddleware  *Middleware
 	PreProcess     func(ctx context.Context) error
@@ -26,13 +24,13 @@ type Handler struct {
 
 func (h Handler) WsReady() Middleware {
 	chain := Chain(
-		middlewares.ParseModel(h.PostModel, h.GetModel, h.DeleteModel),
-		middlewares.GetParams(h.OptionalGet, h.RequiredGet),
+		ParseModelMiddleware(h.PostModel, h.GetModel, h.DeleteModel),
+		GetParamsMiddleware(h.OptionalGet, h.RequiredGet),
 	)
 
 	// Add contexts
 	for key, value := range requestContext {
-		chain = Chain(chain, middlewares.WithContext(key, value))
+		chain = Chain(chain, WithContextMiddleware(key, value))
 	}
 
 	// Add global middlewares
@@ -51,21 +49,21 @@ func (h Handler) WsReady() Middleware {
 	}
 
 	// Add preProcess
-	return Chain(chain, middlewares.PreProcess(h.PreProcess))
+	return Chain(chain, PreProcessMiddleware(h.PreProcess))
 }
 
 func (h Handler) HandlerFunc() http.HandlerFunc {
 	chain := Chain(
-		middlewares.SetCors(config.CORS),
-		middlewares.SetJSONResponse,
-		middlewares.ParseModel(h.PostModel, h.GetModel, h.DeleteModel),
-		middlewares.GetParams(h.OptionalGet, h.RequiredGet),
-		middlewares.AddLogging,
+		SetCorsMiddleware(config.CORS),
+		SetJSONResponseMiddleware,
+		ParseModelMiddleware(h.PostModel, h.GetModel, h.DeleteModel),
+		GetParamsMiddleware(h.OptionalGet, h.RequiredGet),
+		AddLoggingMiddleware,
 	)
 
 	// Add contexts
 	for key, value := range requestContext {
-		chain = Chain(chain, middlewares.WithContext(key, value))
+		chain = Chain(chain, WithContextMiddleware(key, value))
 	}
 
 	// Add global middlewares
@@ -84,7 +82,7 @@ func (h Handler) HandlerFunc() http.HandlerFunc {
 	}
 
 	// Add preProcess
-	chain = Chain(chain, middlewares.PreProcess(h.PreProcess))
+	chain = Chain(chain, PreProcessMiddleware(h.PreProcess))
 
 	return SelectMethod(chain, h)
 }
