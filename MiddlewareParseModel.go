@@ -1,4 +1,4 @@
-package uhttp 
+package uhttp
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
-
 )
 
 // ParseModel parses and adds a model from a requestbody if wanted
@@ -43,7 +42,7 @@ func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteMod
 
 				// Parse body
 				modelInterface := reflectModel.Interface()
-				err := ParseBody(r, modelInterface)
+				err := GzipDecodeRequestBody(r, modelInterface)
 				if err != nil {
 					RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err))
 					return

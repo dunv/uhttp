@@ -21,9 +21,3 @@ func AddContext(key string, value interface{}) {
 		ulog.Warnf("contextKey %s already exists", key)
 	}
 }
-
-func AddContexts(m ContextMap) {
-	for key := range m {
-		AddContext(key, m[key])
-	}
-}
