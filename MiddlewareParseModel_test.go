@@ -1,9 +1,8 @@
-package uhttp 
+package uhttp
 
 import (
 	"net/http"
 	"testing"
-
 )
 
 func TestParsePostModel(t *testing.T) {
@@ -14,7 +13,7 @@ func TestParsePostModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodPost, requestBody, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, t)
 }
 
 func TestParseGetModel(t *testing.T) {
@@ -25,7 +24,7 @@ func TestParseGetModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodGet, requestBody, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodGet, http.StatusOK, requestBody, expectedResponseBody, t)
 }
 
 func TestParseDeleteModel(t *testing.T) {
@@ -36,5 +35,5 @@ func TestParseDeleteModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodDelete, requestBody, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodDelete, http.StatusOK, requestBody, expectedResponseBody, t)
 }
