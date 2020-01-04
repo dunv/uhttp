@@ -1,6 +1,8 @@
 package uhttp
 
 import (
+	"fmt"
+
 	"github.com/dunv/uhelpers"
 )
 
@@ -10,10 +12,10 @@ func AdditionalMiddlewares() []Middleware {
 	return additionalMiddlewares
 }
 
-func AddMiddleware(mw Middleware) {
+func AddMiddleware(mw Middleware) error {
 	if !uhelpers.SliceContainsItem(additionalMiddlewares, mw) {
 		additionalMiddlewares = append(additionalMiddlewares, mw)
-		return
+		return nil
 	}
-	Logger.Warnf("middleware already added", mw)
+	return fmt.Errorf("middleware already added (%+v)", mw)
 }
