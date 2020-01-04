@@ -1,4 +1,4 @@
-package uhttp 
+package uhttp
 
 import (
 	"compress/gzip"
@@ -47,16 +47,23 @@ func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCod
 
 func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, model interface{}) {
 	var writer io.Writer
-	switch r.Header.Get("Accept-Encoding") {
-	case "gzip":
-		w.Header().Add("Content-Encoding", "gzip")
-		var err error
-		// TODO: find a way to use config for compressionLevel and enabling and disabling
-		writer, err = gzip.NewWriterLevel(w, 5)
-		if err != nil {
-			Logger.Panicf("could not initialize gzip writer (%s)", err)
+
+	// The go-http-client implementation decodes gzip out-of-the-box, but only if it gets 200 OK
+	// For now: use the same behavior here
+	if statusCode == http.StatusOK {
+		switch r.Header.Get("Accept-Encoding") {
+		case "gzip":
+			w.Header().Add("Content-Encoding", "gzip")
+			var err error
+			// TODO: find a way to use config for compressionLevel and enabling and disabling
+			writer, err = gzip.NewWriterLevel(w, 5)
+			if err != nil {
+				Logger.Panicf("could not initialize gzip writer (%s)", err)
+			}
+		default:
+			writer = w
 		}
-	default:
+	} else {
 		writer = w
 	}
 

@@ -45,16 +45,16 @@ func ExecuteHandler(
 		return
 	}
 
-	if res.StatusCode != expectedStatus {
-		t.Errorf("did not return http %d (actual: %d)", expectedStatus, res.StatusCode)
-		return
-	}
-
 	response, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		t.Error(err)
 	}
 	res.Body.Close()
+
+	if res.StatusCode != expectedStatus {
+		t.Errorf("did not return http %d (actual: %d)", expectedStatus, res.StatusCode)
+		return
+	}
 
 	expectedWithNewLine := append(expectedResponseBody, []byte("\n")...)
 

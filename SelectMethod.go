@@ -19,6 +19,6 @@ func SelectMethod(chain Middleware, handler Handler) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		RenderError(w, r, fmt.Errorf("Method not allowed"))
+		RenderError(w, r, fmt.Errorf("method not allowed"))
 	})
 }

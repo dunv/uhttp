@@ -3,7 +3,6 @@ package uhttp
 import (
 	"context"
 	"net/http"
-
 )
 
 // Handler configured
