@@ -3,7 +3,6 @@ package uhttp
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -24,21 +23,20 @@ func TestRendering(t *testing.T) {
 
 	res, err := http.Get(ts.URL)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
+		return
 	}
 	greeting, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
-
-	fmt.Println(res.Header)
 
 	actual := fmt.Sprintf("%s", greeting)
 	expected := `{"hallo":"welt"}` + "\n"
 
 	if strings.Compare(actual, expected) != 0 {
-		t.Errorf("Could not produce valid JSON response. Expected: %s, Actual: %s", expected, actual)
+		t.Errorf("could not produce valid JSON response. Expected: %s, Actual: %s", expected, actual)
 	}
 }
 
@@ -52,11 +50,12 @@ func TestJSONResponse(t *testing.T) {
 
 	res, err := http.Get(ts.URL)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
+		return
 	}
 
 	if res.Header.Get("Content-Type") != "application/json" {
-		t.Errorf("Did not set Content-Type as expeceted")
+		t.Errorf("did not set Content-Type as expeceted")
 	}
 }
 

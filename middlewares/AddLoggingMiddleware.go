@@ -20,6 +20,7 @@ type LoggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode       int
 	additionalOutput map[string]string
+	headerWritten    bool
 }
 
 func newLoggingResponseWriter(w http.ResponseWriter) *LoggingResponseWriter {
@@ -27,6 +28,7 @@ func newLoggingResponseWriter(w http.ResponseWriter) *LoggingResponseWriter {
 		w,
 		http.StatusOK,
 		map[string]string{},
+		false,
 	}
 }
 
@@ -35,8 +37,11 @@ func (lrw *LoggingResponseWriter) AddLogOutput(key, value string) {
 }
 
 func (lrw *LoggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
+	if !lrw.headerWritten {
+		lrw.statusCode = code
+		lrw.headerWritten = true
+		lrw.ResponseWriter.WriteHeader(code)
+	}
 }
 
 func fmtDuration(d time.Duration) string {

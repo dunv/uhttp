@@ -13,6 +13,8 @@ import (
 // TODO: make cors more configurable
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
 // TODO: make statistics trackable
+// TODO: write more tests
+// TODO: add a "server-default" with timeouts
 
 func init() {
 	// Make expected output (which is only for info, not for debugging) more readable
