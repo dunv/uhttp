@@ -3,6 +3,7 @@ package uhttp
 import (
 	"context"
 	"net/http"
+	"time"
 )
 
 // Handler configured
@@ -19,6 +20,8 @@ type Handler struct {
 	AddMiddlewares []Middleware
 	AddMiddleware  *Middleware
 	PreProcess     func(ctx context.Context) error
+	Timeout        *time.Duration
+	TimeoutMessage *string
 }
 
 func (h Handler) WsReady() Middleware {
@@ -82,6 +85,15 @@ func (h Handler) HandlerFunc() http.HandlerFunc {
 
 	// Add preProcess
 	chain = Chain(chain, PreProcessMiddleware(h.PreProcess))
+
+	// Timeouts
+	if h.Timeout != nil {
+		msg := "timeout"
+		if h.TimeoutMessage != nil {
+			msg = *h.TimeoutMessage
+		}
+		return http.TimeoutHandler(SelectMethod(chain, h), *h.Timeout, msg).ServeHTTP
+	}
 
 	return SelectMethod(chain, h)
 }
