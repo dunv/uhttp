@@ -1,4 +1,4 @@
-package uhttp 
+package uhttp
 
 import (
 	"fmt"
@@ -30,6 +30,8 @@ func (r R) Printable() (map[string]string, error) {
 		switch typed := value.(type) {
 		case string:
 			printable[key] = typed
+		case bool:
+			printable[key] = strconv.FormatBool(typed)
 		case int:
 			printable[key] = strconv.FormatInt(int64(typed), 10)
 		case int32:
