@@ -55,8 +55,7 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 		case "gzip":
 			w.Header().Add("Content-Encoding", "gzip")
 			var err error
-			// TODO: find a way to use config for compressionLevel and enabling and disabling
-			writer, err = gzip.NewWriterLevel(w, 5)
+			writer, err = gzip.NewWriterLevel(w, *GetConfig().GzipCompressionLevel)
 			if err != nil {
 				Logger.Panicf("could not initialize gzip writer (%s)", err)
 			}
@@ -71,7 +70,8 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 
 	err := json.NewEncoder(writer).Encode(model)
 	if err != nil {
-		Logger.Error("err encoding http response (%s)", err)
+		// TODO: find a way of doing this per handler!
+		Logger.LogWithLevelf(*GetConfig().EncodingErrorLogLevel, "err encoding http response (%s)", err)
 		return
 	}
 
@@ -79,7 +79,8 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 	case *gzip.Writer:
 		err = typedWriter.Close()
 		if err != nil {
-			Logger.Error("err closing gzip writer (%s)", err)
+			// TODO: find a way of doing this per handler!
+			Logger.LogWithLevelf(*GetConfig().EncodingErrorLogLevel, "err closing gzip writer (%s)", err)
 		}
 	}
 }

@@ -5,16 +5,21 @@ import (
 	"github.com/dunv/ulog"
 )
 
+// TODO: migrate to GRPC-Style config
+
+var errorLevel = ulog.LEVEL_ERROR
 var config Config = Config{
-	CORS:                 uhelpers.PtrToString("*"),
-	CustomLog:            ulog.NewUlog(),
-	GzipCompressionLevel: uhelpers.PtrToInt(4),
+	CORS:                  uhelpers.PtrToString("*"),
+	CustomLog:             ulog.NewUlog(),
+	GzipCompressionLevel:  uhelpers.PtrToInt(4),
+	EncodingErrorLogLevel: &errorLevel,
 }
 
 type Config struct {
-	CORS                 *string
-	CustomLog            ulog.ULogger
-	GzipCompressionLevel *int
+	CORS                  *string
+	CustomLog             ulog.ULogger
+	GzipCompressionLevel  *int
+	EncodingErrorLogLevel *ulog.LogLevel
 }
 
 func GetConfig() Config {
@@ -36,5 +41,9 @@ func SetConfig(_config Config) {
 
 	if _config.GzipCompressionLevel != nil {
 		config.GzipCompressionLevel = _config.GzipCompressionLevel
+	}
+
+	if _config.EncodingErrorLogLevel != nil {
+		config.EncodingErrorLogLevel = _config.EncodingErrorLogLevel
 	}
 }

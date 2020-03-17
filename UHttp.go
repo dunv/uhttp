@@ -26,8 +26,12 @@ func init() {
 		"github.com/dunv/uhttp/helpers.RenderMessageWithStatusCode",
 		"github.com/dunv/uhttp.renderMessageWithStatusCode",
 		"github.com/dunv/uhttp/helpers.renderMessageWithStatusCode",
+		"github.com/dunv/uhttp.renderErrorWithStatusCode",
 		"github.com/dunv/uhttp/helpers.renderErrorWithStatusCode",
 		"github.com/dunv/uhttp.renderErrorWithStatusCode",
+		"github.com/dunv/uhttp/helpers.renderErrorWithStatusCode",
+		"github.com/dunv/uhttp.rawRenderErrorWithStatusCode",
+		"github.com/dunv/uhttp/helpers.rawRenderErrorWithStatusCode",
 	)
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.AddLoggingMiddleware.func1", "uhttp.Logging")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.Handle", "uhttp.Handle")
