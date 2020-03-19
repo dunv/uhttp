@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+
+	"github.com/dunv/ulog"
 )
 
 func TestRender(t *testing.T) {
@@ -57,6 +59,18 @@ func TestRenderMessage(t *testing.T) {
 }
 
 func TestRenderMessageWithStatusCode(t *testing.T) {
+	handler := Handler{
+		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			RenderMessageWithStatusCode(w, r, http.StatusConflict, "test")
+		}),
+	}
+	expectedResponseBody := []byte(`{"msg":"test"}`)
+	ExecuteHandler(handler, http.MethodGet, http.StatusConflict, nil, expectedResponseBody, t)
+}
+
+func TestRenderMessageWithStatusCodeAndLogLevelOverride(t *testing.T) {
+	errorLogLevel := ulog.LEVEL_INFO
+	SetConfig(Config{EncodingErrorLogLevel: &errorLogLevel})
 	handler := Handler{
 		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			RenderMessageWithStatusCode(w, r, http.StatusConflict, "test")

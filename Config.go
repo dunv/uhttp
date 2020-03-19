@@ -28,8 +28,6 @@ func GetConfig() Config {
 
 // SetConfig set config for all handlers
 func SetConfig(_config Config) {
-	config = _config
-
 	if _config.CustomLog != nil {
 		config.CustomLog = _config.CustomLog
 		Logger = _config.CustomLog
