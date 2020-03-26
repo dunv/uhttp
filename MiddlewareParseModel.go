@@ -34,7 +34,8 @@ func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteMod
 					bodyBytes, err = ioutil.ReadAll(r.Body)
 					defer r.Body.Close()
 					if err != nil {
-						RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err))
+						renderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
+						Logger.LogWithLevelf(*GetConfig().ParseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 						return
 					}
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -44,7 +45,8 @@ func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteMod
 				modelInterface := reflectModel.Interface()
 				err := GzipDecodeRequestBody(r, modelInterface)
 				if err != nil {
-					RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err))
+					renderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
+					Logger.LogWithLevelf(*GetConfig().ParseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 					return
 				}
 

@@ -22,6 +22,7 @@ func ExecuteHandler(
 ) {
 	// Suppress log-output
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	// ulog.SetDebug()
 
 	ts := httptest.NewServer(handler.HandlerFunc())
 	defer ts.Close()

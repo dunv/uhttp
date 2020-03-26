@@ -9,17 +9,19 @@ import (
 
 var errorLevel = ulog.LEVEL_ERROR
 var config Config = Config{
-	CORS:                  uhelpers.PtrToString("*"),
-	CustomLog:             ulog.NewUlog(),
-	GzipCompressionLevel:  uhelpers.PtrToInt(4),
-	EncodingErrorLogLevel: &errorLevel,
+	CORS:                    uhelpers.PtrToString("*"),
+	CustomLog:               ulog.NewUlog(),
+	GzipCompressionLevel:    uhelpers.PtrToInt(4),
+	EncodingErrorLogLevel:   &errorLevel,
+	ParseModelErrorLogLevel: &errorLevel,
 }
 
 type Config struct {
-	CORS                  *string
-	CustomLog             ulog.ULogger
-	GzipCompressionLevel  *int
-	EncodingErrorLogLevel *ulog.LogLevel
+	CORS                    *string
+	CustomLog               ulog.ULogger
+	GzipCompressionLevel    *int
+	EncodingErrorLogLevel   *ulog.LogLevel
+	ParseModelErrorLogLevel *ulog.LogLevel
 }
 
 func GetConfig() Config {
@@ -43,5 +45,9 @@ func SetConfig(_config Config) {
 
 	if _config.EncodingErrorLogLevel != nil {
 		config.EncodingErrorLogLevel = _config.EncodingErrorLogLevel
+	}
+
+	if _config.ParseModelErrorLogLevel != nil {
+		config.ParseModelErrorLogLevel = _config.ParseModelErrorLogLevel
 	}
 }

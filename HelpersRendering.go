@@ -16,30 +16,34 @@ func RenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int
 }
 
 func RenderError(w http.ResponseWriter, r *http.Request, err error) {
-	renderErrorWithStatusCode(w, r, http.StatusBadRequest, err)
+	renderErrorWithStatusCode(w, r, http.StatusBadRequest, err, true)
 }
 
 func RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
-	renderErrorWithStatusCode(w, r, statusCode, err)
+	renderErrorWithStatusCode(w, r, statusCode, err, true)
 }
 
 func RenderMessage(w http.ResponseWriter, r *http.Request, msg string) {
-	renderMessageWithStatusCode(w, r, http.StatusOK, msg)
+	renderMessageWithStatusCode(w, r, http.StatusOK, msg, true)
 }
 
 func RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
-	renderMessageWithStatusCode(w, r, statusCode, msg)
+	renderMessageWithStatusCode(w, r, statusCode, msg, true)
 }
 
-func renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
+func renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string, logOut bool) {
 	rawRenderWithStatusCode(w, r, statusCode, map[string]string{"msg": msg})
-	Logger.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
+	if logOut {
+		Logger.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
+	}
 }
 
-func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
+func renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error, logOut bool) {
 	if err != nil {
 		rawRenderWithStatusCode(w, r, statusCode, map[string]string{"error": err.Error()})
-		Logger.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
+		if logOut {
+			Logger.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
+		}
 	} else {
 		Logger.Panic("Error to be rendered is nil")
 	}
