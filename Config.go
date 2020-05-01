@@ -1,6 +1,8 @@
 package uhttp
 
 import (
+	"net/http"
+
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/ulog"
 )
@@ -14,6 +16,7 @@ var config Config = Config{
 	GzipCompressionLevel:    uhelpers.PtrToInt(4),
 	EncodingErrorLogLevel:   &errorLevel,
 	ParseModelErrorLogLevel: &errorLevel,
+	Mux:                     http.NewServeMux(),
 }
 
 type Config struct {
@@ -22,6 +25,7 @@ type Config struct {
 	GzipCompressionLevel    *int
 	EncodingErrorLogLevel   *ulog.LogLevel
 	ParseModelErrorLogLevel *ulog.LogLevel
+	Mux                     *http.ServeMux
 }
 
 func GetConfig() Config {
@@ -50,4 +54,12 @@ func SetConfig(_config Config) {
 	if _config.ParseModelErrorLogLevel != nil {
 		config.ParseModelErrorLogLevel = _config.ParseModelErrorLogLevel
 	}
+
+	if _config.Mux != nil {
+		config.Mux = _config.Mux
+	}
+}
+
+func ServeMux() *http.ServeMux {
+	return config.Mux
 }

@@ -47,7 +47,7 @@ func Handle(pattern string, handler Handler) {
 	} else if handler.DeleteHandler != nil {
 		Logger.Infof("Registered http DELETE %s", pattern)
 	}
-	http.Handle(pattern, handlerFunc)
+	config.Mux.Handle(pattern, handlerFunc)
 }
 
 func ParsedModel(r *http.Request) interface{} {

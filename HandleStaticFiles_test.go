@@ -11,8 +11,16 @@ import (
 )
 
 func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
+	SetConfig(Config{Mux: http.NewServeMux()})
 
-	f, err := os.OpenFile(filepath.Join(os.TempDir(), "index.html"), os.O_RDWR|os.O_CREATE, 0755)
+	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	f, err := os.OpenFile(filepath.Join(tempDir, "index.html"), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		t.Error(err)
 	}
@@ -24,7 +32,7 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 	}
 	f.Close()
 
-	f2, err := os.OpenFile(filepath.Join(os.TempDir(), "main.css"), os.O_RDWR|os.O_CREATE, 0755)
+	f2, err := os.OpenFile(filepath.Join(tempDir, "main.css"), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		t.Error(err)
 	}
@@ -37,10 +45,15 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 	f2.Close()
 
 	// Test for serving index.html when requesting
-	handler := SinglePageAppHandler(os.TempDir(), "index.html")
+	err = RegisterStaticFilesHandler(tempDir)
+	if err != nil {
+		t.Errorf("could not register staticFilesHandler (%s)", err)
+		return
+	}
+
 	req := httptest.NewRequest("GET", "http://example.com/", nil)
 	w := httptest.NewRecorder()
-	handler(w, req)
+	staticFilesHandler(w, req)
 	res := w.Result()
 	response, _ := ioutil.ReadAll(res.Body)
 
@@ -57,8 +70,16 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 }
 
 func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
+	SetConfig(Config{Mux: http.NewServeMux()})
 
-	f, err := os.OpenFile(filepath.Join(os.TempDir(), "index.html"), os.O_RDWR|os.O_CREATE, 0755)
+	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	f, err := os.OpenFile(filepath.Join(tempDir, "index.html"), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +91,7 @@ func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
 	}
 	f.Close()
 
-	f2, err := os.OpenFile(filepath.Join(os.TempDir(), "main.css"), os.O_RDWR|os.O_CREATE, 0755)
+	f2, err := os.OpenFile(filepath.Join(tempDir, "main.css"), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		t.Error(err)
 	}
@@ -83,10 +104,14 @@ func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
 	f2.Close()
 
 	// Test for serving index.html when requesting
-	handler := SinglePageAppHandler(os.TempDir(), "index.html")
+	err = RegisterStaticFilesHandler(tempDir)
+	if err != nil {
+		t.Errorf("could not register staticFilesHandler (%s)", err)
+		return
+	}
 	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
 	w := httptest.NewRecorder()
-	handler(w, req)
+	staticFilesHandler(w, req)
 	res := w.Result()
 	response, _ := ioutil.ReadAll(res.Body)
 
