@@ -8,7 +8,7 @@ import (
 func TestAdditionalMiddlewareGlobally(t *testing.T) {
 	u := NewUHTTP()
 
-	middleware := WithContextMiddleware("manuallyAddedGlobally", map[string]string{"manuallyAdded": "manuallyAdded"})
+	middleware := WithContextMiddleware(u, "manuallyAddedGlobally", map[string]string{"manuallyAdded": "manuallyAdded"})
 	err := AddMiddleware(middleware)
 	if err != nil {
 		t.Error(err)
@@ -20,9 +20,11 @@ func TestAdditionalMiddlewareGlobally(t *testing.T) {
 	}
 
 	handler := Handler{
-		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			Render(w, r, r.Context().Value("manuallyAddedGlobally"))
-		}),
+		GetHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				u.Render(w, r, r.Context().Value("manuallyAddedGlobally"))
+			})
+		},
 	}
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)
 
@@ -32,12 +34,14 @@ func TestAdditionalMiddlewareGlobally(t *testing.T) {
 func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 	u := NewUHTTP()
 
-	middleware := WithContextMiddleware("manuallyAddedSingleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
+	middleware := WithContextMiddleware(u, "manuallyAddedSingleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := Handler{
-		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			Render(w, r, r.Context().Value("manuallyAddedSingleHandler"))
-		}),
+		GetHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				u.Render(w, r, r.Context().Value("manuallyAddedSingleHandler"))
+			})
+		},
 		AddMiddleware: &middleware,
 	}
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)
@@ -48,12 +52,14 @@ func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 func TestAdditionalMiddlewareHandlerMultiple(t *testing.T) {
 	u := NewUHTTP()
 
-	middleware := WithContextMiddleware("manuallyAddedMultipleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
+	middleware := WithContextMiddleware(u, "manuallyAddedMultipleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := Handler{
-		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			Render(w, r, r.Context().Value("manuallyAddedMultipleHandler"))
-		}),
+		GetHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				u.Render(w, r, r.Context().Value("manuallyAddedMultipleHandler"))
+			})
+		},
 		AddMiddlewares: []Middleware{middleware},
 	}
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)

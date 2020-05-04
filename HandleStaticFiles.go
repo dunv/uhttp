@@ -27,30 +27,32 @@ var filesCache = map[string]cachedFile{}
 
 // static files handler which only works if initialized with "RegisterStaticFilesHandler"
 // (only serves from initialized cache)
-var staticFilesHandler = func(w http.ResponseWriter, r *http.Request) {
-	if len(filesCache) == 0 {
-		RenderError(w, r, errors.New("staticFilesHandler used but not initialized"))
-		return
-	}
+func staticFilesHandler(u *UHTTP) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if len(filesCache) == 0 {
+			u.RenderError(w, r, errors.New("staticFilesHandler used but not initialized"))
+			return
+		}
 
-	var cachedFile cachedFile
-	var ok bool
+		var cachedFile cachedFile
+		var ok bool
 
-	// Find file (fallback to index.html)
-	if cachedFile, ok = filesCache[r.URL.Path]; !ok {
-		cachedFile = filesCache["/index.html"]
-	}
-	w.Header().Add("Content-Type", cachedFile.ContentType)
+		// Find file (fallback to index.html)
+		if cachedFile, ok = filesCache[r.URL.Path]; !ok {
+			cachedFile = filesCache["/index.html"]
+		}
+		w.Header().Add("Content-Type", cachedFile.ContentType)
 
-	// If client accepts br or gzip -> return compressed
-	if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "br") {
-		w.Header().Add("Content-Encoding", "br")
-		ulog.LogIfErrorSecondArg(w.Write(cachedFile.BrContent))
-	} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "gzip") {
-		w.Header().Add("Content-Encoding", "gzip")
-		ulog.LogIfErrorSecondArg(w.Write(cachedFile.GzippedContent))
-	} else {
-		ulog.LogIfErrorSecondArg(w.Write(cachedFile.Content))
+		// If client accepts br or gzip -> return compressed
+		if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "br") {
+			w.Header().Add("Content-Encoding", "br")
+			ulog.LogIfErrorSecondArg(w.Write(cachedFile.BrContent))
+		} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "gzip") {
+			w.Header().Add("Content-Encoding", "gzip")
+			ulog.LogIfErrorSecondArg(w.Write(cachedFile.GzippedContent))
+		} else {
+			ulog.LogIfErrorSecondArg(w.Write(cachedFile.Content))
+		}
 	}
 }
 
@@ -153,10 +155,10 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 			uhelpers.ByteCountIEC(int64(len(gzippedFileContent))),
 			uhelpers.ByteCountIEC(int64(len(brotliFileContent))),
 		)
-		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler)
+		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler(u))
 	}
 	ulog.Infof("Registered http static / -> /index.html")
-	u.opts.serveMux.HandleFunc("/", staticFilesHandler)
+	u.opts.serveMux.HandleFunc("/", staticFilesHandler(u))
 
 	if !foundMainFile {
 		return errors.New("could not find index.html")

@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func getParamsMiddleware(optionalGet R, requiredGet R) func(next http.HandlerFunc) http.HandlerFunc {
+func getParamsMiddleware(u *UHTTP, optionalGet R, requiredGet R) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			actualRaw := r.URL.Query() // map[string][]string
@@ -14,7 +14,7 @@ func getParamsMiddleware(optionalGet R, requiredGet R) func(next http.HandlerFun
 			for key, values := range actualRaw {
 				if len(values) > 0 {
 					if len(values) > 1 {
-						RenderError(w, r, fmt.Errorf("param %s has more than one value (given multiple times), this is not supported", key))
+						u.RenderError(w, r, fmt.Errorf("param %s has more than one value (given multiple times), this is not supported", key))
 						return
 					}
 					actual[key] = values[0]
@@ -24,13 +24,13 @@ func getParamsMiddleware(optionalGet R, requiredGet R) func(next http.HandlerFun
 			paramMap := R{}
 			err := ValidateParams(requiredGet, actual, paramMap, true)
 			if err != nil {
-				RenderError(w, r, fmt.Errorf("%v", err))
+				u.RenderError(w, r, fmt.Errorf("%v", err))
 				return
 			}
 
 			err = ValidateParams(optionalGet, actual, paramMap, false)
 			if err != nil {
-				RenderError(w, r, fmt.Errorf("%v", err))
+				u.RenderError(w, r, fmt.Errorf("%v", err))
 			}
 
 			ctx := context.WithValue(r.Context(), CtxKeyGetParams, paramMap)

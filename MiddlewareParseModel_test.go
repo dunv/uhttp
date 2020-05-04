@@ -6,34 +6,43 @@ import (
 )
 
 func TestParsePostModel(t *testing.T) {
+	u := NewUHTTP()
 	handler := Handler{
-		PostHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Render(w, r, ParsedModel(r)) }),
-		PostModel:   map[string]string{},
+		PostHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { u.Render(w, r, ParsedModel(r)) })
+		},
+		PostModel: map[string]string{},
 	}
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, NewUHTTP(), t)
+	ExecuteHandler(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, u, t)
 }
 
 func TestParseGetModel(t *testing.T) {
+	u := NewUHTTP()
 	handler := Handler{
-		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Render(w, r, ParsedModel(r)) }),
-		GetModel:   map[string]string{},
+		GetHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { u.Render(w, r, ParsedModel(r)) })
+		},
+		GetModel: map[string]string{},
 	}
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, requestBody, expectedResponseBody, NewUHTTP(), t)
+	ExecuteHandler(handler, http.MethodGet, http.StatusOK, requestBody, expectedResponseBody, u, t)
 }
 
 func TestParseDeleteModel(t *testing.T) {
+	u := NewUHTTP()
 	handler := Handler{
-		DeleteHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Render(w, r, ParsedModel(r)) }),
-		DeleteModel:   map[string]string{},
+		DeleteHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { u.Render(w, r, ParsedModel(r)) })
+		},
+		DeleteModel: map[string]string{},
 	}
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodDelete, http.StatusOK, requestBody, expectedResponseBody, NewUHTTP(), t)
+	ExecuteHandler(handler, http.MethodDelete, http.StatusOK, requestBody, expectedResponseBody, u, t)
 }

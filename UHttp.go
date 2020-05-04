@@ -57,7 +57,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 
 // Handle configuration
 func (u *UHTTP) Handle(pattern string, handler Handler) {
-	handlerFunc := handler.HandlerFunc(u.opts)
+	handlerFunc := handler.HandlerFunc(u)
 	if handler.GetHandler != nil {
 		Logger.Infof("Registered http GET %s", pattern)
 	} else if handler.PostHandler != nil {

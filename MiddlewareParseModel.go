@@ -10,7 +10,7 @@ import (
 )
 
 // ParseModel parses and adds a model from a requestbody if wanted
-func ParseModelMiddleware(opts *uhttpOptions, postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
+func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var reflectModel reflect.Value
@@ -34,8 +34,8 @@ func ParseModelMiddleware(opts *uhttpOptions, postModel interface{}, getModel in
 					bodyBytes, err = ioutil.ReadAll(r.Body)
 					defer r.Body.Close()
 					if err != nil {
-						renderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
-						Logger.LogWithLevelf(opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
+						u.renderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
+						Logger.LogWithLevelf(u.opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 						return
 					}
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -45,8 +45,8 @@ func ParseModelMiddleware(opts *uhttpOptions, postModel interface{}, getModel in
 				modelInterface := reflectModel.Interface()
 				err := GzipDecodeRequestBody(r, modelInterface)
 				if err != nil {
-					renderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
-					Logger.LogWithLevelf(opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
+					u.renderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
+					Logger.LogWithLevelf(u.opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 					return
 				}
 

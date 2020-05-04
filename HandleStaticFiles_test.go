@@ -53,7 +53,7 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/", nil)
 	w := httptest.NewRecorder()
-	staticFilesHandler(w, req)
+	staticFilesHandler(u)(w, req)
 	res := w.Result()
 	response, _ := ioutil.ReadAll(res.Body)
 
@@ -111,7 +111,7 @@ func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
 	}
 	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
 	w := httptest.NewRecorder()
-	staticFilesHandler(w, req)
+	staticFilesHandler(u)(w, req)
 	res := w.Result()
 	response, _ := ioutil.ReadAll(res.Body)
 

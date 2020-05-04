@@ -10,9 +10,11 @@ func TestWithContextMiddleware(t *testing.T) {
 	AddContext("testKey", map[string]string{"addedContext": "testAddedContext"})
 
 	handler := Handler{
-		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			Render(w, r, r.Context().Value("testKey"))
-		}),
+		GetHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				u.Render(w, r, r.Context().Value("testKey"))
+			})
+		},
 	}
 	expectedResponseBody := []byte(`{"addedContext":"testAddedContext"}`)
 

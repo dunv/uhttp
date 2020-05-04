@@ -12,14 +12,16 @@ import (
 func TestRendering(t *testing.T) {
 	u := NewUHTTP()
 	tmp := Handler{
-		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			Render(w, r, map[string]string{
-				"hallo": "welt",
+		GetHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				u.Render(w, r, map[string]string{
+					"hallo": "welt",
+				})
 			})
-		}),
+		},
 	}
 
-	ts := httptest.NewServer(tmp.HandlerFunc(u.opts))
+	ts := httptest.NewServer(tmp.HandlerFunc(u))
 	defer ts.Close()
 
 	res, err := http.Get(ts.URL)
@@ -44,10 +46,12 @@ func TestRendering(t *testing.T) {
 func TestJSONResponse(t *testing.T) {
 	u := NewUHTTP()
 	tmp := Handler{
-		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
+		GetHandler: func(u *UHTTP) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		},
 	}
 
-	ts := httptest.NewServer(tmp.HandlerFunc(u.opts))
+	ts := httptest.NewServer(tmp.HandlerFunc(u))
 	defer ts.Close()
 
 	res, err := http.Get(ts.URL)
