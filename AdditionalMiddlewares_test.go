@@ -8,7 +8,7 @@ import (
 func TestAdditionalMiddlewareGlobally(t *testing.T) {
 	u := NewUHTTP()
 
-	middleware := WithContextMiddleware(u, "manuallyAddedGlobally", map[string]string{"manuallyAdded": "manuallyAdded"})
+	middleware := withContextMiddleware(u, "manuallyAddedGlobally", map[string]string{"manuallyAdded": "manuallyAdded"})
 	err := AddMiddleware(middleware)
 	if err != nil {
 		t.Error(err)
@@ -34,7 +34,7 @@ func TestAdditionalMiddlewareGlobally(t *testing.T) {
 func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 	u := NewUHTTP()
 
-	middleware := WithContextMiddleware(u, "manuallyAddedSingleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
+	middleware := withContextMiddleware(u, "manuallyAddedSingleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := Handler{
 		GetHandler: func(u *UHTTP) http.HandlerFunc {
@@ -52,7 +52,7 @@ func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 func TestAdditionalMiddlewareHandlerMultiple(t *testing.T) {
 	u := NewUHTTP()
 
-	middleware := WithContextMiddleware(u, "manuallyAddedMultipleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
+	middleware := withContextMiddleware(u, "manuallyAddedMultipleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := Handler{
 		GetHandler: func(u *UHTTP) http.HandlerFunc {

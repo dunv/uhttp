@@ -1,8 +1,10 @@
 package uhttp
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/dunv/uhelpers"
 	"github.com/dunv/ulog"
 )
 
@@ -37,13 +39,14 @@ func init() {
 }
 
 type UHTTP struct {
-	opts *uhttpOptions
+	opts           *uhttpOptions
+	requestContext map[string]interface{}
 }
 
 func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	mergedOpts := &uhttpOptions{
 		cors:                    "*",
-		customLog:               ulog.NewUlog(),
+		log:                     ulog.NewUlog(),
 		gzipCompressionLevel:    4,
 		encodingErrorLogLevel:   ulog.LEVEL_ERROR,
 		parseModelErrorLogLevel: ulog.LEVEL_ERROR,
@@ -52,18 +55,30 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
 	}
-	return &UHTTP{opts: mergedOpts}
+	return &UHTTP{
+		opts:           mergedOpts,
+		requestContext: map[string]interface{}{},
+	}
+}
+
+func (u *UHTTP) AddContext(key string, value interface{}) error {
+	keys := uhelpers.StringKeysFromMap(u.requestContext)
+	if !uhelpers.SliceContainsItem(keys, key) {
+		u.requestContext[key] = value
+		return nil
+	}
+	return fmt.Errorf("contextKey %s already exists", key)
 }
 
 // Handle configuration
 func (u *UHTTP) Handle(pattern string, handler Handler) {
 	handlerFunc := handler.HandlerFunc(u)
 	if handler.GetHandler != nil {
-		Logger.Infof("Registered http GET %s", pattern)
+		u.opts.log.Infof("Registered http GET %s", pattern)
 	} else if handler.PostHandler != nil {
-		Logger.Infof("Registered http POST %s", pattern)
+		u.opts.log.Infof("Registered http POST %s", pattern)
 	} else if handler.DeleteHandler != nil {
-		Logger.Infof("Registered http DELETE %s", pattern)
+		u.opts.log.Infof("Registered http DELETE %s", pattern)
 	}
 	u.opts.serveMux.Handle(pattern, handlerFunc)
 }

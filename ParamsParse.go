@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func ParseString(value string, key string, validatedMap R, errors *[]error) {
+func parseString(value string, key string, validatedMap R, errors *[]error) {
 	if value != "" {
 		validatedMap[key] = value
 		return
@@ -14,7 +14,7 @@ func ParseString(value string, key string, validatedMap R, errors *[]error) {
 	*errors = append(*errors, fmt.Errorf("could not validate string. needs to be not empty"))
 }
 
-func ParseEnum(value string, enum []string, key string, validatedMap R, errors *[]error) {
+func parseEnum(value string, enum []string, key string, validatedMap R, errors *[]error) {
 	for _, enumValue := range enum {
 		if enumValue == value {
 			validatedMap[key] = value
@@ -24,7 +24,7 @@ func ParseEnum(value string, enum []string, key string, validatedMap R, errors *
 	*errors = append(*errors, fmt.Errorf("could not validate enum. needs to be one of %s", enum))
 }
 
-func ParseBool(value string, key string, validatedMap R, errors *[]error) {
+func parseBool(value string, key string, validatedMap R, errors *[]error) {
 	if value == "true" {
 		validatedMap[key] = true
 		return
@@ -35,7 +35,7 @@ func ParseBool(value string, key string, validatedMap R, errors *[]error) {
 	*errors = append(*errors, fmt.Errorf("could not validate bool. needs to be true or false, got %s", value))
 }
 
-func ParseInt(value string, key string, bits int, validatedMap R, errors *[]error) {
+func parseInt(value string, key string, bits int, validatedMap R, errors *[]error) {
 	intValue, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 		*errors = append(*errors, fmt.Errorf("could not validate int%d. got %s", bits, value))
@@ -52,7 +52,7 @@ func ParseInt(value string, key string, bits int, validatedMap R, errors *[]erro
 	}
 }
 
-func ParseFloat(value string, key string, bits int, validatedMap R, errors *[]error) {
+func parseFloat(value string, key string, bits int, validatedMap R, errors *[]error) {
 	floatValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		*errors = append(*errors, fmt.Errorf("could not validate float%d. got %s", bits, value))
@@ -67,7 +67,7 @@ func ParseFloat(value string, key string, bits int, validatedMap R, errors *[]er
 	}
 }
 
-func ParseDate(value string, key string, format string, validatedMap R, errors *[]error) {
+func parseDate(value string, key string, format string, validatedMap R, errors *[]error) {
 	parsedDate, err := time.Parse(format, value)
 	if err != nil {
 		*errors = append(*errors, fmt.Errorf("could not validate date (%s). got %s", format, value))

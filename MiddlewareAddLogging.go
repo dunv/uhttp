@@ -91,7 +91,7 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 				}
 			}
 
-			Logger.Info(logString)
+			u.opts.log.Info(logString)
 		}
 	}
 }

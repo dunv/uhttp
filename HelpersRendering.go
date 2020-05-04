@@ -34,7 +34,7 @@ func (u *UHTTP) RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Reque
 func (u *UHTTP) renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string, logOut bool) {
 	u.rawRenderWithStatusCode(w, r, statusCode, map[string]string{"msg": msg})
 	if logOut {
-		Logger.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
+		u.opts.log.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
 	}
 }
 
@@ -42,10 +42,10 @@ func (u *UHTTP) renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		u.rawRenderWithStatusCode(w, r, statusCode, map[string]string{"error": err.Error()})
 		if logOut {
-			Logger.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
+			u.opts.log.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
 		}
 	} else {
-		Logger.Panic("Error to be rendered is nil")
+		u.opts.log.Panic("Error to be rendered is nil")
 	}
 }
 
@@ -61,7 +61,7 @@ func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, 
 			var err error
 			writer, err = gzip.NewWriterLevel(w, u.opts.gzipCompressionLevel)
 			if err != nil {
-				Logger.Panicf("could not initialize gzip writer (%s)", err)
+				u.opts.log.Panicf("could not initialize gzip writer (%s)", err)
 			}
 		default:
 			writer = w
@@ -75,7 +75,7 @@ func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, 
 	err := json.NewEncoder(writer).Encode(model)
 	if err != nil {
 		// TODO: find a way of doing this per handler!
-		Logger.LogWithLevelf(u.opts.encodingErrorLogLevel, "err encoding http response (%s)", err)
+		u.opts.log.LogWithLevelf(u.opts.encodingErrorLogLevel, "err encoding http response (%s)", err)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, 
 		err = typedWriter.Close()
 		if err != nil {
 			// TODO: find a way of doing this per handler!
-			Logger.LogWithLevelf(u.opts.encodingErrorLogLevel, "err closing gzip writer (%s)", err)
+			u.opts.log.LogWithLevelf(u.opts.encodingErrorLogLevel, "err closing gzip writer (%s)", err)
 		}
 	}
 }

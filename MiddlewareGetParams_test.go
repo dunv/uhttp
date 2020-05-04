@@ -1,15 +1,15 @@
-package uhttp 
+package uhttp
 
 import (
 	"fmt"
 	"testing"
 	"time"
-
 )
 
 func testRequirementFail(requirement R, actual map[string]string, unexpectedKey string, t *testing.T) {
+	u := NewUHTTP()
 	validatedMap := R{}
-	err := ValidateParams(requirement, actual, validatedMap, true)
+	err := u.validateParams(requirement, actual, validatedMap, true)
 	if err == nil {
 		t.Error(fmt.Errorf("validation mistakenly succeeded"))
 	}
@@ -19,8 +19,9 @@ func testRequirementFail(requirement R, actual map[string]string, unexpectedKey 
 }
 
 func testRequirementSuccess(requirement R, actual map[string]string, expectedKey string, expectedValue interface{}, t *testing.T) {
+	u := NewUHTTP()
 	validatedMap := R{}
-	err := ValidateParams(requirement, actual, validatedMap, true)
+	err := u.validateParams(requirement, actual, validatedMap, true)
 	if err != nil {
 		t.Error(fmt.Errorf("validation mistakenly failed"))
 	}

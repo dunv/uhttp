@@ -7,7 +7,12 @@ import (
 
 func TestWithContextMiddleware(t *testing.T) {
 	u := NewUHTTP()
-	AddContext("testKey", map[string]string{"addedContext": "testAddedContext"})
+
+	err := u.AddContext("testKey", map[string]string{"addedContext": "testAddedContext"})
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	handler := Handler{
 		GetHandler: func(u *UHTTP) http.HandlerFunc {

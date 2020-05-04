@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func PreProcessMiddleware(u *UHTTP, preProcess func(ctx context.Context) error) func(next http.HandlerFunc) http.HandlerFunc {
+func preProcessMiddleware(u *UHTTP, preProcess func(ctx context.Context) error) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			if preProcess != nil {

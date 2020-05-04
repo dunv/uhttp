@@ -9,7 +9,13 @@ func TestParsePostModel(t *testing.T) {
 	u := NewUHTTP()
 	handler := Handler{
 		PostHandler: func(u *UHTTP) http.HandlerFunc {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { u.Render(w, r, ParsedModel(r)) })
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if parsedModel, err := ParsedModel(r); err != nil {
+					u.RenderError(w, r, err)
+				} else {
+					u.Render(w, r, parsedModel)
+				}
+			})
 		},
 		PostModel: map[string]string{},
 	}
@@ -23,7 +29,13 @@ func TestParseGetModel(t *testing.T) {
 	u := NewUHTTP()
 	handler := Handler{
 		GetHandler: func(u *UHTTP) http.HandlerFunc {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { u.Render(w, r, ParsedModel(r)) })
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if parsedModel, err := ParsedModel(r); err != nil {
+					u.RenderError(w, r, err)
+				} else {
+					u.Render(w, r, parsedModel)
+				}
+			})
 		},
 		GetModel: map[string]string{},
 	}
@@ -37,7 +49,13 @@ func TestParseDeleteModel(t *testing.T) {
 	u := NewUHTTP()
 	handler := Handler{
 		DeleteHandler: func(u *UHTTP) http.HandlerFunc {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { u.Render(w, r, ParsedModel(r)) })
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if parsedModel, err := ParsedModel(r); err != nil {
+					u.RenderError(w, r, err)
+				} else {
+					u.Render(w, r, parsedModel)
+				}
+			})
 		},
 		DeleteModel: map[string]string{},
 	}

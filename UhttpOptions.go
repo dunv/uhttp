@@ -12,7 +12,7 @@ type UhttpOption interface {
 
 type uhttpOptions struct {
 	cors                    string
-	customLog               ulog.ULogger
+	log                     ulog.ULogger
 	gzipCompressionLevel    int
 	encodingErrorLogLevel   ulog.LogLevel
 	parseModelErrorLogLevel ulog.LogLevel
@@ -37,9 +37,9 @@ func WithCORS(cors string) UhttpOption {
 	})
 }
 
-func WithCustomLog(logger ulog.ULogger) UhttpOption {
+func WithLogger(logger ulog.ULogger) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.customLog = logger
+		o.log = logger
 	})
 }
 

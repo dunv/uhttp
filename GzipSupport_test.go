@@ -25,7 +25,11 @@ func TestGzipRequestAndResponse(t *testing.T) {
 	handler := Handler{
 		PostHandler: func(u *UHTTP) http.HandlerFunc {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				u.Render(w, r, ParsedModel(r))
+				if parsedModel, err := ParsedModel(r); err != nil {
+					u.RenderError(w, r, err)
+				} else {
+					u.Render(w, r, parsedModel)
+				}
 			})
 		},
 		PostModel: map[string]string{},

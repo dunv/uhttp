@@ -2,6 +2,7 @@ package uhttp
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -25,37 +26,37 @@ type Handler struct {
 }
 
 func (h Handler) WsReady(u *UHTTP) Middleware {
-	chain := Chain(
+	c := chain(
 		parseModelMiddleware(u, h.PostModel, h.GetModel, h.DeleteModel),
 		getParamsMiddleware(u, h.OptionalGet, h.RequiredGet),
 	)
 
 	// Add contexts
-	for key, value := range requestContext {
-		chain = Chain(chain, WithContextMiddleware(u, key, value))
+	for key, value := range u.requestContext {
+		c = chain(c, withContextMiddleware(u, key, value))
 	}
 
 	// Add global middlewares
 	for key := range additionalMiddlewares {
-		chain = Chain(chain, additionalMiddlewares[key])
+		c = chain(c, additionalMiddlewares[key])
 	}
 
 	// Add handler-specified middlewares
 	for key := range h.AddMiddlewares {
-		chain = Chain(chain, h.AddMiddlewares[key])
+		c = chain(c, h.AddMiddlewares[key])
 	}
 
 	// Add handler-specified middleware
 	if h.AddMiddleware != nil {
-		chain = Chain(chain, *h.AddMiddleware)
+		c = chain(c, *h.AddMiddleware)
 	}
 
 	// Add preProcess
-	return Chain(chain, PreProcessMiddleware(u, h.PreProcess))
+	return chain(c, preProcessMiddleware(u, h.PreProcess))
 }
 
 func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
-	chain := Chain(
+	c := chain(
 		corsMiddleware(u),
 		jsonResponseMiddleware(u),
 		parseModelMiddleware(u, h.PostModel, h.GetModel, h.DeleteModel),
@@ -64,27 +65,27 @@ func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
 	)
 
 	// Add contexts
-	for key, value := range requestContext {
-		chain = Chain(chain, WithContextMiddleware(u, key, value))
+	for key, value := range u.requestContext {
+		c = chain(c, withContextMiddleware(u, key, value))
 	}
 
 	// Add global middlewares
 	for key := range additionalMiddlewares {
-		chain = Chain(chain, additionalMiddlewares[key])
+		c = chain(c, additionalMiddlewares[key])
 	}
 
 	// Add handler-specified middlewares
 	for key := range h.AddMiddlewares {
-		chain = Chain(chain, h.AddMiddlewares[key])
+		c = chain(c, h.AddMiddlewares[key])
 	}
 
 	// Add handler-specified middleware
 	if h.AddMiddleware != nil {
-		chain = Chain(chain, *h.AddMiddleware)
+		c = chain(c, *h.AddMiddleware)
 	}
 
 	// Add preProcess
-	chain = Chain(chain, PreProcessMiddleware(u, h.PreProcess))
+	c = chain(c, preProcessMiddleware(u, h.PreProcess))
 
 	// Timeouts
 	if h.Timeout != nil {
@@ -92,8 +93,14 @@ func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
 		if h.TimeoutMessage != nil {
 			msg = *h.TimeoutMessage
 		}
-		return http.TimeoutHandler(SelectMethod(u, chain, h), *h.Timeout, msg).ServeHTTP
+		return http.TimeoutHandler(SelectMethod(u, c, h), *h.Timeout, msg).ServeHTTP
 	}
 
-	return SelectMethod(u, chain, h)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
+
+	return SelectMethod(u, c, h)
 }
