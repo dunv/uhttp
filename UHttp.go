@@ -3,6 +3,7 @@ package uhttp
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/ulog"
@@ -10,9 +11,8 @@ import (
 
 // TODO: make cors more configurable
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
-// TODO: make statistics trackable
+// TODO: make statistics trackable -> prometheus?
 // TODO: write more tests
-// TODO: add a "server-default" with timeouts
 
 func init() {
 	// Make expected output (which is only for info, not for debugging) more readable
@@ -51,6 +51,11 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		encodingErrorLogLevel:   ulog.LEVEL_ERROR,
 		parseModelErrorLogLevel: ulog.LEVEL_ERROR,
 		serveMux:                http.NewServeMux(),
+		address:                 "0.0.0.0:8080",
+		readTimeout:             30 * time.Second,
+		readHeaderTimeout:       30 * time.Second,
+		writeTimeout:            30 * time.Second,
+		idleTimeout:             30 * time.Second,
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
@@ -81,4 +86,15 @@ func (u *UHTTP) Handle(pattern string, handler Handler) {
 		u.opts.log.Infof("Registered http DELETE %s", pattern)
 	}
 	u.opts.serveMux.Handle(pattern, handlerFunc)
+}
+
+func (u *UHTTP) ListenAndServe() error {
+	srv := &http.Server{
+		Addr:              u.opts.address,
+		ReadTimeout:       u.opts.readTimeout,
+		ReadHeaderTimeout: u.opts.readHeaderTimeout,
+		WriteTimeout:      u.opts.writeTimeout,
+		IdleTimeout:       u.opts.idleTimeout,
+	}
+	return srv.ListenAndServe()
 }

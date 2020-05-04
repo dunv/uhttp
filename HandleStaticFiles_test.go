@@ -11,7 +11,7 @@ import (
 )
 
 func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
-	u := NewUHTTP(WithServeMux(http.NewServeMux()))
+	u := NewUHTTP()
 
 	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
 	if err != nil {
@@ -70,7 +70,7 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 }
 
 func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
-	u := NewUHTTP(WithServeMux(http.NewServeMux()))
+	u := NewUHTTP()
 
 	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
 	if err != nil {

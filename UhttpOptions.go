@@ -2,6 +2,7 @@ package uhttp
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/dunv/ulog"
 )
@@ -16,7 +17,14 @@ type uhttpOptions struct {
 	gzipCompressionLevel    int
 	encodingErrorLogLevel   ulog.LogLevel
 	parseModelErrorLogLevel ulog.LogLevel
-	serveMux                *http.ServeMux
+
+	// Http-Server options
+	address           string
+	serveMux          *http.ServeMux
+	readTimeout       time.Duration
+	readHeaderTimeout time.Duration
+	writeTimeout      time.Duration
+	idleTimeout       time.Duration
 }
 
 type funcUhttpOption struct {
@@ -61,8 +69,32 @@ func WithParseModelErrorLogLevel(level ulog.LogLevel) UhttpOption {
 	})
 }
 
-func WithServeMux(serveMux *http.ServeMux) UhttpOption {
+func WithAddress(address string) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.serveMux = serveMux
+		o.address = address
+	})
+}
+
+func WithReadTimeout(readTimeout time.Duration) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.readTimeout = readTimeout
+	})
+}
+
+func WithReadHeaderTimeout(readHeaderTimeout time.Duration) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.readHeaderTimeout = readHeaderTimeout
+	})
+}
+
+func WithWriteTimeout(writeTimeout time.Duration) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.writeTimeout = writeTimeout
+	})
+}
+
+func WithIdleTimeout(idleTimeout time.Duration) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.idleTimeout = idleTimeout
 	})
 }
