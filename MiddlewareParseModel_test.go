@@ -13,7 +13,7 @@ func TestParsePostModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, NewUHTTP(), t)
 }
 
 func TestParseGetModel(t *testing.T) {
@@ -24,7 +24,7 @@ func TestParseGetModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, requestBody, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodGet, http.StatusOK, requestBody, expectedResponseBody, NewUHTTP(), t)
 }
 
 func TestParseDeleteModel(t *testing.T) {
@@ -35,5 +35,5 @@ func TestParseDeleteModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodDelete, http.StatusOK, requestBody, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodDelete, http.StatusOK, requestBody, expectedResponseBody, NewUHTTP(), t)
 }

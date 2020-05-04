@@ -10,6 +10,7 @@ import (
 )
 
 func TestRendering(t *testing.T) {
+	u := NewUHTTP()
 	tmp := Handler{
 		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			Render(w, r, map[string]string{
@@ -18,7 +19,7 @@ func TestRendering(t *testing.T) {
 		}),
 	}
 
-	ts := httptest.NewServer(tmp.HandlerFunc())
+	ts := httptest.NewServer(tmp.HandlerFunc(u.opts))
 	defer ts.Close()
 
 	res, err := http.Get(ts.URL)
@@ -41,11 +42,12 @@ func TestRendering(t *testing.T) {
 }
 
 func TestJSONResponse(t *testing.T) {
+	u := NewUHTTP()
 	tmp := Handler{
 		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
 	}
 
-	ts := httptest.NewServer(tmp.HandlerFunc())
+	ts := httptest.NewServer(tmp.HandlerFunc(u.opts))
 	defer ts.Close()
 
 	res, err := http.Get(ts.URL)

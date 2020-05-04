@@ -6,6 +6,7 @@ import (
 )
 
 func TestGzipResponse(t *testing.T) {
+	u := NewUHTTP()
 	handler := Handler{
 		GetHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			RenderMessage(w, r, "testResponse")
@@ -13,11 +14,12 @@ func TestGzipResponse(t *testing.T) {
 	}
 	expectedResponseBody := []byte(`{"msg":"testResponse"}`)
 
-	ExecuteHandlerWithGzipResponse(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, t)
+	ExecuteHandlerWithGzipResponse(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, u, t)
 
 }
 
 func TestGzipRequestAndResponse(t *testing.T) {
+	u := NewUHTTP()
 	handler := Handler{
 		PostHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			Render(w, r, ParsedModel(r))
@@ -27,6 +29,6 @@ func TestGzipRequestAndResponse(t *testing.T) {
 	requestBody := []byte(`{"request":"gzipped"}`)
 	expectedResponseBody := []byte(`{"request":"gzipped"}`)
 
-	ExecuteHandlerWithGzipRequestAndResponse(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, t)
+	ExecuteHandlerWithGzipRequestAndResponse(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, u, t)
 
 }

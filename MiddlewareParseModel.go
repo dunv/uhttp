@@ -10,7 +10,7 @@ import (
 )
 
 // ParseModel parses and adds a model from a requestbody if wanted
-func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
+func ParseModelMiddleware(opts *uhttpOptions, postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var reflectModel reflect.Value
@@ -35,7 +35,7 @@ func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteMod
 					defer r.Body.Close()
 					if err != nil {
 						renderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
-						Logger.LogWithLevelf(*GetConfig().ParseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
+						Logger.LogWithLevelf(opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 						return
 					}
 					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -46,7 +46,7 @@ func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteMod
 				err := GzipDecodeRequestBody(r, modelInterface)
 				if err != nil {
 					renderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
-					Logger.LogWithLevelf(*GetConfig().ParseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
+					Logger.LogWithLevelf(opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 					return
 				}
 
@@ -63,4 +63,13 @@ func ParseModelMiddleware(postModel interface{}, getModel interface{}, deleteMod
 			next.ServeHTTP(w, r)
 		}
 	}
+}
+
+func ParsedModel(r *http.Request) interface{} {
+	parsedModel := r.Context().Value(CtxKeyPostModel)
+	if parsedModel != nil {
+		return parsedModel
+	}
+	Logger.Error("Using parsedModel in a request without parsedModel")
+	return nil
 }

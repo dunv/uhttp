@@ -13,5 +13,5 @@ func TestSelectMethodNotFound(t *testing.T) {
 		}),
 	}
 	expectedResponseBody := []byte(`{"error":"method not allowed"}`)
-	ExecuteHandler(handler, http.MethodPost, http.StatusMethodNotAllowed, nil, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodPost, http.StatusMethodNotAllowed, nil, expectedResponseBody, NewUHTTP(), t)
 }

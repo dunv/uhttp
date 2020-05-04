@@ -1,4 +1,4 @@
-package uhttp 
+package uhttp
 
 import (
 	"errors"
@@ -92,4 +92,13 @@ func AddLoggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		Logger.Info(logString)
 	}
+}
+
+func AddLogOutput(w interface{}, key, value string) error {
+	writer, ok := w.(*LoggingResponseWriter)
+	if !ok {
+		return fmt.Errorf("passed in parameter was not of type LoggingResponseWriter (%T)", w)
+	}
+	writer.AddLogOutput(key, value)
+	return nil
 }

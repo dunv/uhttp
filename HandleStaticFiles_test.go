@@ -11,7 +11,7 @@ import (
 )
 
 func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
-	SetConfig(Config{Mux: http.NewServeMux()})
+	u := NewUHTTP(WithServeMux(http.NewServeMux()))
 
 	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
 	if err != nil {
@@ -45,7 +45,7 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 	f2.Close()
 
 	// Test for serving index.html when requesting
-	err = RegisterStaticFilesHandler(tempDir)
+	err = u.RegisterStaticFilesHandler(tempDir)
 	if err != nil {
 		t.Errorf("could not register staticFilesHandler (%s)", err)
 		return
@@ -70,7 +70,7 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 }
 
 func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
-	SetConfig(Config{Mux: http.NewServeMux()})
+	u := NewUHTTP(WithServeMux(http.NewServeMux()))
 
 	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
 	if err != nil {
@@ -104,7 +104,7 @@ func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
 	f2.Close()
 
 	// Test for serving index.html when requesting
-	err = RegisterStaticFilesHandler(tempDir)
+	err = u.RegisterStaticFilesHandler(tempDir)
 	if err != nil {
 		t.Errorf("could not register staticFilesHandler (%s)", err)
 		return

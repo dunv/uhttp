@@ -60,7 +60,7 @@ var staticFilesHandler = func(w http.ResponseWriter, r *http.Request) {
 // - read all files from root directory
 // - create cache for these files containing original, gzip, br
 // - register handlers for main http-mux
-func RegisterStaticFilesHandler(root string) error {
+func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 	fileNames := []string{}
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if path != root && !info.IsDir() {
@@ -153,10 +153,10 @@ func RegisterStaticFilesHandler(root string) error {
 			uhelpers.ByteCountIEC(int64(len(gzippedFileContent))),
 			uhelpers.ByteCountIEC(int64(len(brotliFileContent))),
 		)
-		config.Mux.HandleFunc(pattern, staticFilesHandler)
+		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler)
 	}
 	ulog.Infof("Registered http static / -> /index.html")
-	config.Mux.HandleFunc("/", staticFilesHandler)
+	u.opts.serveMux.HandleFunc("/", staticFilesHandler)
 
 	if !foundMainFile {
 		return errors.New("could not find index.html")

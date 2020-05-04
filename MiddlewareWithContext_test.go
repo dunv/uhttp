@@ -6,6 +6,7 @@ import (
 )
 
 func TestWithContextMiddleware(t *testing.T) {
+	u := NewUHTTP()
 	AddContext("testKey", map[string]string{"addedContext": "testAddedContext"})
 
 	handler := Handler{
@@ -15,5 +16,5 @@ func TestWithContextMiddleware(t *testing.T) {
 	}
 	expectedResponseBody := []byte(`{"addedContext":"testAddedContext"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, u, t)
 }

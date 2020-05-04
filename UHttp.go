@@ -1,7 +1,6 @@
 package uhttp
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/dunv/ulog"
@@ -37,9 +36,28 @@ func init() {
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.Handle", "uhttp.Handle")
 }
 
+type UHTTP struct {
+	opts *uhttpOptions
+}
+
+func NewUHTTP(opts ...UhttpOption) *UHTTP {
+	mergedOpts := &uhttpOptions{
+		cors:                    "*",
+		customLog:               ulog.NewUlog(),
+		gzipCompressionLevel:    4,
+		encodingErrorLogLevel:   ulog.LEVEL_ERROR,
+		parseModelErrorLogLevel: ulog.LEVEL_ERROR,
+		serveMux:                http.NewServeMux(),
+	}
+	for _, opt := range opts {
+		opt.apply(mergedOpts)
+	}
+	return &UHTTP{opts: mergedOpts}
+}
+
 // Handle configuration
-func Handle(pattern string, handler Handler) {
-	handlerFunc := handler.HandlerFunc()
+func (u *UHTTP) Handle(pattern string, handler Handler) {
+	handlerFunc := handler.HandlerFunc(u.opts)
 	if handler.GetHandler != nil {
 		Logger.Infof("Registered http GET %s", pattern)
 	} else if handler.PostHandler != nil {
@@ -47,23 +65,5 @@ func Handle(pattern string, handler Handler) {
 	} else if handler.DeleteHandler != nil {
 		Logger.Infof("Registered http DELETE %s", pattern)
 	}
-	config.Mux.Handle(pattern, handlerFunc)
-}
-
-func ParsedModel(r *http.Request) interface{} {
-	parsedModel := r.Context().Value(CtxKeyPostModel)
-	if parsedModel != nil {
-		return parsedModel
-	}
-	Logger.Error("Using parsedModel in a request without parsedModel")
-	return nil
-}
-
-func AddLogOutput(w interface{}, key, value string) error {
-	writer, ok := w.(*LoggingResponseWriter)
-	if !ok {
-		return fmt.Errorf("passed in parameter was not of type LoggingResponseWriter (%T)", w)
-	}
-	writer.AddLogOutput(key, value)
-	return nil
+	u.opts.serveMux.Handle(pattern, handlerFunc)
 }

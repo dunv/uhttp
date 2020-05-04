@@ -6,6 +6,8 @@ import (
 )
 
 func TestAdditionalMiddlewareGlobally(t *testing.T) {
+	u := NewUHTTP()
+
 	middleware := WithContextMiddleware("manuallyAddedGlobally", map[string]string{"manuallyAdded": "manuallyAdded"})
 	err := AddMiddleware(middleware)
 	if err != nil {
@@ -24,10 +26,12 @@ func TestAdditionalMiddlewareGlobally(t *testing.T) {
 	}
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, u, t)
 }
 
 func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
+	u := NewUHTTP()
+
 	middleware := WithContextMiddleware("manuallyAddedSingleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := Handler{
@@ -38,10 +42,12 @@ func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 	}
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, u, t)
 }
 
 func TestAdditionalMiddlewareHandlerMultiple(t *testing.T) {
+	u := NewUHTTP()
+
 	middleware := WithContextMiddleware("manuallyAddedMultipleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := Handler{
@@ -52,5 +58,5 @@ func TestAdditionalMiddlewareHandlerMultiple(t *testing.T) {
 	}
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, t)
+	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, u, t)
 }

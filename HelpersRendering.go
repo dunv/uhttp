@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/dunv/ulog"
 )
 
 func Render(w http.ResponseWriter, r *http.Request, model interface{}) {
@@ -59,7 +61,8 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 		case "gzip":
 			w.Header().Add("Content-Encoding", "gzip")
 			var err error
-			writer, err = gzip.NewWriterLevel(w, *GetConfig().GzipCompressionLevel)
+			// TODO: find a way of doing this per handler!
+			writer, err = gzip.NewWriterLevel(w, gzip.DefaultCompression)
 			if err != nil {
 				Logger.Panicf("could not initialize gzip writer (%s)", err)
 			}
@@ -75,7 +78,7 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 	err := json.NewEncoder(writer).Encode(model)
 	if err != nil {
 		// TODO: find a way of doing this per handler!
-		Logger.LogWithLevelf(*GetConfig().EncodingErrorLogLevel, "err encoding http response (%s)", err)
+		Logger.LogWithLevelf(ulog.LEVEL_ERROR, "err encoding http response (%s)", err)
 		return
 	}
 
@@ -84,7 +87,7 @@ func rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode 
 		err = typedWriter.Close()
 		if err != nil {
 			// TODO: find a way of doing this per handler!
-			Logger.LogWithLevelf(*GetConfig().EncodingErrorLogLevel, "err closing gzip writer (%s)", err)
+			Logger.LogWithLevelf(ulog.LEVEL_ERROR, "err closing gzip writer (%s)", err)
 		}
 	}
 }

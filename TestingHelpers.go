@@ -18,13 +18,14 @@ func ExecuteHandler(
 	expectedStatus int,
 	requestBody []byte,
 	expectedResponseBody []byte,
+	u *UHTTP,
 	t *testing.T,
 ) {
 	// Suppress log-output
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	// ulog.SetDebug()
 
-	ts := httptest.NewServer(handler.HandlerFunc())
+	ts := httptest.NewServer(handler.HandlerFunc(u.opts))
 	defer ts.Close()
 
 	url, err := url.Parse(ts.URL)
@@ -71,12 +72,13 @@ func ExecuteHandlerWithGzipResponse(
 	expectedStatus int,
 	requestBody []byte,
 	expectedResponseBody []byte,
+	u *UHTTP,
 	t *testing.T,
 ) {
 	// Suppress log-output
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 
-	ts := httptest.NewServer(handler.HandlerFunc())
+	ts := httptest.NewServer(handler.HandlerFunc(u.opts))
 	defer ts.Close()
 
 	url, err := url.Parse(ts.URL)
@@ -122,12 +124,13 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 	expectedStatus int,
 	requestBody []byte,
 	expectedResponseBody []byte,
+	u *UHTTP,
 	t *testing.T,
 ) {
 	// Suppress log-output
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 
-	ts := httptest.NewServer(handler.HandlerFunc())
+	ts := httptest.NewServer(handler.HandlerFunc(u.opts))
 	defer ts.Close()
 
 	url, err := url.Parse(ts.URL)

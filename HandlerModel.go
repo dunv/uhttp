@@ -24,10 +24,10 @@ type Handler struct {
 	TimeoutMessage *string
 }
 
-func (h Handler) WsReady() Middleware {
+func (h Handler) WsReady(opts *uhttpOptions) Middleware {
 	chain := Chain(
-		ParseModelMiddleware(h.PostModel, h.GetModel, h.DeleteModel),
-		GetParamsMiddleware(h.OptionalGet, h.RequiredGet),
+		ParseModelMiddleware(opts, h.PostModel, h.GetModel, h.DeleteModel),
+		getParamsMiddleware(h.OptionalGet, h.RequiredGet),
 	)
 
 	// Add contexts
@@ -54,12 +54,12 @@ func (h Handler) WsReady() Middleware {
 	return Chain(chain, PreProcessMiddleware(h.PreProcess))
 }
 
-func (h Handler) HandlerFunc() http.HandlerFunc {
+func (h Handler) HandlerFunc(opts *uhttpOptions) http.HandlerFunc {
 	chain := Chain(
-		SetCorsMiddleware(config.CORS),
+		SetCorsMiddleware(&opts.cors),
 		SetJSONResponseMiddleware,
-		ParseModelMiddleware(h.PostModel, h.GetModel, h.DeleteModel),
-		GetParamsMiddleware(h.OptionalGet, h.RequiredGet),
+		ParseModelMiddleware(opts, h.PostModel, h.GetModel, h.DeleteModel),
+		getParamsMiddleware(h.OptionalGet, h.RequiredGet),
 		AddLoggingMiddleware,
 	)
 

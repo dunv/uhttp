@@ -1,8 +1,8 @@
 package uhttp
 
-import (
-	"net/http"
-)
+import "net/http"
+
+type Middleware func(next http.HandlerFunc) http.HandlerFunc
 
 // Chain chain multiple middlewares
 // copied from: https://hackernoon.com/simple-http-middleware-with-go-79a4ad62889b

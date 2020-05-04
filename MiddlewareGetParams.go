@@ -1,13 +1,12 @@
-package uhttp 
+package uhttp
 
 import (
 	"context"
 	"fmt"
 	"net/http"
-
 )
 
-func GetParamsMiddleware(optionalGet R, requiredGet R) func(next http.HandlerFunc) http.HandlerFunc {
+func getParamsMiddleware(optionalGet R, requiredGet R) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			actualRaw := r.URL.Query() // map[string][]string
