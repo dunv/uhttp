@@ -18,6 +18,9 @@ type uhttpOptions struct {
 	encodingErrorLogLevel   ulog.LogLevel
 	parseModelErrorLogLevel ulog.LogLevel
 
+	// global middlewares
+	globalMiddlewares []Middleware
+
 	// Http-Server options
 	address           string
 	serveMux          *http.ServeMux
@@ -96,5 +99,11 @@ func WithWriteTimeout(writeTimeout time.Duration) UhttpOption {
 func WithIdleTimeout(idleTimeout time.Duration) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.idleTimeout = idleTimeout
+	})
+}
+
+func WithGlobalMiddlewares(middlewares []Middleware) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.globalMiddlewares = middlewares
 	})
 }

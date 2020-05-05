@@ -36,6 +36,7 @@ func init() {
 	)
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.AddLoggingMiddleware.func1", "uhttp.Logging")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.Handle", "uhttp.Handle")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe", "uhttp.ListenAndServe")
 }
 
 type UHTTP struct {
@@ -76,13 +77,15 @@ func (u *UHTTP) AddContext(key string, value interface{}) error {
 }
 
 // Handle configuration
-func (u *UHTTP) Handle(pattern string, handler Handler) {
-	handlerFunc := handler.HandlerFunc(u)
-	if handler.GetHandler != nil {
+func (u *UHTTP) Handle(pattern string, opts ...HandlerOption) {
+	mergedOpts := NewHandler(opts...)
+	handlerFunc := mergedOpts.HandlerFunc(u)
+
+	if mergedOpts.Get != nil {
 		u.opts.log.Infof("Registered http GET %s", pattern)
-	} else if handler.PostHandler != nil {
+	} else if mergedOpts.Post != nil {
 		u.opts.log.Infof("Registered http POST %s", pattern)
-	} else if handler.DeleteHandler != nil {
+	} else if mergedOpts.Delete != nil {
 		u.opts.log.Infof("Registered http DELETE %s", pattern)
 	}
 	u.opts.serveMux.Handle(pattern, handlerFunc)
@@ -90,11 +93,13 @@ func (u *UHTTP) Handle(pattern string, handler Handler) {
 
 func (u *UHTTP) ListenAndServe() error {
 	srv := &http.Server{
+		Handler:           u.opts.serveMux,
 		Addr:              u.opts.address,
 		ReadTimeout:       u.opts.readTimeout,
 		ReadHeaderTimeout: u.opts.readHeaderTimeout,
 		WriteTimeout:      u.opts.writeTimeout,
 		IdleTimeout:       u.opts.idleTimeout,
 	}
+	ulog.Infof("Serving at %s", u.opts.address)
 	return srv.ListenAndServe()
 }

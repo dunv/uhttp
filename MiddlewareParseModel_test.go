@@ -7,18 +7,13 @@ import (
 
 func TestParsePostModel(t *testing.T) {
 	u := NewUHTTP()
-	handler := Handler{
-		PostHandler: func(u *UHTTP) http.HandlerFunc {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if parsedModel, err := ParsedModel(r); err != nil {
-					u.RenderError(w, r, err)
-				} else {
-					u.Render(w, r, parsedModel)
-				}
-			})
+	handler := NewHandler(WithPostModel(
+		map[string]string{},
+		func(r *http.Request, model interface{}, ret *int) interface{} {
+			return model
 		},
-		PostModel: map[string]string{},
-	}
+	))
+
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
@@ -27,18 +22,13 @@ func TestParsePostModel(t *testing.T) {
 
 func TestParseGetModel(t *testing.T) {
 	u := NewUHTTP()
-	handler := Handler{
-		GetHandler: func(u *UHTTP) http.HandlerFunc {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if parsedModel, err := ParsedModel(r); err != nil {
-					u.RenderError(w, r, err)
-				} else {
-					u.Render(w, r, parsedModel)
-				}
-			})
+	handler := NewHandler(WithGetModel(
+		map[string]string{},
+		func(r *http.Request, model interface{}, ret *int) interface{} {
+			return model
 		},
-		GetModel: map[string]string{},
-	}
+	))
+
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
@@ -47,18 +37,13 @@ func TestParseGetModel(t *testing.T) {
 
 func TestParseDeleteModel(t *testing.T) {
 	u := NewUHTTP()
-	handler := Handler{
-		DeleteHandler: func(u *UHTTP) http.HandlerFunc {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if parsedModel, err := ParsedModel(r); err != nil {
-					u.RenderError(w, r, err)
-				} else {
-					u.Render(w, r, parsedModel)
-				}
-			})
+	handler := NewHandler(WithDeleteModel(
+		map[string]string{},
+		func(r *http.Request, model interface{}, ret *int) interface{} {
+			return model
 		},
-		DeleteModel: map[string]string{},
-	}
+	))
+
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 

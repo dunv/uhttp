@@ -34,7 +34,7 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 					bodyBytes, err = ioutil.ReadAll(r.Body)
 					defer r.Body.Close()
 					if err != nil {
-						u.renderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
+						u.RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
 						u.opts.log.LogWithLevelf(u.opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 						return
 					}
@@ -45,7 +45,7 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 				modelInterface := reflectModel.Interface()
 				err := GzipDecodeRequestBody(r, modelInterface)
 				if err != nil {
-					u.renderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
+					u.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
 					u.opts.log.LogWithLevelf(u.opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 					return
 				}
@@ -65,10 +65,7 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 	}
 }
 
-func ParsedModel(r *http.Request) (interface{}, error) {
+func parsedModel(r *http.Request) interface{} {
 	parsedModel := r.Context().Value(CtxKeyPostModel)
-	if parsedModel != nil {
-		return parsedModel, nil
-	}
-	return nil, fmt.Errorf("Using parsedModel in a request without parsedModel")
+	return parsedModel
 }

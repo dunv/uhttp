@@ -16,29 +16,10 @@ func (u *UHTTP) RenderWithStatusCode(w http.ResponseWriter, r *http.Request, sta
 }
 
 func (u *UHTTP) RenderError(w http.ResponseWriter, r *http.Request, err error) {
-	u.renderErrorWithStatusCode(w, r, http.StatusBadRequest, err, true)
+	u.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, err, true)
 }
 
-func (u *UHTTP) RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
-	u.renderErrorWithStatusCode(w, r, statusCode, err, true)
-}
-
-func (u *UHTTP) RenderMessage(w http.ResponseWriter, r *http.Request, msg string) {
-	u.renderMessageWithStatusCode(w, r, http.StatusOK, msg, true)
-}
-
-func (u *UHTTP) RenderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string) {
-	u.renderMessageWithStatusCode(w, r, statusCode, msg, true)
-}
-
-func (u *UHTTP) renderMessageWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, msg string, logOut bool) {
-	u.rawRenderWithStatusCode(w, r, statusCode, map[string]string{"msg": msg})
-	if logOut {
-		u.opts.log.Infof("renderMessage [path: %s] %s", r.RequestURI, msg)
-	}
-}
-
-func (u *UHTTP) renderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error, logOut bool) {
+func (u *UHTTP) RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error, logOut bool) {
 	if err != nil {
 		u.rawRenderWithStatusCode(w, r, statusCode, map[string]string{"error": err.Error()})
 		if logOut {
