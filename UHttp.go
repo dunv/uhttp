@@ -77,15 +77,14 @@ func (u *UHTTP) AddContext(key string, value interface{}) error {
 }
 
 // Handle configuration
-func (u *UHTTP) Handle(pattern string, opts ...HandlerOption) {
-	mergedOpts := NewHandler(opts...)
-	handlerFunc := mergedOpts.HandlerFunc(u)
+func (u *UHTTP) Handle(pattern string, opts *handlerOptions) {
+	handlerFunc := opts.HandlerFunc(u)
 
-	if mergedOpts.Get != nil {
+	if opts.Get != nil {
 		u.opts.log.Infof("Registered http GET %s", pattern)
-	} else if mergedOpts.Post != nil {
+	} else if opts.Post != nil {
 		u.opts.log.Infof("Registered http POST %s", pattern)
-	} else if mergedOpts.Delete != nil {
+	} else if opts.Delete != nil {
 		u.opts.log.Infof("Registered http DELETE %s", pattern)
 	}
 	u.opts.serveMux.Handle(pattern, handlerFunc)

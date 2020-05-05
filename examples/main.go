@@ -11,9 +11,9 @@ func main() {
 
 	u := uhttp.NewUHTTP()
 
-	u.Handle("/", uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
+	u.Handle("/", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		return map[string]string{"hello": "world"}
-	}))
+	})))
 
 	ulog.Fatal(u.ListenAndServe())
 }
