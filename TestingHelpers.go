@@ -13,7 +13,7 @@ import (
 )
 
 func ExecuteHandler(
-	handlerOpts *handlerOptions,
+	handler Handler,
 	method string,
 	expectedStatus int,
 	requestBody []byte,
@@ -25,7 +25,7 @@ func ExecuteHandler(
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	// ulog.SetDebug()
 
-	ts := httptest.NewServer(handlerOpts.HandlerFunc(u))
+	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()
 
 	url, err := url.Parse(ts.URL)
@@ -67,7 +67,7 @@ func ExecuteHandler(
 }
 
 func ExecuteHandlerWithGzipResponse(
-	handlerOpts *handlerOptions,
+	handler Handler,
 	method string,
 	expectedStatus int,
 	requestBody []byte,
@@ -78,7 +78,7 @@ func ExecuteHandlerWithGzipResponse(
 	// Suppress log-output
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 
-	ts := httptest.NewServer(handlerOpts.HandlerFunc(u))
+	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()
 
 	url, err := url.Parse(ts.URL)
@@ -119,7 +119,7 @@ func ExecuteHandlerWithGzipResponse(
 }
 
 func ExecuteHandlerWithGzipRequestAndResponse(
-	handlerOpts *handlerOptions,
+	handler Handler,
 	method string,
 	expectedStatus int,
 	requestBody []byte,
@@ -130,7 +130,7 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 	// Suppress log-output
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 
-	ts := httptest.NewServer(handlerOpts.HandlerFunc(u))
+	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()
 
 	url, err := url.Parse(ts.URL)

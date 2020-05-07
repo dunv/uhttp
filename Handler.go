@@ -2,16 +2,19 @@ package uhttp
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 )
 
-func NewHandler(opts ...HandlerOption) *handlerOptions {
+func NewHandler(opts ...HandlerOption) Handler {
 	mergedOpts := &handlerOptions{}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
 	}
-	return mergedOpts
+	return Handler{opts: *mergedOpts}
+}
+
+type Handler struct {
+	opts handlerOptions
 }
 
 type HandlerFunc func(r *http.Request, returnCode *int) interface{}
@@ -20,10 +23,10 @@ type HandlerFuncWithModel func(r *http.Request, model interface{}, returnCode *i
 
 type PreProcessFunc func(ctx context.Context) error
 
-func (h handlerOptions) WsReady(u *UHTTP) Middleware {
+func (h Handler) WsReady(u *UHTTP) Middleware {
 	c := chain(
-		parseModelMiddleware(u, h.PostModel, h.GetModel, h.DeleteModel),
-		getParamsMiddleware(u, h.OptionalGet, h.RequiredGet),
+		parseModelMiddleware(u, h.opts.PostModel, h.opts.GetModel, h.opts.DeleteModel),
+		getParamsMiddleware(u, h.opts.OptionalGet, h.opts.RequiredGet),
 	)
 
 	// Add contexts
@@ -37,20 +40,20 @@ func (h handlerOptions) WsReady(u *UHTTP) Middleware {
 	}
 
 	// Add handler-specified middlewares
-	for key := range h.Middlewares {
-		c = chain(c, h.Middlewares[key])
+	for key := range h.opts.Middlewares {
+		c = chain(c, h.opts.Middlewares[key])
 	}
 
 	// Add preProcess
-	return chain(c, preProcessMiddleware(u, h.PreProcess))
+	return chain(c, preProcessMiddleware(u, h.opts.PreProcess))
 }
 
-func (h handlerOptions) HandlerFunc(u *UHTTP) http.HandlerFunc {
+func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
 	c := chain(
 		corsMiddleware(u),
 		jsonResponseMiddleware(u),
-		parseModelMiddleware(u, h.PostModel, h.GetModel, h.DeleteModel),
-		getParamsMiddleware(u, h.OptionalGet, h.RequiredGet),
+		parseModelMiddleware(u, h.opts.PostModel, h.opts.GetModel, h.opts.DeleteModel),
+		getParamsMiddleware(u, h.opts.OptionalGet, h.opts.RequiredGet),
 		addLoggingMiddleware(u),
 	)
 
@@ -65,23 +68,17 @@ func (h handlerOptions) HandlerFunc(u *UHTTP) http.HandlerFunc {
 	}
 
 	// Add handler-specified middlewares
-	for key := range h.Middlewares {
-		c = chain(c, h.Middlewares[key])
+	for key := range h.opts.Middlewares {
+		c = chain(c, h.opts.Middlewares[key])
 	}
 
 	// Add preProcess
-	c = chain(c, preProcessMiddleware(u, h.PreProcess))
+	c = chain(c, preProcessMiddleware(u, h.opts.PreProcess))
 
 	// Timeouts
-	if h.Timeout != 0 {
-		return http.TimeoutHandler(SelectMethod(u, c, h), h.Timeout, h.TimeoutMessage).ServeHTTP
+	if h.opts.Timeout != 0 {
+		return http.TimeoutHandler(SelectMethod(u, c, h.opts), h.opts.Timeout, h.opts.TimeoutMessage).ServeHTTP
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered in f", r)
-		}
-	}()
-
-	return SelectMethod(u, c, h)
+	return SelectMethod(u, c, h.opts)
 }
