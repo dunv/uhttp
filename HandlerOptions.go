@@ -112,7 +112,7 @@ func WithRequiredGet(r R) HandlerOption {
 	})
 }
 
-func WithOptionsGet(r R) HandlerOption {
+func WithOptionalGet(r R) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.OptionalGet = r
 	})
