@@ -9,10 +9,8 @@ import (
 	"github.com/dunv/ulog"
 )
 
-// TODO: make cors more configurable
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
 // TODO: make statistics trackable -> prometheus?
-// TODO: write more tests
 
 func init() {
 	// Make expected output (which is only for info, not for debugging) more readable
@@ -34,8 +32,7 @@ func init() {
 		"github.com/dunv/uhttp.rawRenderErrorWithStatusCode",
 		"github.com/dunv/uhttp/helpers.rawRenderErrorWithStatusCode",
 	)
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.AddLoggingMiddleware.func1", "uhttp.Logging")
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.Handle", "uhttp.Handle")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.addLoggingMiddleware.func1", "uhttp.Log")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe", "uhttp.ListenAndServe")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).Handle", "uhttp.Handle")
 }
