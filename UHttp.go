@@ -32,7 +32,7 @@ func init() {
 		"github.com/dunv/uhttp.rawRenderErrorWithStatusCode",
 		"github.com/dunv/uhttp/helpers.rawRenderErrorWithStatusCode",
 	)
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.addLoggingMiddleware.func1", "uhttp.Log")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.addLoggingMiddleware.func1.1", "uhttp.Log")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe", "uhttp.ListenAndServe")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).Handle", "uhttp.Handle")
 }

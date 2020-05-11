@@ -11,5 +11,7 @@ github.com/dunv/ulog v1.0.16 h1:KyocpaZ/fSu/pUz4NToo3ZidjWBnFgwTHa/IwFZX1o8=
 github.com/dunv/ulog v1.0.16/go.mod h1:FZ+CtNEmE7f9EDAceYJO4QULUlfNCrHKu3mx/rzkaGI=
 github.com/dunv/ulog v1.0.18 h1:X2w2X/u/qQj5m454HTEZ6vt7qFcRClKahlrwjqLVTls=
 github.com/dunv/ulog v1.0.18/go.mod h1:FZ+CtNEmE7f9EDAceYJO4QULUlfNCrHKu3mx/rzkaGI=
+github.com/dunv/ulog v1.0.20 h1:X0wEAxfROvo9Du/wGqQ+9Oku3Ur1/mDcilDZciFsvA0=
+github.com/dunv/ulog v1.0.20/go.mod h1:FZ+CtNEmE7f9EDAceYJO4QULUlfNCrHKu3mx/rzkaGI=
 github.com/itchio/go-brotli v0.0.0-20190702114328-3f28d645a45c h1:Jf20xV/yR/O6eSUqLTuXhka/+54YR59sGwN7b3MkxYk=
 github.com/itchio/go-brotli v0.0.0-20190702114328-3f28d645a45c/go.mod h1:oRXh43p/JW9kWosasd+2kHfDpb1ec4m7YrZ5E39s1iI=
