@@ -26,6 +26,10 @@ func SelectMethod(u *UHTTP, chain Middleware, handlerOpts handlerOptions) http.H
 		} else if r.Method == http.MethodDelete && handlerOpts.DeleteWithModel != nil {
 			model := parsedModel(r)
 			res = handlerOpts.DeleteWithModel(r, model, &returnCode)
+		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			u.RenderError(w, r, fmt.Errorf("method not allowed"))
+			return
 		}
 
 		// Figure out, how to respond
@@ -47,7 +51,6 @@ func SelectMethod(u *UHTTP, chain Middleware, handlerOpts handlerOptions) http.H
 			return
 		}
 
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		u.RenderError(w, r, fmt.Errorf("method not allowed"))
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
