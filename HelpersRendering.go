@@ -3,6 +3,7 @@ package uhttp
 import (
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -42,7 +43,7 @@ func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, 
 			var err error
 			writer, err = gzip.NewWriterLevel(w, u.opts.gzipCompressionLevel)
 			if err != nil {
-				u.opts.log.Panicf("could not initialize gzip writer (%s)", err)
+				u.opts.log.Panic(fmt.Errorf("could not initialize gzip writer (%s)", err))
 			}
 		default:
 			writer = w
