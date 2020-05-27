@@ -65,6 +65,10 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	}
 }
 
+func (u *UHTTP) ServeMux() *http.ServeMux {
+	return u.opts.serveMux
+}
+
 func (u *UHTTP) AddContext(key string, value interface{}) error {
 	keys := uhelpers.StringKeysFromMap(u.requestContext)
 	if !uhelpers.SliceContainsItem(keys, key) {
