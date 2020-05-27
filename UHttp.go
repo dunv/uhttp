@@ -89,6 +89,19 @@ func (u *UHTTP) Handle(pattern string, handler Handler) {
 }
 
 func (u *UHTTP) ListenAndServe() error {
+	if !u.opts.enableTLS {
+		srv := &http.Server{
+			Handler:           u.opts.serveMux,
+			Addr:              u.opts.address,
+			ReadTimeout:       u.opts.readTimeout,
+			ReadHeaderTimeout: u.opts.readHeaderTimeout,
+			WriteTimeout:      u.opts.writeTimeout,
+			IdleTimeout:       u.opts.idleTimeout,
+		}
+		ulog.Infof("Serving at %s", u.opts.address)
+		return srv.ListenAndServe()
+	}
+
 	srv := &http.Server{
 		Handler:           u.opts.serveMux,
 		Addr:              u.opts.address,
@@ -96,7 +109,8 @@ func (u *UHTTP) ListenAndServe() error {
 		ReadHeaderTimeout: u.opts.readHeaderTimeout,
 		WriteTimeout:      u.opts.writeTimeout,
 		IdleTimeout:       u.opts.idleTimeout,
+		ErrorLog:          u.opts.tlsErrorLogger,
 	}
-	ulog.Infof("Serving at %s", u.opts.address)
-	return srv.ListenAndServe()
+	ulog.Infof("ServingTLS at %s", u.opts.address)
+	return srv.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath)
 }

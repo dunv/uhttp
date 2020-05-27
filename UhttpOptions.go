@@ -1,6 +1,8 @@
 package uhttp
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -28,6 +30,12 @@ type uhttpOptions struct {
 	readHeaderTimeout time.Duration
 	writeTimeout      time.Duration
 	idleTimeout       time.Duration
+
+	// TLS
+	enableTLS      bool
+	tlsErrorLogger *log.Logger
+	tlsCertPath    *string
+	tlsKeyPath     *string
 }
 
 type funcUhttpOption struct {
@@ -105,5 +113,18 @@ func WithIdleTimeout(idleTimeout time.Duration) UhttpOption {
 func WithGlobalMiddlewares(middlewares []Middleware) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.globalMiddlewares = middlewares
+	})
+}
+
+func WithTLS(certPath string, keyPath string, tlsErrorLogger *log.Logger) UhttpOption {
+	usedLogger := log.New(ioutil.Discard, "", log.Lshortfile)
+	if tlsErrorLogger != nil {
+		usedLogger = tlsErrorLogger
+	}
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.enableTLS = true
+		o.tlsErrorLogger = usedLogger
+		o.tlsCertPath = &certPath
+		o.tlsKeyPath = &keyPath
 	})
 }
