@@ -71,7 +71,7 @@ func (u *UHTTP) ServeMux() *http.ServeMux {
 }
 
 func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
-	keys := uhelpers.StringKeysFromMap(u.requestContext)
+	keys := ContextKeysFromMap(u.requestContext)
 	if !uhelpers.SliceContainsItem(keys, key) {
 		u.requestContext[key] = value
 		return nil
