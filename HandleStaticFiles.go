@@ -28,7 +28,7 @@ var filesCache = map[string]cachedFile{}
 // static files handler which only works if initialized with "RegisterStaticFilesHandler"
 // (only serves from initialized cache)
 func staticFilesHandler(u *UHTTP) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return chain(addLoggingMiddleware(u))(func(w http.ResponseWriter, r *http.Request) {
 		if len(filesCache) == 0 {
 			u.RenderError(w, r, errors.New("staticFilesHandler used but not initialized"))
 			return
@@ -53,7 +53,7 @@ func staticFilesHandler(u *UHTTP) http.HandlerFunc {
 		} else {
 			ulog.LogIfErrorSecondArg(w.Write(cachedFile.Content))
 		}
-	}
+	})
 }
 
 // RegisterStaticFilesHandler which serves content from a directory and

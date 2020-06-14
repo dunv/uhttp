@@ -57,7 +57,8 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 			next.ServeHTTP(lrw, r)
 
 			logLineParams := map[string]string{}
-			logLineParams["duration"] = fmtDuration(time.Since(start))
+			duration := time.Since(start)
+			logLineParams["duration"] = fmtDuration(duration)
 			realIP := r.Header.Get("X-Real-IP") // nginx-proxy adds this header
 			if realIP == "" {
 				realIP = r.RemoteAddr
@@ -68,19 +69,20 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 			logLineParams["uri"] = r.URL.EscapedPath()
 			logString := "Uhttp"
 
-			params, err := r.Context().Value(CtxKeyGetParams).(R).Printable()
-			if err != nil {
-				ulog.Errorf("error when trying to log %s", err)
-				u.RenderError(w, r, errors.New("internal server error"))
-				return
-			}
-			for key, value := range params {
-				logLineParams[fmt.Sprintf("urlParam-%s", key)] = value
+			if paramsRaw, ok := r.Context().Value(CtxKeyGetParams).(R); ok {
+				params, err := paramsRaw.Printable()
+				if err != nil {
+					ulog.Errorf("error when trying to log %s", err)
+					u.RenderError(w, r, errors.New("internal server error"))
+					return
+				}
+				for key, value := range params {
+					logLineParams[fmt.Sprintf("urlParam-%s", key)] = value
+				}
 			}
 
 			keys := uhelpers.StringKeysFromMap(logLineParams)
 			sort.Strings(keys)
-
 			for _, key := range keys {
 				logString = fmt.Sprintf("%s [%s: %s]", logString, key, logLineParams[key])
 			}
@@ -89,6 +91,10 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 				for key, value := range lrw.additionalOutput {
 					logString = fmt.Sprintf("%s [%s: %s]", logString, key, value)
 				}
+			}
+
+			if u.opts.enableMetrics {
+				u.opts.log.LogIfError(HandleMetrics(u.metrics, r.Method, lrw.statusCode, r.URL.EscapedPath(), duration))
 			}
 
 			u.opts.log.Info(logString)

@@ -7,6 +7,9 @@ import (
 
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/ulog"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // TODO: add filters for logging (i.e. do not log everything, or only user etc)
@@ -34,6 +37,7 @@ func init() {
 	)
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.addLoggingMiddleware.func1.1", "uhttp.Log")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe", "uhttp.ListenAndServe")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe.func1", "uhttp.ListenAndServe")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).Handle", "uhttp.Handle")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RegisterStaticFilesHandler", "uhttp.HandleStatic")
 }
@@ -41,6 +45,7 @@ func init() {
 type UHTTP struct {
 	opts           *uhttpOptions
 	requestContext map[ContextKey]interface{}
+	metrics        map[string]interface{}
 }
 
 func NewUHTTP(opts ...UhttpOption) *UHTTP {
@@ -56,14 +61,38 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		readHeaderTimeout:       30 * time.Second,
 		writeTimeout:            30 * time.Second,
 		idleTimeout:             30 * time.Second,
+		enableMetrics:           false,
+		metricsPath:             "/metrics",
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
 	}
-	return &UHTTP{
+
+	metrics := map[string]interface{}{}
+	if mergedOpts.enableMetrics {
+		metrics[Metric_Requests_Total] = promauto.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "uhttp",
+			Subsystem: "requests",
+			Name:      "total",
+			Help:      "request counters",
+		}, []string{"method", "code", "handler"})
+
+		metrics[Metric_Requests_Duration] = promauto.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "uhttp",
+			Subsystem: "requests",
+			Name:      "duration",
+			Help:      "request durations",
+			Buckets:   []float64{1, 100, 500, 1000, 5000, 10000, 60000},
+		}, []string{"method", "code", "handler"})
+	}
+
+	u := &UHTTP{
 		opts:           mergedOpts,
 		requestContext: map[ContextKey]interface{}{},
+		metrics:        metrics,
 	}
+
+	return u
 }
 
 func (u *UHTTP) ServeMux() *http.ServeMux {
@@ -94,19 +123,6 @@ func (u *UHTTP) Handle(pattern string, handler Handler) {
 }
 
 func (u *UHTTP) ListenAndServe() error {
-	if !u.opts.enableTLS {
-		srv := &http.Server{
-			Handler:           u.opts.serveMux,
-			Addr:              u.opts.address,
-			ReadTimeout:       u.opts.readTimeout,
-			ReadHeaderTimeout: u.opts.readHeaderTimeout,
-			WriteTimeout:      u.opts.writeTimeout,
-			IdleTimeout:       u.opts.idleTimeout,
-		}
-		ulog.Infof("Serving at %s", u.opts.address)
-		return srv.ListenAndServe()
-	}
-
 	srv := &http.Server{
 		Handler:           u.opts.serveMux,
 		Addr:              u.opts.address,
@@ -115,6 +131,39 @@ func (u *UHTTP) ListenAndServe() error {
 		WriteTimeout:      u.opts.writeTimeout,
 		IdleTimeout:       u.opts.idleTimeout,
 		ErrorLog:          u.opts.tlsErrorLogger,
+	}
+
+	var metricsServer *http.Server
+	if u.opts.enableMetrics {
+		mux := http.NewServeMux()
+		mux.Handle(u.opts.metricsPath, promhttp.Handler())
+		metricsServer = &http.Server{
+			Handler:           mux,
+			Addr:              u.opts.metricsSocket,
+			ReadTimeout:       u.opts.readTimeout,
+			ReadHeaderTimeout: u.opts.readHeaderTimeout,
+			WriteTimeout:      u.opts.writeTimeout,
+			IdleTimeout:       u.opts.idleTimeout,
+		}
+	}
+
+	if !u.opts.enableTLS {
+		if u.opts.enableMetrics {
+			go func() {
+				ulog.Infof("Serving metrics at %s", u.opts.metricsSocket)
+				ulog.Fatal(metricsServer.ListenAndServe())
+			}()
+		}
+
+		ulog.Infof("Serving at %s", u.opts.address)
+		return srv.ListenAndServe()
+	}
+
+	if u.opts.enableMetrics {
+		go func() {
+			ulog.Infof("ServingTLS metrics at %s", u.opts.metricsSocket)
+			ulog.Fatal(metricsServer.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath))
+		}()
 	}
 	ulog.Infof("ServingTLS at %s", u.opts.address)
 	return srv.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath)

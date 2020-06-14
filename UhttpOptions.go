@@ -36,6 +36,12 @@ type uhttpOptions struct {
 	tlsErrorLogger *log.Logger
 	tlsCertPath    *string
 	tlsKeyPath     *string
+
+	// Prometheus
+	enableMetrics bool
+	metricsSocket string
+	metricsPath   string
+	metricsName   string
 }
 
 type funcUhttpOption struct {
@@ -126,5 +132,14 @@ func WithTLS(certPath string, keyPath string, tlsErrorLogger *log.Logger) UhttpO
 		o.tlsErrorLogger = usedLogger
 		o.tlsCertPath = &certPath
 		o.tlsKeyPath = &keyPath
+	})
+}
+
+func WithMetrics(metricsSocket string, metricsPath string, metricsName string) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.enableMetrics = true
+		o.metricsSocket = metricsSocket
+		o.metricsPath = metricsPath
+		o.metricsName = metricsName
 	})
 }
