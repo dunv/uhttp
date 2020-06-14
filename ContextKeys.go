@@ -1,6 +1,8 @@
 package uhttp
 
+type ContextKey string
+
 const (
-	CtxKeyPostModel string = "uhttp.postModel"
-	CtxKeyGetParams string = "uhttp.getParams"
+	CtxKeyPostModel ContextKey = "uhttp.postModel"
+	CtxKeyGetParams ContextKey = "uhttp.getParams"
 )

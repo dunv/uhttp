@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func testMiddleware(key string, value interface{}) Middleware {
+func testMiddleware(key ContextKey, value interface{}) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			httpContext := context.WithValue(r.Context(), key, value)
@@ -16,11 +16,12 @@ func testMiddleware(key string, value interface{}) Middleware {
 }
 
 func TestAdditionalMiddlewareGlobally(t *testing.T) {
-	middleware := testMiddleware("manuallyAddedGlobally", map[string]string{"manuallyAdded": "manuallyAdded"})
+	ctxKey := ContextKey("manuallyAddedGlobally")
+	middleware := testMiddleware(ctxKey, map[string]string{"manuallyAdded": "manuallyAdded"})
 	u := NewUHTTP(WithGlobalMiddlewares([]Middleware{middleware}))
 
 	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
-		return r.Context().Value("manuallyAddedGlobally")
+		return r.Context().Value(ctxKey)
 	}))
 
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)
@@ -30,10 +31,11 @@ func TestAdditionalMiddlewareGlobally(t *testing.T) {
 
 func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 	u := NewUHTTP()
-	middleware := testMiddleware("manuallyAddedSingleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
+	ctxKey := ContextKey("manuallyAddedSingleHandler")
+	middleware := testMiddleware(ctxKey, map[string]string{"manuallyAdded": "manuallyAdded"})
 	handler := NewHandler(
 		WithGet(func(r *http.Request, ret *int) interface{} {
-			return r.Context().Value("manuallyAddedSingleHandler")
+			return r.Context().Value(ctxKey)
 		}),
 		WithMiddlewares([]Middleware{middleware}),
 	)
@@ -46,11 +48,12 @@ func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 func TestAdditionalMiddlewareHandlerMultiple(t *testing.T) {
 	u := NewUHTTP()
 
-	middleware := withContextMiddleware(u, "manuallyAddedMultipleHandler", map[string]string{"manuallyAdded": "manuallyAdded"})
+	ctxKey := ContextKey("manuallyAddedMultipleHandler")
+	middleware := withContextMiddleware(u, ctxKey, map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := NewHandler(
 		WithGet(func(r *http.Request, ret *int) interface{} {
-			return r.Context().Value("manuallyAddedMultipleHandler")
+			return r.Context().Value(ctxKey)
 		}),
 		WithMiddlewares([]Middleware{middleware}),
 	)

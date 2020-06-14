@@ -76,6 +76,10 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 
 	foundMainFile := false
 	for _, fileName := range fileNames {
+		if strings.Contains(fileName, ".DS_Store") {
+			ulog.Infof("Skipping '%s'", fileName)
+			continue
+		}
 		fileContent, err := ioutil.ReadFile(fileName)
 		if err != nil {
 			return err

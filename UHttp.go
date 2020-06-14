@@ -35,11 +35,12 @@ func init() {
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.addLoggingMiddleware.func1.1", "uhttp.Log")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe", "uhttp.ListenAndServe")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).Handle", "uhttp.Handle")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RegisterStaticFilesHandler", "uhttp.HandleStatic")
 }
 
 type UHTTP struct {
 	opts           *uhttpOptions
-	requestContext map[string]interface{}
+	requestContext map[ContextKey]interface{}
 }
 
 func NewUHTTP(opts ...UhttpOption) *UHTTP {
@@ -61,7 +62,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	}
 	return &UHTTP{
 		opts:           mergedOpts,
-		requestContext: map[string]interface{}{},
+		requestContext: map[ContextKey]interface{}{},
 	}
 }
 
@@ -69,7 +70,7 @@ func (u *UHTTP) ServeMux() *http.ServeMux {
 	return u.opts.serveMux
 }
 
-func (u *UHTTP) AddContext(key string, value interface{}) error {
+func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
 	keys := uhelpers.StringKeysFromMap(u.requestContext)
 	if !uhelpers.SliceContainsItem(keys, key) {
 		u.requestContext[key] = value

@@ -8,14 +8,16 @@ import (
 func TestWithContextMiddleware(t *testing.T) {
 	u := NewUHTTP()
 
-	err := u.AddContext("testKey", map[string]string{"addedContext": "testAddedContext"})
+	ctxKey := ContextKey("testKey")
+
+	err := u.AddContext(ctxKey, map[string]string{"addedContext": "testAddedContext"})
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
 	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
-		return r.Context().Value("testKey")
+		return r.Context().Value(ctxKey)
 	}))
 
 	expectedResponseBody := []byte(`{"addedContext":"testAddedContext"}`)
