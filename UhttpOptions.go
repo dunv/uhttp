@@ -41,7 +41,6 @@ type uhttpOptions struct {
 	enableMetrics bool
 	metricsSocket string
 	metricsPath   string
-	metricsName   string
 }
 
 type funcUhttpOption struct {
@@ -135,11 +134,10 @@ func WithTLS(certPath string, keyPath string, tlsErrorLogger *log.Logger) UhttpO
 	})
 }
 
-func WithMetrics(metricsSocket string, metricsPath string, metricsName string) UhttpOption {
+func WithMetrics(metricsSocket string, metricsPath string) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.enableMetrics = true
 		o.metricsSocket = metricsSocket
 		o.metricsPath = metricsPath
-		o.metricsName = metricsName
 	})
 }
