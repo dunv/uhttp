@@ -29,6 +29,9 @@ func (h Handler) WsReady(u *UHTTP) Middleware {
 		getParamsMiddleware(u, h.opts.OptionalGet, h.opts.RequiredGet),
 	)
 
+	// Add original responseWriter
+	c = chain(c, withOriginalResponseWriter(u))
+
 	// Add contexts
 	for key, value := range u.requestContext {
 		c = chain(c, withContextMiddleware(u, key, value))
@@ -56,6 +59,9 @@ func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
 		getParamsMiddleware(u, h.opts.OptionalGet, h.opts.RequiredGet),
 		addLoggingMiddleware(u),
 	)
+
+	// Add original responseWriter
+	c = chain(c, withOriginalResponseWriter(u))
 
 	// Add contexts
 	for key, value := range u.requestContext {
