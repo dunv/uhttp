@@ -36,7 +36,7 @@ func GzipDecodeRequestBody(r *http.Request, model interface{}) error {
 
 	err = json.NewDecoder(reader).Decode(model)
 	if err != nil {
-		return fmt.Errorf("err parsing request (err marshaling %s)", err)
+		return fmt.Errorf("err parsing request (err decoding %s)", err)
 	}
 	defer r.Body.Close()
 
