@@ -27,6 +27,7 @@ func (h Handler) WsReady(u *UHTTP) Middleware {
 	c := chain(
 		parseModelMiddleware(u, h.opts.PostModel, h.opts.GetModel, h.opts.DeleteModel),
 		getParamsMiddleware(u, h.opts.OptionalGet, h.opts.RequiredGet),
+		addLoggingMiddleware(u),
 	)
 
 	// Add original responseWriter

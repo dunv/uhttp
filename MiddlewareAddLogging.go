@@ -1,8 +1,10 @@
 package uhttp
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"sort"
 	"strconv"
@@ -13,14 +15,16 @@ import (
 )
 
 type LoggingResponseWriter struct {
-	http.ResponseWriter
-	statusCode       int
-	additionalOutput map[string]string
-	headerWritten    bool
+	// http.ResponseWriter
+	underlyingResponseWriter http.ResponseWriter
+	statusCode               int
+	additionalOutput         map[string]string
+	headerWritten            bool
 }
 
 func newLoggingResponseWriter(w http.ResponseWriter) *LoggingResponseWriter {
 	return &LoggingResponseWriter{
+		// w,
 		w,
 		http.StatusOK,
 		map[string]string{},
@@ -32,18 +36,32 @@ func (lrw *LoggingResponseWriter) AddLogOutput(key, value string) {
 	lrw.additionalOutput[key] = value
 }
 
+// Delegate Header() to underlying responseWriter
+func (lrw *LoggingResponseWriter) Header() http.Header {
+	return lrw.underlyingResponseWriter.Header()
+}
+
+// Delegate Write() to underlying responseWriter
+func (lrw *LoggingResponseWriter) Write(data []byte) (int, error) {
+	return lrw.underlyingResponseWriter.Write(data)
+}
+
+// Delegate WriteHeader() to underlying responseWriter AND save code
 func (lrw *LoggingResponseWriter) WriteHeader(code int) {
 	if !lrw.headerWritten {
 		lrw.statusCode = code
 		lrw.headerWritten = true
-		lrw.ResponseWriter.WriteHeader(code)
+		lrw.underlyingResponseWriter.WriteHeader(code)
 	}
 }
 
-func fmtDuration(d time.Duration) string {
-	d = d.Round(time.Millisecond)
-	milli := d / time.Millisecond
-	return fmt.Sprintf("%dms", milli)
+// Delegate Hijack() to underlying responseWriter
+func (lrw *LoggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := lrw.underlyingResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijack not supported")
+	}
+	return h.Hijack()
 }
 
 // Logging log time, method and path of an HTTP-Request
@@ -58,7 +76,7 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 
 			logLineParams := map[string]string{}
 			duration := time.Since(start)
-			logLineParams["duration"] = fmtDuration(duration)
+			logLineParams["duration"] = uhelpers.FmtDuration(duration)
 			realIP := r.Header.Get("X-Real-IP") // nginx-proxy adds this header
 			if realIP == "" {
 				realIP = r.RemoteAddr
