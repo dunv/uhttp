@@ -55,6 +55,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		gzipCompressionLevel:    4,
 		encodingErrorLogLevel:   ulog.LEVEL_ERROR,
 		parseModelErrorLogLevel: ulog.LEVEL_ERROR,
+		sendPanicInfoToClient:   false,
 		serveMux:                http.NewServeMux(),
 		address:                 "0.0.0.0:8080",
 		readTimeout:             30 * time.Second,

@@ -9,28 +9,52 @@ func SelectMethod(u *UHTTP, chain Middleware, handlerOpts handlerOptions) http.H
 	return chain(func(w http.ResponseWriter, r *http.Request) {
 
 		// Figure out which method to invoke
-		var res interface{}
 		var returnCode int
+
+		// We need to process the handler in a goroutine so we can recover from panics
+		// this channel will be used to tell the main routine that the handler was processed
+		handlerProcessed := make(chan interface{})
+
 		if r.Method == http.MethodGet && handlerOpts.Get != nil {
-			res = handlerOpts.Get(r, &returnCode)
+			go func() {
+				defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+				handlerProcessed <- handlerOpts.Get(r, &returnCode)
+			}()
 		} else if r.Method == http.MethodGet && handlerOpts.GetWithModel != nil {
-			model := parsedModel(r)
-			res = handlerOpts.GetWithModel(r, model, &returnCode)
+			go func() {
+				defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+				model := parsedModel(r)
+				handlerProcessed <- handlerOpts.GetWithModel(r, model, &returnCode)
+			}()
 		} else if r.Method == http.MethodPost && handlerOpts.Post != nil {
-			res = handlerOpts.Post(r, &returnCode)
+			go func() {
+				defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+				handlerProcessed <- handlerOpts.Post(r, &returnCode)
+			}()
 		} else if r.Method == http.MethodPost && handlerOpts.PostWithModel != nil {
-			model := parsedModel(r)
-			res = handlerOpts.PostWithModel(r, model, &returnCode)
+			go func() {
+				defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+				model := parsedModel(r)
+				handlerProcessed <- handlerOpts.PostWithModel(r, model, &returnCode)
+			}()
 		} else if r.Method == http.MethodDelete && handlerOpts.Delete != nil {
-			res = handlerOpts.Delete(r, &returnCode)
+			go func() {
+				defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+				handlerProcessed <- handlerOpts.Delete(r, &returnCode)
+			}()
 		} else if r.Method == http.MethodDelete && handlerOpts.DeleteWithModel != nil {
-			model := parsedModel(r)
-			res = handlerOpts.DeleteWithModel(r, model, &returnCode)
+			go func() {
+				defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+				model := parsedModel(r)
+				handlerProcessed <- handlerOpts.DeleteWithModel(r, model, &returnCode)
+			}()
 		} else {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			u.RenderError(w, r, fmt.Errorf("method not allowed"))
 			return
 		}
+
+		res := <-handlerProcessed
 
 		// Figure out, how to respond
 		if res != nil {
@@ -53,4 +77,17 @@ func SelectMethod(u *UHTTP, chain Middleware, handlerOpts handlerOptions) http.H
 
 		w.WriteHeader(http.StatusNoContent)
 	})
+}
+
+func recoverFromPanic(u *UHTTP, handlerProcessed chan interface{}, r *http.Request, returnCode *int) {
+	if rec := recover(); rec != nil {
+		err := fmt.Errorf("panic: handlerExecution (%s)", rec)
+		u.opts.log.Errorf("panic [path: %s] %s", r.RequestURI, err)
+		*returnCode = http.StatusInternalServerError
+		if u.opts.sendPanicInfoToClient {
+			handlerProcessed <- err
+			return
+		}
+		handlerProcessed <- fmt.Errorf("internal server error")
+	}
 }

@@ -20,8 +20,11 @@ type uhttpOptions struct {
 	encodingErrorLogLevel   ulog.LogLevel
 	parseModelErrorLogLevel ulog.LogLevel
 
-	// global middlewares
+	// Global middlewares
 	globalMiddlewares []Middleware
+
+	// If handler panics, send the information to the client
+	sendPanicInfoToClient bool
 
 	// Http-Server options
 	address           string
@@ -139,5 +142,11 @@ func WithMetrics(metricsSocket string, metricsPath string) UhttpOption {
 		o.enableMetrics = true
 		o.metricsSocket = metricsSocket
 		o.metricsPath = metricsPath
+	})
+}
+
+func WithSendPanicInfoToClient(sendPanicInfoToClient bool) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.sendPanicInfoToClient = sendPanicInfoToClient
 	})
 }

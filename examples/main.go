@@ -11,10 +11,20 @@ import (
 
 func main() {
 
-	u := uhttp.NewUHTTP()
+	u := uhttp.NewUHTTP(
+		uhttp.WithSendPanicInfoToClient(true),
+	)
 
 	u.Handle("/", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		return map[string]string{"hello": "world"}
+	})))
+
+	// force a handler-panic
+	u.Handle("/forcePanic", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
+		var test interface{}
+		test = 5
+		wrongType := test.(string)
+		return wrongType
 	})))
 
 	u.Handle("/test", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
