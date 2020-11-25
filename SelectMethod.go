@@ -3,6 +3,10 @@ package uhttp
 import (
 	"fmt"
 	"net/http"
+	"runtime/debug"
+	"strings"
+
+	"github.com/dunv/ulog"
 )
 
 func SelectMethod(u *UHTTP, chain Middleware, handlerOpts handlerOptions) http.HandlerFunc {
@@ -83,6 +87,9 @@ func recoverFromPanic(u *UHTTP, handlerProcessed chan interface{}, r *http.Reque
 	if rec := recover(); rec != nil {
 		err := fmt.Errorf("panic: handlerExecution (%s)", rec)
 		u.opts.log.Errorf("panic [path: %s] %s", r.RequestURI, err)
+		stack := debug.Stack()
+		ulog.LogByteArrayLineByLine(stack, u.opts.log.Errorf, fmt.Sprintf("panic [path: %s] ", r.RequestURI))
+		err = fmt.Errorf("%s stackTrace: %s", err, strings.ReplaceAll(string(stack), "\n", "\\n"))
 		*returnCode = http.StatusInternalServerError
 		if u.opts.sendPanicInfoToClient {
 			handlerProcessed <- err
