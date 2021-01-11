@@ -22,7 +22,7 @@ func (u *UHTTP) RenderError(w http.ResponseWriter, r *http.Request, err error) {
 
 func (u *UHTTP) RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error, logOut bool) {
 	if err != nil {
-		u.rawRenderWithStatusCode(w, r, statusCode, map[string]string{"error": err.Error()})
+		u.rawRenderWithStatusCode(w, r, statusCode, NewHttpErrorResponse(err))
 		if logOut {
 			u.opts.log.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
 		}
