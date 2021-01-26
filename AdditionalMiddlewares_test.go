@@ -37,7 +37,7 @@ func TestAdditionalMiddlewareHandlerSingle(t *testing.T) {
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			return r.Context().Value(ctxKey)
 		}),
-		WithMiddlewares([]Middleware{middleware}),
+		WithMiddlewares(middleware),
 	)
 
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)
@@ -55,7 +55,7 @@ func TestAdditionalMiddlewareHandlerMultiple(t *testing.T) {
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			return r.Context().Value(ctxKey)
 		}),
-		WithMiddlewares([]Middleware{middleware}),
+		WithMiddlewares(middleware),
 	)
 
 	expectedResponseBody := []byte(`{"manuallyAdded":"manuallyAdded"}`)

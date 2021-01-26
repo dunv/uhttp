@@ -118,7 +118,7 @@ func WithOptionalGet(r R) HandlerOption {
 	})
 }
 
-func WithMiddlewares(m []Middleware) HandlerOption {
+func WithMiddlewares(m ...Middleware) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.Middlewares = m
 	})
