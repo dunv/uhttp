@@ -96,6 +96,14 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	return u
 }
 
+func (u *UHTTP) Log() ulog.ULogger {
+	return u.opts.log
+}
+
+func (u *UHTTP) CORS() string {
+	return u.opts.cors
+}
+
 func (u *UHTTP) ServeMux() *http.ServeMux {
 	return u.opts.serveMux
 }
