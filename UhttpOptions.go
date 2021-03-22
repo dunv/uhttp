@@ -34,6 +34,10 @@ type uhttpOptions struct {
 	writeTimeout      time.Duration
 	idleTimeout       time.Duration
 
+	// Static files encoding
+	enableGzip   bool
+	enableBrotli bool
+
 	// TLS
 	enableTLS      bool
 	tlsErrorLogger *log.Logger
@@ -148,5 +152,12 @@ func WithMetrics(metricsSocket string, metricsPath string) UhttpOption {
 func WithSendPanicInfoToClient(sendPanicInfoToClient bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.sendPanicInfoToClient = sendPanicInfoToClient
+	})
+}
+
+func WithStaticFileEncodings(enableGzip bool, enableBrotli bool) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.enableGzip = enableGzip
+		o.enableBrotli = enableBrotli
 	})
 }

@@ -44,10 +44,10 @@ func staticFilesHandler(u *UHTTP) http.HandlerFunc {
 		w.Header().Add("Content-Type", cachedFile.ContentType)
 
 		// If client accepts br or gzip -> return compressed
-		if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "br") {
+		if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "br") && u.opts.enableBrotli {
 			w.Header().Add("Content-Encoding", "br")
 			ulog.LogIfErrorSecondArg(w.Write(cachedFile.BrContent))
-		} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "gzip") {
+		} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "gzip") && u.opts.enableGzip {
 			w.Header().Add("Content-Encoding", "gzip")
 			ulog.LogIfErrorSecondArg(w.Write(cachedFile.GzippedContent))
 		} else {
@@ -111,53 +111,57 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 			contentType = "text/html; charset=utf-8"
 		}
 
-		// Compress gzip
-		var gzipBuffer bytes.Buffer
-		gzipWriter, err := gzip.NewWriterLevel(&gzipBuffer, gzip.BestCompression)
-		if err != nil {
-			return err
-		}
-		_, err = gzipWriter.Write(fileContent)
-		if err != nil {
-			return err
-		}
-		err = gzipWriter.Close()
-		if err != nil {
-			return err
-		}
-		gzippedFileContent, err := ioutil.ReadAll(&gzipBuffer)
-		if err != nil {
-			return err
+		cached := cachedFile{
+			Content:     fileContent,
+			ContentType: contentType,
 		}
 
-		// Compress brotli
-		var brotliBuffer bytes.Buffer
-		brotliWriter := enc.NewBrotliWriter(&brotliBuffer, &enc.BrotliWriterOptions{Quality: 11})
-		_, err = brotliWriter.Write(fileContent)
-		if err != nil {
-			return err
-		}
-		err = brotliWriter.Close()
-		if err != nil {
-			return err
-		}
-		brotliFileContent, err := ioutil.ReadAll(&brotliBuffer)
-		if err != nil {
-			return err
+		if u.opts.enableGzip {
+			// Compress gzip
+			var gzipBuffer bytes.Buffer
+			gzipWriter, err := gzip.NewWriterLevel(&gzipBuffer, gzip.BestCompression)
+			if err != nil {
+				return err
+			}
+			_, err = gzipWriter.Write(fileContent)
+			if err != nil {
+				return err
+			}
+			err = gzipWriter.Close()
+			if err != nil {
+				return err
+			}
+			cached.GzippedContent, err = ioutil.ReadAll(&gzipBuffer)
+			if err != nil {
+				return err
+			}
 		}
 
-		filesCache[pattern] = cachedFile{
-			Content:        fileContent,
-			GzippedContent: gzippedFileContent,
-			BrContent:      brotliFileContent,
-			ContentType:    contentType,
+		if u.opts.enableBrotli {
+			// Compress brotli
+			var brotliBuffer bytes.Buffer
+			brotliWriter := enc.NewBrotliWriter(&brotliBuffer, &enc.BrotliWriterOptions{Quality: 11})
+			_, err = brotliWriter.Write(fileContent)
+			if err != nil {
+				return err
+			}
+			err = brotliWriter.Close()
+			if err != nil {
+				return err
+			}
+			cached.BrContent, err = ioutil.ReadAll(&brotliBuffer)
+			if err != nil {
+				return err
+			}
 		}
+
+		filesCache[pattern] = cached
 
 		ulog.Infof("Registered http static %s (%s, gzip:%s, br:%s)",
 			pattern,
 			uhelpers.ByteCountIEC(int64(len(fileContent))),
-			uhelpers.ByteCountIEC(int64(len(gzippedFileContent))),
-			uhelpers.ByteCountIEC(int64(len(brotliFileContent))),
+			uhelpers.ByteCountIEC(int64(len(cached.GzippedContent))),
+			uhelpers.ByteCountIEC(int64(len(cached.BrContent))),
 		)
 		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler(u))
 	}

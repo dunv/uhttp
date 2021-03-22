@@ -64,6 +64,8 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		idleTimeout:             30 * time.Second,
 		enableMetrics:           false,
 		metricsPath:             "/metrics",
+		enableGzip:              true,
+		enableBrotli:            true,
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
