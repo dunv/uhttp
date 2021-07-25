@@ -123,11 +123,11 @@ func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
 func (u *UHTTP) Handle(pattern string, handler Handler) {
 	handlerFunc := handler.HandlerFunc(u)
 
-	if handler.opts.Get != nil {
+	if handler.opts.Get != nil || handler.opts.GetWithModel != nil {
 		u.opts.log.Infof("Registered http GET %s", pattern)
-	} else if handler.opts.Post != nil {
+	} else if handler.opts.Post != nil || handler.opts.PostWithModel != nil {
 		u.opts.log.Infof("Registered http POST %s", pattern)
-	} else if handler.opts.Delete != nil {
+	} else if handler.opts.Delete != nil || handler.opts.DeleteWithModel != nil {
 		u.opts.log.Infof("Registered http DELETE %s", pattern)
 	}
 	u.opts.serveMux.Handle(pattern, handlerFunc)

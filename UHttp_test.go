@@ -1,7 +1,6 @@
 package uhttp
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -29,7 +28,7 @@ func TestRendering(t *testing.T) {
 		t.Error(err)
 	}
 
-	actual := fmt.Sprintf("%s", greeting)
+	actual := string(greeting)
 	expected := `{"hallo":"welt"}` + "\n"
 
 	if strings.Compare(actual, expected) != 0 {
