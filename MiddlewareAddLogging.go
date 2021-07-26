@@ -115,7 +115,9 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 				u.opts.log.LogIfError(HandleMetrics(u.metrics, r.Method, lrw.statusCode, r.URL.EscapedPath(), duration))
 			}
 
-			u.opts.log.Info(logString)
+			if u.opts.logHandlerCalls {
+				u.opts.log.Info(logString)
+			}
 		}
 	}
 }

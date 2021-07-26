@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ func main() {
 
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
+		uhttp.WithGranularLogging(false, true, true),
 	)
 
 	u.Handle("/", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
@@ -21,10 +23,13 @@ func main() {
 
 	// force a handler-panic
 	u.Handle("/forcePanic", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
-		var test interface{}
-		test = 5
+		var test interface{} = 5
 		wrongType := test.(string)
 		return wrongType
+	})))
+
+	u.Handle("/forceError", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
+		return errors.New("this is an error")
 	})))
 
 	u.Handle("/test", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {

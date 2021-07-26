@@ -12,9 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// TODO: add filters for logging (i.e. do not log everything, or only user etc)
-// TODO: make statistics trackable -> prometheus?
-
 func init() {
 	// Make expected output (which is only for info, not for debugging) more readable
 	ulog.AddSkipFunctions(
@@ -66,6 +63,10 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		metricsPath:             "/metrics",
 		enableGzip:              true,
 		enableBrotli:            true,
+
+		logHandlerCalls:         true,
+		logHandlerErrors:        true,
+		logHandlerRegistrations: true,
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
@@ -123,13 +124,16 @@ func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
 func (u *UHTTP) Handle(pattern string, handler Handler) {
 	handlerFunc := handler.HandlerFunc(u)
 
-	if handler.opts.Get != nil || handler.opts.GetWithModel != nil {
-		u.opts.log.Infof("Registered http GET %s", pattern)
-	} else if handler.opts.Post != nil || handler.opts.PostWithModel != nil {
-		u.opts.log.Infof("Registered http POST %s", pattern)
-	} else if handler.opts.Delete != nil || handler.opts.DeleteWithModel != nil {
-		u.opts.log.Infof("Registered http DELETE %s", pattern)
+	if u.opts.logHandlerRegistrations {
+		if handler.opts.Get != nil || handler.opts.GetWithModel != nil {
+			u.opts.log.Infof("Registered http GET %s", pattern)
+		} else if handler.opts.Post != nil || handler.opts.PostWithModel != nil {
+			u.opts.log.Infof("Registered http POST %s", pattern)
+		} else if handler.opts.Delete != nil || handler.opts.DeleteWithModel != nil {
+			u.opts.log.Infof("Registered http DELETE %s", pattern)
+		}
 	}
+
 	u.opts.serveMux.Handle(pattern, handlerFunc)
 }
 

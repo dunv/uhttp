@@ -65,9 +65,9 @@ func SelectMethod(u *UHTTP, chain Middleware, handlerOpts handlerOptions) http.H
 			switch typed := res.(type) {
 			case error:
 				if returnCode == 0 {
-					u.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, typed, true)
+					u.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, typed, u.opts.logHandlerErrors)
 				} else {
-					u.RenderErrorWithStatusCode(w, r, returnCode, typed, true)
+					u.RenderErrorWithStatusCode(w, r, returnCode, typed, u.opts.logHandlerErrors)
 				}
 			default:
 				if returnCode == 0 {

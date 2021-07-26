@@ -20,7 +20,6 @@ func GetAsStringFromContext(key string, ctx context.Context) *string {
 	// it obviously points to a bug in the code not an error on the user's side
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		// TODO: add recover so the whole app does not crash
 		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 	}
 

@@ -48,6 +48,11 @@ type uhttpOptions struct {
 	enableMetrics bool
 	metricsSocket string
 	metricsPath   string
+
+	// Granular logging
+	logHandlerCalls         bool
+	logHandlerErrors        bool
+	logHandlerRegistrations bool
 }
 
 type funcUhttpOption struct {
@@ -159,5 +164,13 @@ func WithStaticFileEncodings(enableGzip bool, enableBrotli bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.enableGzip = enableGzip
 		o.enableBrotli = enableBrotli
+	})
+}
+
+func WithGranularLogging(logHandlerCalls bool, logHandlerErrors bool, logHandlerRegistrations bool) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.logHandlerCalls = logHandlerCalls
+		o.logHandlerErrors = logHandlerErrors
+		o.logHandlerRegistrations = logHandlerRegistrations
 	})
 }
