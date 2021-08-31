@@ -125,7 +125,9 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 func AddLogOutput(w interface{}, key, value string) error {
 	writer, ok := w.(*LoggingResponseWriter)
 	if !ok {
-		return fmt.Errorf("passed in parameter was not of type LoggingResponseWriter (%T)", w)
+		// If we cannot add information (this is the case when we are using websockets)
+		// just ignore this call
+		return nil
 	}
 	writer.AddLogOutput(key, value)
 	return nil
