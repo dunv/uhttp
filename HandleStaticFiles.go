@@ -156,13 +156,14 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		}
 
 		filesCache[pattern] = cached
-
-		ulog.Infof("Registered http static %s (%s, gzip:%s, br:%s)",
-			pattern,
-			uhelpers.ByteCountIEC(int64(len(fileContent))),
-			uhelpers.ByteCountIEC(int64(len(cached.GzippedContent))),
-			uhelpers.ByteCountIEC(int64(len(cached.BrContent))),
-		)
+		if !u.opts.silentStaticFileRegistration {
+			ulog.Infof("Registered http static %s (%s, gzip:%s, br:%s)",
+				pattern,
+				uhelpers.ByteCountIEC(int64(len(fileContent))),
+				uhelpers.ByteCountIEC(int64(len(cached.GzippedContent))),
+				uhelpers.ByteCountIEC(int64(len(cached.BrContent))),
+			)
+		}
 		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler(u))
 	}
 	ulog.Infof("Registered http static / -> /index.html")
