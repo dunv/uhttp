@@ -64,9 +64,10 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		enableGzip:              true,
 		enableBrotli:            true,
 
-		logHandlerCalls:         true,
-		logHandlerErrors:        true,
-		logHandlerRegistrations: true,
+		silentStaticFileRegistration: false,
+		logHandlerCalls:              true,
+		logHandlerErrors:             true,
+		logHandlerRegistrations:      true,
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)

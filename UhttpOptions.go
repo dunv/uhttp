@@ -38,6 +38,9 @@ type uhttpOptions struct {
 	enableGzip   bool
 	enableBrotli bool
 
+	// Logging
+	silentStaticFileRegistration bool
+
 	// TLS
 	enableTLS      bool
 	tlsErrorLogger *log.Logger
@@ -172,5 +175,12 @@ func WithGranularLogging(logHandlerCalls bool, logHandlerErrors bool, logHandler
 		o.logHandlerCalls = logHandlerCalls
 		o.logHandlerErrors = logHandlerErrors
 		o.logHandlerRegistrations = logHandlerRegistrations
+	})
+}
+
+// WithSilentStaticFileRegistration disables logging for every static file registration, handy, if dealing with large file trees
+func WithSilentStaticFileRegistration(makeFileRegistrationSilent bool) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.silentStaticFileRegistration = makeFileRegistrationSilent
 	})
 }
