@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func getParamsMiddleware(u *UHTTP, optionalGet R, requiredGet R) func(next http.HandlerFunc) http.HandlerFunc {
+func getParamsMiddleware(u *UHTTP, opts handlerOptions) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			actualRaw := r.URL.Query() // map[string][]string
@@ -22,13 +22,14 @@ func getParamsMiddleware(u *UHTTP, optionalGet R, requiredGet R) func(next http.
 			}
 
 			paramMap := R{}
-			err := u.validateParams(requiredGet, actual, paramMap, true)
+
+			err := u.validateParams(opts.RequiredGet, actual, paramMap, true)
 			if err != nil {
 				u.RenderError(w, r, fmt.Errorf("%v", err))
 				return
 			}
 
-			err = u.validateParams(optionalGet, actual, paramMap, false)
+			err = u.validateParams(opts.OptionalGet, actual, paramMap, false)
 			if err != nil {
 				u.RenderError(w, r, fmt.Errorf("%v", err))
 			}

@@ -3,6 +3,7 @@ package uhttp
 import (
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/dunv/uhelpers"
@@ -43,6 +44,10 @@ type UHTTP struct {
 	opts           *uhttpOptions
 	requestContext map[ContextKey]interface{}
 	metrics        map[string]interface{}
+
+	// hold handle to all caches for calculating total and management
+	cache     map[string]*cache
+	cacheLock *sync.RWMutex
 }
 
 func NewUHTTP(opts ...UhttpOption) *UHTTP {
@@ -68,6 +73,8 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		logHandlerCalls:              true,
 		logHandlerErrors:             true,
 		logHandlerRegistrations:      true,
+
+		cacheTTLEnforcerInterval: 30 * time.Second,
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
@@ -95,9 +102,19 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		opts:           mergedOpts,
 		requestContext: map[ContextKey]interface{}{},
 		metrics:        metrics,
+		cache:          map[string]*cache{},
+		cacheLock:      &sync.RWMutex{},
 	}
 
 	return u
+}
+
+func (u *UHTTP) registerCache(pattern string, cache *cache) error {
+	if _, ok := u.cache[pattern]; ok {
+		return fmt.Errorf("cache for handler %s already exists", pattern)
+	}
+	u.cache[pattern] = cache
+	return nil
 }
 
 func (u *UHTTP) Log() ulog.ULogger {
@@ -123,6 +140,7 @@ func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
 
 // Handle configuration
 func (u *UHTTP) Handle(pattern string, handler Handler) {
+	handler.opts.HandlerPattern = pattern
 	handlerFunc := handler.HandlerFunc(u)
 
 	if u.opts.logHandlerRegistrations {
@@ -162,6 +180,30 @@ func (u *UHTTP) ListenAndServe() error {
 			IdleTimeout:       u.opts.idleTimeout,
 		}
 	}
+
+	if u.opts.cacheExposeHandlers {
+		u.Handle("/uhttp/cache/size", cacheSizeHandler(u))
+		u.Handle("/uhttp/cache/clear", cacheClearHandler(u))
+	}
+
+	// Execute TTL for cache (a handler will never serve a cache which is too old, this routine only
+	// makes sure that the cache size does not grow too much)
+	go func() {
+		for {
+			u.cacheLock.RLock()
+			for _, patternCache := range u.cache {
+				patternCache.Lock()
+				for key, entry := range patternCache.data {
+					if time.Since(entry.updatedOn) > patternCache.maxAge {
+						delete(patternCache.data, key)
+					}
+				}
+				patternCache.Unlock()
+			}
+			u.cacheLock.RUnlock()
+			time.Sleep(u.opts.cacheTTLEnforcerInterval)
+		}
+	}()
 
 	if !u.opts.enableTLS {
 		if u.opts.enableMetrics {

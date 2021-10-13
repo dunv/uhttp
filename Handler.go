@@ -7,6 +7,7 @@ import (
 
 func NewHandler(opts ...HandlerOption) Handler {
 	mergedOpts := &handlerOptions{}
+	withDefaults().apply(mergedOpts)
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
 	}
@@ -26,7 +27,7 @@ type PreProcessFunc func(ctx context.Context) error
 func (h Handler) WsReady(u *UHTTP) Middleware {
 	c := chain(
 		parseModelMiddleware(u, h.opts.PostModel, h.opts.GetModel, h.opts.DeleteModel),
-		getParamsMiddleware(u, h.opts.OptionalGet, h.opts.RequiredGet),
+		getParamsMiddleware(u, h.opts),
 		// Do not add logging here: a WS connection has more states which should be logged separately e.g. in the handler
 	)
 
@@ -53,11 +54,12 @@ func (h Handler) WsReady(u *UHTTP) Middleware {
 }
 
 func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
+
 	c := chain(
 		corsMiddleware(u),
 		jsonResponseMiddleware(u),
 		parseModelMiddleware(u, h.opts.PostModel, h.opts.GetModel, h.opts.DeleteModel),
-		getParamsMiddleware(u, h.opts.OptionalGet, h.opts.RequiredGet),
+		getParamsMiddleware(u, h.opts),
 		addLoggingMiddleware(u),
 	)
 
@@ -82,10 +84,15 @@ func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
 	// Add preProcess
 	c = chain(c, preProcessMiddleware(u, h.opts.PreProcess))
 
-	// Timeouts
-	if h.opts.Timeout != 0 {
-		return http.TimeoutHandler(SelectMethod(u, c, h.opts), h.opts.Timeout, h.opts.TimeoutMessage).ServeHTTP
+	if h.opts.CacheEnable {
+		c = chain(c, cacheMiddleware(u, h))
 	}
 
-	return SelectMethod(u, c, h.opts)
+	// Timeouts
+	if h.opts.Timeout != 0 {
+		return http.TimeoutHandler(c(selectMethodMiddleware(u, h.opts)), h.opts.Timeout, h.opts.TimeoutMessage).ServeHTTP
+	}
+
+	return c(selectMethodMiddleware(u, h.opts))
+
 }

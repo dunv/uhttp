@@ -2,9 +2,11 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/dunv/uhttp"
 	"github.com/dunv/ulog"
@@ -14,6 +16,7 @@ func main() {
 
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
+		uhttp.WithExposeCacheHandlers(true),
 		uhttp.WithGranularLogging(false, true, true),
 	)
 
@@ -31,6 +34,36 @@ func main() {
 	u.Handle("/forceError", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		return errors.New("this is an error")
 	})))
+
+	u.Handle("/testCache", uhttp.NewHandler(
+		uhttp.WithCache(10*time.Minute),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
+			fmt.Println("executing GET testCacheHandler")
+			return map[string]string{
+				"method":    "get",
+				"updatedOn": time.Now().Format(time.RFC3339Nano),
+			}
+		}),
+	))
+
+	// 	u.Handle("/testCacheAutomatic", uhttp.NewHandler(
+	// 		uhttp.WithCache(10*time.Minute),
+	// 		uhttp.WithAutomaticCacheUpdates(5*time.Second, []string{}),
+	// 		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
+	// 			fmt.Println("executing GET testCacheAutomaticHandler")
+	// 			return map[string]string{
+	// 				"method":    "get",
+	// 				"updatedOn": time.Now().Format(time.RFC3339Nano),
+	// 			}
+	// 		}),
+	// 		uhttp.WithPost(func(r *http.Request, ret *int) interface{} {
+	// 			fmt.Println("executing POST testCacheAutomaticHandler")
+	// 			return map[string]string{
+	// 				"method":    "post",
+	// 				"updatedOn": time.Now().Format(time.RFC3339Nano),
+	// 			}
+	// 		}),
+	// 	))
 
 	u.Handle("/test", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		writer := r.Context().Value(uhttp.CtxKeyResponseWriter).(http.ResponseWriter)

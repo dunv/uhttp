@@ -52,6 +52,10 @@ type uhttpOptions struct {
 	metricsSocket string
 	metricsPath   string
 
+	// Caching
+	cacheExposeHandlers      bool
+	cacheTTLEnforcerInterval time.Duration
+
 	// Granular logging
 	logHandlerCalls         bool
 	logHandlerErrors        bool
@@ -182,5 +186,17 @@ func WithGranularLogging(logHandlerCalls bool, logHandlerErrors bool, logHandler
 func WithSilentStaticFileRegistration(makeFileRegistrationSilent bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.silentStaticFileRegistration = makeFileRegistrationSilent
+	})
+}
+
+func WithExposeCacheHandlers(exposeCacheHandlers bool) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.cacheExposeHandlers = exposeCacheHandlers
+	})
+}
+
+func WithCacheTTLEnforcerInterval(i time.Duration) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.cacheTTLEnforcerInterval = i
 	})
 }

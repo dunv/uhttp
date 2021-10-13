@@ -30,7 +30,19 @@ type handlerOptions struct {
 	PreProcess     func(ctx context.Context) error
 	Timeout        time.Duration
 	TimeoutMessage string
+
+	CacheEnable                      bool
+	CacheAutomaticUpdatesInterval    time.Duration
+	CacheAutomaticUpdatesQueryString []string
+	CacheMaxAge                      time.Duration
+
+	// Read-only
+	CacheBypassHeader    string
+	CacheRelevantHeaders []string
+
+	HandlerPattern string
 }
+
 type funcHandlerOption struct {
 	f func(*handlerOptions)
 }
@@ -41,6 +53,13 @@ func (fdo *funcHandlerOption) apply(do *handlerOptions) {
 
 func newFuncHandlerOption(f func(*handlerOptions)) *funcHandlerOption {
 	return &funcHandlerOption{f: f}
+}
+
+func withDefaults() HandlerOption {
+	return newFuncHandlerOption(func(o *handlerOptions) {
+		o.CacheBypassHeader = "X-UHTTP-BYPASS-CACHE"
+		o.CacheRelevantHeaders = []string{"Accept-Encoding"}
+	})
 }
 
 func WithGet(h HandlerFunc) HandlerOption {
@@ -134,5 +153,19 @@ func WithTimeout(timeout time.Duration, timeoutMessage string) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.Timeout = timeout
 		o.TimeoutMessage = timeoutMessage
+	})
+}
+
+func WithCache(maxAge time.Duration) HandlerOption {
+	return newFuncHandlerOption(func(o *handlerOptions) {
+		o.CacheEnable = true
+		o.CacheMaxAge = maxAge
+	})
+}
+
+func WithAutomaticCacheUpdates(interval time.Duration, queryStrings []string) HandlerOption {
+	return newFuncHandlerOption(func(o *handlerOptions) {
+		o.CacheAutomaticUpdatesInterval = interval
+		o.CacheAutomaticUpdatesQueryString = queryStrings
 	})
 }
