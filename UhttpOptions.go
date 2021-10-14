@@ -1,6 +1,8 @@
 package uhttp
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,7 +18,6 @@ type UhttpOption interface {
 type uhttpOptions struct {
 	cors                    string
 	log                     ulog.ULogger
-	gzipCompressionLevel    int
 	encodingErrorLogLevel   ulog.LogLevel
 	parseModelErrorLogLevel ulog.LogLevel
 
@@ -34,9 +35,13 @@ type uhttpOptions struct {
 	writeTimeout      time.Duration
 	idleTimeout       time.Duration
 
-	// Static files encoding
-	enableGzip   bool
-	enableBrotli bool
+	// Encodings
+	enableGzip              bool
+	gzipCompressionLevel    int
+	enableBrotli            bool
+	brotliCompressionLevel  int
+	enableDeflate           bool
+	deflateCompressionLevel int
 
 	// Logging
 	silentStaticFileRegistration bool
@@ -87,9 +92,39 @@ func WithLogger(logger ulog.ULogger) UhttpOption {
 	})
 }
 
-func WithGzipCompressionLevel(level int) UhttpOption {
+func WithGzipCompression(enable bool, level int) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.enableGzip = enable
+		if level < gzip.HuffmanOnly {
+			level = gzip.HuffmanOnly
+		} else if level > gzip.BestCompression {
+			level = gzip.BestCompression
+		}
 		o.gzipCompressionLevel = level
+	})
+}
+
+func WithBrotliCompression(enable bool, level int) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.enableBrotli = enable
+		if level < 0 {
+			level = 0
+		} else if level > 11 {
+			level = 11
+		}
+		o.brotliCompressionLevel = level
+	})
+}
+
+func WithDeflateCompression(enable bool, level int) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.enableDeflate = enable
+		if level < flate.HuffmanOnly {
+			level = flate.HuffmanOnly
+		} else if level > flate.BestCompression {
+			level = flate.BestCompression
+		}
+		o.deflateCompressionLevel = level
 	})
 }
 
@@ -165,13 +200,6 @@ func WithMetrics(metricsSocket string, metricsPath string) UhttpOption {
 func WithSendPanicInfoToClient(sendPanicInfoToClient bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.sendPanicInfoToClient = sendPanicInfoToClient
-	})
-}
-
-func WithStaticFileEncodings(enableGzip bool, enableBrotli bool) UhttpOption {
-	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.enableGzip = enableGzip
-		o.enableBrotli = enableBrotli
 	})
 }
 

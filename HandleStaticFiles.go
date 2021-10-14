@@ -140,7 +140,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		if u.opts.enableBrotli {
 			// Compress brotli
 			var brotliBuffer bytes.Buffer
-			brotliWriter := enc.NewBrotliWriter(&brotliBuffer, &enc.BrotliWriterOptions{Quality: 11})
+			brotliWriter := enc.NewBrotliWriter(&brotliBuffer, &enc.BrotliWriterOptions{Quality: u.opts.brotliCompressionLevel})
 			_, err = brotliWriter.Write(fileContent)
 			if err != nil {
 				return err

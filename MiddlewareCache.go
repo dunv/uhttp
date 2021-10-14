@@ -2,7 +2,6 @@ package uhttp
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"net"
@@ -124,7 +123,7 @@ func (w *cachingResponseWriter) Header() http.Header {
 // a response writer whch updates the cache as soon as a response is sent to the client
 // Write always needs to be called AFTER WriteHeader, otherwise we get an error
 func (w *cachingResponseWriter) Write(data []byte) (int, error) {
-	w.responseBody = append(w.responseBody, bytes.TrimSpace(data)...)
+	w.responseBody = append(w.responseBody, data...)
 	return w.w.Write(data)
 }
 

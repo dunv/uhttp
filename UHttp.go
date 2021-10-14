@@ -1,6 +1,8 @@
 package uhttp
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"fmt"
 	"net/http"
 	"sync"
@@ -57,7 +59,6 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	mergedOpts := &uhttpOptions{
 		cors:                    "*",
 		log:                     ulog.NewUlog(),
-		gzipCompressionLevel:    4,
 		encodingErrorLogLevel:   ulog.LEVEL_ERROR,
 		parseModelErrorLogLevel: ulog.LEVEL_ERROR,
 		sendPanicInfoToClient:   false,
@@ -70,7 +71,11 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		enableMetrics:           false,
 		metricsPath:             "/metrics",
 		enableGzip:              true,
+		gzipCompressionLevel:    gzip.BestCompression,
 		enableBrotli:            true,
+		brotliCompressionLevel:  11,
+		enableDeflate:           true,
+		deflateCompressionLevel: flate.BestCompression,
 
 		silentStaticFileRegistration: false,
 		logHandlerCalls:              true,

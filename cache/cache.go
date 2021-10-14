@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"crypto/md5"
 	"fmt"
 	"net/http"
@@ -141,7 +142,7 @@ func (e cacheEntry) Write(w http.ResponseWriter) error {
 }
 
 func (c cacheEntry) String() string {
-	return fmt.Sprintf("{%s - %d - '%s'}", c.updatedOn.Format(time.RFC3339Nano), c.responseStatusCode, string(c.responseBody))
+	return fmt.Sprintf("{%s - %d - '%s'}", c.updatedOn.Format(time.RFC3339Nano), c.responseStatusCode, string(bytes.TrimSpace(c.responseBody)))
 }
 
 func hash(body []byte, params string, header http.Header) string {
