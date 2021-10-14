@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dunv/uhelpers"
+	"github.com/dunv/uhttp/cache"
 	"github.com/dunv/ulog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -48,7 +49,7 @@ type UHTTP struct {
 	metrics        map[string]interface{}
 
 	// hold handle to all caches for calculating total and management
-	cache     map[string]*cache
+	cache     map[string]*cache.Cache
 	cacheLock *sync.RWMutex
 }
 
@@ -104,7 +105,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		opts:           mergedOpts,
 		requestContext: map[ContextKey]interface{}{},
 		metrics:        metrics,
-		cache:          map[string]*cache{},
+		cache:          map[string]*cache.Cache{},
 		cacheLock:      &sync.RWMutex{},
 	}
 	if u.opts.cacheExposeHandlers {
@@ -116,7 +117,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	return u
 }
 
-func (u *UHTTP) registerCache(pattern string, cache *cache) error {
+func (u *UHTTP) registerCache(pattern string, cache *cache.Cache) error {
 	if _, ok := u.cache[pattern]; ok {
 		return fmt.Errorf("cache for handler %s already exists", pattern)
 	}
@@ -196,8 +197,8 @@ func (u *UHTTP) ListenAndServe() error {
 			for _, patternCache := range u.cache {
 				keys := patternCache.Keys()
 				for _, key := range keys {
-					if entry, ok := patternCache.Get(key); ok {
-						if time.Since(entry.updatedOn) > patternCache.maxAge {
+					if entry, ok := patternCache.GetByKey(key); ok {
+						if time.Since(entry.UpdatedOn()) > patternCache.MaxAge() {
 							patternCache.Delete(key)
 						}
 					}

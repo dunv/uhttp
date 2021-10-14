@@ -8,18 +8,22 @@ import (
 	"net/http"
 )
 
+// HelperMethod for rendering a JSON model
 func (u *UHTTP) Render(w http.ResponseWriter, r *http.Request, model interface{}) {
 	u.rawRenderWithStatusCode(w, r, http.StatusOK, model)
 }
 
+// HelperMethod for rendering a JSON model with statusCode in the response
 func (u *UHTTP) RenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, model interface{}) {
 	u.rawRenderWithStatusCode(w, r, statusCode, model)
 }
 
+// HelperMethod for rendering an error as JSON while automatically setting a 400 statusCode
 func (u *UHTTP) RenderError(w http.ResponseWriter, r *http.Request, err error) {
 	u.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, err, true)
 }
 
+// HelperMethod for rendering an error as JSON with defining a custom statusCode
 func (u *UHTTP) RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, err error, logOut bool) {
 	if err != nil {
 		u.rawRenderWithStatusCode(w, r, statusCode, NewHttpErrorResponse(err))
@@ -31,6 +35,8 @@ func (u *UHTTP) RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// Internal helperMethod with is used for ALL rendering throughout uhttp
+// Takes care of encoding responses
 func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, statusCode int, model interface{}) {
 	var writer io.Writer
 
@@ -67,6 +73,15 @@ func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, 
 		if err != nil {
 			// TODO: find a way of doing this per handler!
 			u.opts.log.LogWithLevelf(u.opts.encodingErrorLogLevel, "err closing gzip writer (%s)", err)
+		}
+	}
+
+	switch responseWriter := w.(type) {
+	case *cachingResponseWriter:
+		err = responseWriter.Close()
+		if err != nil {
+			// TODO: find a way of doing this per handler!
+			u.opts.log.LogWithLevelf(u.opts.encodingErrorLogLevel, "err closing cachingResponseWriter (%s)", err)
 		}
 	}
 }

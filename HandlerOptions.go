@@ -59,6 +59,7 @@ func withDefaults() HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.CacheBypassHeader = "X-UHTTP-BYPASS-CACHE"
 		o.CacheRelevantHeaders = []string{"Accept-Encoding"}
+		// o.CacheRelevantHeaders = []string{}
 	})
 }
 

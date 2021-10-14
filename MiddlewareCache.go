@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/dunv/uhttp/cache"
 	"github.com/dunv/ulog"
 )
 
@@ -25,20 +25,15 @@ const CACHE_HEADER_AGE_MS = "X-UHTTP-CACHE-AGE-MS"
 // - queryParams
 // - requestBody
 func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http.HandlerFunc {
-	var c cache
+	var c *cache.Cache
 
 	// only register cache once (this make the "HandlerFunc" callable more than once)
 	u.cacheLock.Lock()
 	if registeredCache, ok := u.cache[handler.opts.HandlerPattern]; ok {
-		c = *registeredCache
+		c = registeredCache
 	} else {
-		c = cache{
-			&sync.RWMutex{},
-			handler.opts.HandlerPattern,
-			handler.opts.CacheMaxAge,
-			map[string]cacheEntry{},
-		}
-		ulog.PanicIfError(u.registerCache(handler.opts.HandlerPattern, &c))
+		c = cache.NewCache(handler.opts.CacheMaxAge)
+		ulog.PanicIfError(u.registerCache(handler.opts.HandlerPattern, c))
 
 		if u.opts.cacheExposeHandlers {
 			u.Handle(fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.HandlerPattern), specificCacheClearHandler(u, c))
@@ -81,34 +76,29 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 			bypassCache := r.Header.Get(handler.opts.CacheBypassHeader)
 			if bypassCache == "true" {
 				next.ServeHTTP(&cachingResponseWriter{
-					r:              r,
-					w:              w,
-					handlerOptions: handler.opts,
-					cache:          c,
+					r:     r,
+					w:     w,
+					cache: c,
 				}, r)
 				return
 			}
 
-			h, err := cacheHash(handler.opts, r)
-			if err == nil {
-				if entry, ok := c.Get(h); ok {
-					if time.Since(entry.updatedOn) < handler.opts.CacheMaxAge {
-						_ = AddLogOutput(w, "cached", "true")
-						w.Header().Add(CACHE_HEADER, "true")
-						w.Header().Add(CACHE_HEADER_AGE_HUMAN_READABLE, time.Since(entry.updatedOn).String())
-						w.Header().Add(CACHE_HEADER_AGE_MS, strconv.FormatInt(time.Since(entry.updatedOn).Milliseconds(), 10))
-						u.RenderWithStatusCode(w, r, entry.statusCode, entry.data)
-						return
-					}
-					c.Delete(h)
+			if entry, ok, key := c.Get(ExtractAndRestoreRequestBody(r), r.URL.RawQuery, r.Header); ok {
+				if time.Since(entry.UpdatedOn()) < handler.opts.CacheMaxAge {
+					_ = AddLogOutput(w, "cached", "true")
+					w.Header().Add(CACHE_HEADER, "true")
+					w.Header().Add(CACHE_HEADER_AGE_HUMAN_READABLE, time.Since(entry.UpdatedOn()).String())
+					w.Header().Add(CACHE_HEADER_AGE_MS, strconv.FormatInt(time.Since(entry.UpdatedOn()).Milliseconds(), 10))
+					u.opts.log.LogIfError(entry.Write(w))
+					return
 				}
+				c.Delete(key)
 			}
 
 			next.ServeHTTP(&cachingResponseWriter{
-				r:              r,
-				w:              w,
-				handlerOptions: handler.opts,
-				cache:          c,
+				r:     r,
+				w:     w,
+				cache: c,
 			}, r)
 		}
 	}
@@ -116,32 +106,42 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 
 // a response writer whch updates the cache as soon as a response is sent to the client
 type cachingResponseWriter struct {
-	r              *http.Request
-	w              http.ResponseWriter
-	handlerOptions handlerOptions
-	headerWritten  bool
-	cache          cache
+	r *http.Request
+	w http.ResponseWriter
+
+	cache *cache.Cache
+
+	responseBody       []byte
+	responseStatusCode int
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client
-func (w *cachingResponseWriter) Header() http.Header { return w.w.Header() }
+func (w *cachingResponseWriter) Header() http.Header {
+
+	return w.w.Header()
+}
 
 // a response writer whch updates the cache as soon as a response is sent to the client
+// Write always needs to be called AFTER WriteHeader, otherwise we get an error
 func (w *cachingResponseWriter) Write(data []byte) (int, error) {
-	h, err := cacheHash(w.handlerOptions, w.r)
-	if err != nil {
-		return 0, err
-	}
-	w.cache.Set(h, bytes.TrimSpace(data), http.StatusOK)
+	w.responseBody = append(w.responseBody, bytes.TrimSpace(data)...)
 	return w.w.Write(data)
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client
 func (w *cachingResponseWriter) WriteHeader(code int) {
-	if !w.headerWritten {
-		w.headerWritten = true
+	if w.responseStatusCode == 0 {
+		w.responseStatusCode = code
 		w.w.WriteHeader(code)
 	}
+}
+
+func (w *cachingResponseWriter) Close() error {
+	w.cache.Set(
+		ExtractAndRestoreRequestBody(w.r), w.r.URL.RawQuery, w.r.Header.Clone(),
+		w.responseBody, w.w.Header().Clone(), w.responseStatusCode,
+	)
+	return nil
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client

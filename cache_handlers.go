@@ -3,6 +3,8 @@ package uhttp
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/dunv/uhttp/cache"
 )
 
 var cacheSizeHandler = func(u *UHTTP) Handler {
@@ -41,7 +43,7 @@ var cacheDebugHandler = func(u *UHTTP) Handler {
 				res[pattern] = map[string]string{}
 				keys := cache.Keys()
 				for _, key := range keys {
-					if data, ok := cache.Get(key); ok {
+					if data, ok := cache.GetByKey(key); ok {
 						res[pattern][fmt.Sprintf("%x", key)] = data.String()
 					}
 				}
@@ -72,7 +74,7 @@ var cacheClearHandler = func(u *UHTTP) Handler {
 	)
 }
 
-var specificCacheClearHandler = func(u *UHTTP, c cache) Handler {
+var specificCacheClearHandler = func(u *UHTTP, c *cache.Cache) Handler {
 	return NewHandler(
 		WithPost(func(r *http.Request, ret *int) interface{} {
 			deletedEntries := 0

@@ -17,7 +17,6 @@ import (
 const NO_LOG_MAGIC_URL_FORCE_CACHE = "UHTTP_NO_LOG_FORCE_CACHE"
 
 type LoggingResponseWriter struct {
-	// http.ResponseWriter
 	underlyingResponseWriter http.ResponseWriter
 	statusCode               int
 	additionalOutput         map[string]string
@@ -26,7 +25,6 @@ type LoggingResponseWriter struct {
 
 func newLoggingResponseWriter(w http.ResponseWriter) *LoggingResponseWriter {
 	return &LoggingResponseWriter{
-		// w,
 		w,
 		http.StatusOK,
 		map[string]string{},
