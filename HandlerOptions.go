@@ -31,10 +31,9 @@ type handlerOptions struct {
 	Timeout        time.Duration
 	TimeoutMessage string
 
-	CacheEnable                      bool
-	CacheAutomaticUpdatesInterval    time.Duration
-	CacheAutomaticUpdatesQueryString []string
-	CacheMaxAge                      time.Duration
+	CacheEnable                   bool
+	CacheAutomaticUpdatesInterval time.Duration
+	CacheMaxAge                   time.Duration
 
 	// Read-only
 	CacheBypassHeader    string
@@ -163,9 +162,8 @@ func WithCache(maxAge time.Duration) HandlerOption {
 	})
 }
 
-func WithAutomaticCacheUpdates(interval time.Duration, queryStrings []string) HandlerOption {
+func WithAutomaticCacheUpdates(interval time.Duration) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.CacheAutomaticUpdatesInterval = interval
-		o.CacheAutomaticUpdatesQueryString = queryStrings
 	})
 }

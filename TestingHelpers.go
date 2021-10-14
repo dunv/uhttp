@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/dunv/ulog"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func ExecuteHandler(
@@ -177,5 +179,68 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 	if !bytes.Equal(expectedWithNewLine, response) {
 		t.Errorf("expected does not match actual (expected: '%s', actual: '%s')", expectedWithNewLine, response)
 		return
+	}
+}
+
+func RequireHTTPBodyJSONEq(
+	t *testing.T,
+	handlerFunc http.HandlerFunc,
+	method string,
+	url string,
+	values url.Values,
+	expected string,
+) {
+	actual := assert.HTTPBody(handlerFunc, method, url, values)
+	require.JSONEq(t, expected, actual)
+}
+
+// Right out of testify but with headers
+func RequireHTTPBodyAndHeader(
+	t *testing.T,
+	handler http.HandlerFunc,
+	method string,
+	url string,
+	values url.Values,
+	expectedBody string,
+	expectedHeader http.Header,
+) {
+	w := httptest.NewRecorder()
+	req, err := http.NewRequest(method, url+"?"+values.Encode(), nil)
+	require.NoError(t, err)
+	handler(w, req)
+
+	require.JSONEq(t, expectedBody, w.Body.String())
+
+	actualHeaders := w.Header()
+
+	for key, expected := range expectedHeader {
+		actual := actualHeaders.Values(key)
+		require.ElementsMatch(t, expected, actual)
+	}
+}
+
+func RequireHTTPBodyAndNotHeader(
+	t *testing.T,
+	handler http.HandlerFunc,
+	method string,
+	url string,
+	values url.Values,
+	expectedBody string,
+	bannedHeaders []string,
+) {
+	w := httptest.NewRecorder()
+	req, err := http.NewRequest(method, url+"?"+values.Encode(), nil)
+	require.NoError(t, err)
+	handler(w, req)
+
+	require.JSONEq(t, expectedBody, w.Body.String())
+
+	actualHeaders := w.Header()
+
+	for _, bannedHeader := range bannedHeaders {
+		if val := actualHeaders.Get(bannedHeader); val != "" {
+			t.Errorf("discovered banned header: %s", bannedHeader)
+			t.FailNow()
+		}
 	}
 }

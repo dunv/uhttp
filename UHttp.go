@@ -40,6 +40,8 @@ func init() {
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RegisterStaticFilesHandler", "uhttp.HandleStatic")
 }
 
+// TODO: queryStrings for cache
+
 type UHTTP struct {
 	opts           *uhttpOptions
 	requestContext map[ContextKey]interface{}
@@ -104,6 +106,11 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		metrics:        metrics,
 		cache:          map[string]*cache{},
 		cacheLock:      &sync.RWMutex{},
+	}
+	if u.opts.cacheExposeHandlers {
+		u.Handle("/uhttp/cache/size", cacheSizeHandler(u))
+		u.Handle("/uhttp/cache/debug", cacheDebugHandler(u))
+		u.Handle("/uhttp/cache/clear", cacheClearHandler(u))
 	}
 
 	return u
@@ -181,24 +188,20 @@ func (u *UHTTP) ListenAndServe() error {
 		}
 	}
 
-	if u.opts.cacheExposeHandlers {
-		u.Handle("/uhttp/cache/size", cacheSizeHandler(u))
-		u.Handle("/uhttp/cache/clear", cacheClearHandler(u))
-	}
-
 	// Execute TTL for cache (a handler will never serve a cache which is too old, this routine only
 	// makes sure that the cache size does not grow too much)
 	go func() {
 		for {
 			u.cacheLock.RLock()
 			for _, patternCache := range u.cache {
-				patternCache.Lock()
-				for key, entry := range patternCache.data {
-					if time.Since(entry.updatedOn) > patternCache.maxAge {
-						delete(patternCache.data, key)
+				keys := patternCache.Keys()
+				for _, key := range keys {
+					if entry, ok := patternCache.Get(key); ok {
+						if time.Since(entry.updatedOn) > patternCache.maxAge {
+							patternCache.Delete(key)
+						}
 					}
 				}
-				patternCache.Unlock()
 			}
 			u.cacheLock.RUnlock()
 			time.Sleep(u.opts.cacheTTLEnforcerInterval)

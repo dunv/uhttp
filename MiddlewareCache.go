@@ -3,21 +3,26 @@ package uhttp
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/dunv/ulog"
 )
 
+const CACHE_HEADER = "X-UHTTP-CACHE"
+const CACHE_HEADER_AGE_HUMAN_READABLE = "X-UHTTP-CACHE-AGE-HUMAN-READABLE"
+const CACHE_HEADER_AGE_MS = "X-UHTTP-CACHE-AGE-MS"
+
+// This middleware provides a per-handler cache
+// It will cache the original response to the client based on
+// - "relevant" headers
+// - queryParams
+// - requestBody
 func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http.HandlerFunc {
 	var c cache
 
@@ -28,17 +33,20 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 	} else {
 		c = cache{
 			&sync.RWMutex{},
+			handler.opts.HandlerPattern,
 			handler.opts.CacheMaxAge,
 			map[string]cacheEntry{},
 		}
 		ulog.PanicIfError(u.registerCache(handler.opts.HandlerPattern, &c))
-		u.Handle(fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.HandlerPattern), specificCacheClearHandler(u, &c))
+		if u.opts.cacheExposeHandlers {
+			u.Handle(fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.HandlerPattern), specificCacheClearHandler(u, c))
+		}
 		if handler.opts.CacheAutomaticUpdatesInterval > 0 {
 			// Run automatic refresher
 			go func() {
 				f := handler.HandlerFunc(u)
 				for {
-					r, err := http.NewRequest(http.MethodGet, "forceCache", nil)
+					r, err := http.NewRequest(http.MethodGet, NO_LOG_MAGIC_URL_FORCE_CACHE, nil)
 					if err != nil {
 						ulog.Errorf("this error should never happen (%s)", err)
 						continue
@@ -73,23 +81,16 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 
 			h, err := cacheHash(handler.opts, r)
 			if err == nil {
-				c.RLock()
-				if entry, ok := c.data[h]; ok {
+				if entry, ok := c.Get(h); ok {
 					if time.Since(entry.updatedOn) < handler.opts.CacheMaxAge {
-						w.Header().Add("X-UHTTP-CACHE", "true")
-						w.Header().Add("X-UHTTP-CACHE-AGE-HUMAN-READABLE", time.Since(entry.updatedOn).String())
-						w.Header().Add("X-UHTTP-CACHE-AGE-MS", strconv.FormatInt(time.Since(entry.updatedOn).Milliseconds(), 10))
+						_ = AddLogOutput(w, "cached", "true")
+						w.Header().Add(CACHE_HEADER, "true")
+						w.Header().Add(CACHE_HEADER_AGE_HUMAN_READABLE, time.Since(entry.updatedOn).String())
+						w.Header().Add(CACHE_HEADER_AGE_MS, strconv.FormatInt(time.Since(entry.updatedOn).Milliseconds(), 10))
 						u.RenderWithStatusCode(w, r, entry.statusCode, entry.data)
-						c.RUnlock()
 						return
 					}
-					c.RUnlock()
-
-					c.Lock()
-					delete(c.data, h)
-					c.Unlock()
-				} else {
-					c.RUnlock()
+					c.Delete(h)
 				}
 			}
 
@@ -99,63 +100,11 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 				handlerOptions: handler.opts,
 				cache:          c,
 			}, r)
-
 		}
 	}
 }
 
-type cache struct {
-	*sync.RWMutex
-	maxAge time.Duration
-	data   map[string]cacheEntry
-}
-
-func (c cache) size() uint64 {
-	total := uint64(0)
-	c.RLock()
-	for _, entry := range c.data {
-		total += uint64(len(entry.data))
-	}
-	c.RUnlock()
-	return total
-}
-
-type cacheEntry struct {
-	updatedOn  time.Time
-	data       json.RawMessage
-	statusCode int
-}
-
-func cacheHash(opts handlerOptions, r *http.Request) (string, error) {
-	// Request-Body
-	body := ""
-	if r.Body != nil {
-		bodyBytes, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return "", err
-		}
-		defer r.Body.Close()
-		if r.Body != nil {
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-		}
-		body = string(bodyBytes)
-	}
-
-	// Request-Params
-	params := r.URL.RawQuery
-
-	// Relevant headers
-	headers := []string{}
-	for _, h := range opts.CacheRelevantHeaders {
-		if val := r.Header.Get(h); val != "" {
-			headers = append(headers, fmt.Sprintf("%s: %s", h, val))
-		}
-	}
-	uniqueString := fmt.Sprintf("%s-%s-%s", body, params, strings.Join(headers, "-"))
-	s := md5.Sum([]byte(uniqueString))
-	return string(s[:]), nil
-}
-
+// a response writer whch updates the cache as soon as a response is sent to the client
 type cachingResponseWriter struct {
 	r              *http.Request
 	w              http.ResponseWriter
@@ -164,26 +113,20 @@ type cachingResponseWriter struct {
 	cache          cache
 }
 
-func (w *cachingResponseWriter) Header() http.Header {
-	return w.w.Header()
-}
+// a response writer whch updates the cache as soon as a response is sent to the client
+func (w *cachingResponseWriter) Header() http.Header { return w.w.Header() }
 
+// a response writer whch updates the cache as soon as a response is sent to the client
 func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 	h, err := cacheHash(w.handlerOptions, w.r)
 	if err != nil {
 		return 0, err
 	}
-
-	w.cache.Lock()
-	w.cache.data[h] = cacheEntry{
-		updatedOn:  time.Now(),
-		data:       data,
-		statusCode: http.StatusOK,
-	}
-	w.cache.Unlock()
+	w.cache.Set(h, bytes.TrimSpace(data), http.StatusOK)
 	return w.w.Write(data)
 }
 
+// a response writer whch updates the cache as soon as a response is sent to the client
 func (w *cachingResponseWriter) WriteHeader(code int) {
 	if !w.headerWritten {
 		w.headerWritten = true
@@ -191,6 +134,7 @@ func (w *cachingResponseWriter) WriteHeader(code int) {
 	}
 }
 
+// a response writer whch updates the cache as soon as a response is sent to the client
 func (w *cachingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	h, ok := w.w.(http.Hijacker)
 	if !ok {
@@ -199,77 +143,15 @@ func (w *cachingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return h.Hijack()
 }
 
-var cacheSizeHandler = func(u *UHTTP) Handler {
-	return NewHandler(
-		WithGet(func(r *http.Request, ret *int) interface{} {
-			res := map[string]map[string]uint64{}
-			totalSize := uint64(0)
-			totalEntries := uint64(0)
-			u.cacheLock.RLock()
-			for pattern, cache := range u.cache {
-				cache.RLock()
-				size := cache.size()
-				totalSize += size
-				entries := uint64(len(cache.data))
-				totalEntries += entries
-				res[pattern] = map[string]uint64{
-					"sizeInBytes": size,
-					"entries":     entries,
-				}
-				cache.RUnlock()
-			}
-			u.cacheLock.RUnlock()
-			res["total"] = map[string]uint64{
-				"sizeInBytes":  totalSize,
-				"totalEntries": totalEntries,
-			}
-			return res
-		}),
-	)
-}
-
-var cacheClearHandler = func(u *UHTTP) Handler {
-	return NewHandler(
-		WithPost(func(r *http.Request, ret *int) interface{} {
-			deletedEntries := 0
-			u.cacheLock.RLock()
-			for _, c := range u.cache {
-				c.Lock()
-				for key := range c.data {
-					delete(c.data, key)
-					deletedEntries++
-				}
-				c.Unlock()
-			}
-			u.cacheLock.RUnlock()
-			return map[string]int{
-				"deletedEntries": deletedEntries,
-			}
-		}),
-	)
-}
-
-var specificCacheClearHandler = func(u *UHTTP, c *cache) Handler {
-	return NewHandler(
-		WithPost(func(r *http.Request, ret *int) interface{} {
-			deletedEntries := 0
-			c.Lock()
-			for key := range c.data {
-				delete(c.data, key)
-				deletedEntries++
-			}
-			c.Unlock()
-			return map[string]int{
-				"deletedEntries": deletedEntries,
-			}
-		}),
-	)
-}
-
+// a response writer which does nothing (used for automatically updating the cache in the background)
+// it can simulate an actual call which discards the anwer to the client
 type noopResponseWriter struct{}
 
+// a response writer which does nothing (used for automatically updating the cache in the background)
 func (w *noopResponseWriter) Header() http.Header { return http.Header{} }
 
+// a response writer which does nothing (used for automatically updating the cache in the background)
 func (w *noopResponseWriter) Write(data []byte) (int, error) { return 0, nil }
 
+// a response writer which does nothing (used for automatically updating the cache in the background)
 func (w *noopResponseWriter) WriteHeader(statusCode int) {}

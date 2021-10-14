@@ -14,6 +14,8 @@ import (
 	"github.com/dunv/ulog"
 )
 
+const NO_LOG_MAGIC_URL_FORCE_CACHE = "UHTTP_NO_LOG_FORCE_CACHE"
+
 type LoggingResponseWriter struct {
 	// http.ResponseWriter
 	underlyingResponseWriter http.ResponseWriter
@@ -68,6 +70,10 @@ func (lrw *LoggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
+				next.ServeHTTP(w, r)
+				return
+			}
 
 			lrw := newLoggingResponseWriter(w)
 			start := time.Now()

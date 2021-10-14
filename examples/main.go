@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -35,20 +34,27 @@ func main() {
 		return errors.New("this is an error")
 	})))
 
-	u.Handle("/testCache", uhttp.NewHandler(
+	counter1 := 0
+	u.Handle("/testCache1", uhttp.NewHandler(
 		uhttp.WithCache(10*time.Minute),
 		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
-			fmt.Println("executing GET testCacheHandler")
-			return map[string]string{
-				"method":    "get",
-				"updatedOn": time.Now().Format(time.RFC3339Nano),
-			}
+			counter1++
+			return map[string]int{"counter1": counter1}
+		}),
+	))
+
+	counter2 := 0
+	u.Handle("/testCache2", uhttp.NewHandler(
+		uhttp.WithCache(10*time.Minute),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
+			counter2++
+			return map[string]int{"counter2": counter2}
 		}),
 	))
 
 	// 	u.Handle("/testCacheAutomatic", uhttp.NewHandler(
 	// 		uhttp.WithCache(10*time.Minute),
-	// 		uhttp.WithAutomaticCacheUpdates(5*time.Second, []string{}),
+	// 		uhttp.WithAutomaticCacheUpdates(5*time.Second),
 	// 		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 	// 			fmt.Println("executing GET testCacheAutomaticHandler")
 	// 			return map[string]string{
