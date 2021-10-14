@@ -82,7 +82,8 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		logHandlerErrors:             true,
 		logHandlerRegistrations:      true,
 
-		cacheTTLEnforcerInterval: 30 * time.Second,
+		cacheTTLEnforcerInterval:       30 * time.Second,
+		cachePersistDifferentEncodings: true,
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)

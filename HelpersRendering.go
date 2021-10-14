@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/dunv/uhttp/cache"
 	"github.com/itchio/go-brotli/enc"
 )
 
@@ -100,9 +103,46 @@ func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, 
 
 	switch responseWriter := w.(type) {
 	case *cachingResponseWriter:
-		err = responseWriter.Close()
+		err = responseWriter.Close(model, statusCode)
 		if err != nil {
 			u.opts.log.LogWithLevelf(u.opts.encodingErrorLogLevel, "err closing cachingResponseWriter (%s)", err)
 		}
 	}
+}
+
+func (u *UHTTP) renderCacheEntry(w http.ResponseWriter, r *http.Request, entry cache.CacheEntry) {
+	_ = AddLogOutput(w, "cached", "true")
+	w.Header().Add(CACHE_HEADER, "true")
+	w.Header().Add(CACHE_HEADER_AGE_HUMAN_READABLE, time.Since(entry.UpdatedOn()).String())
+	w.Header().Add(CACHE_HEADER_AGE_MS, strconv.FormatInt(time.Since(entry.UpdatedOn()).Milliseconds(), 10))
+
+	// if u.opts.cachePersistDifferentEncodings {
+	// for k, v := range entry.ResponseHeader() {
+	// w.Header().Set(k, strings.Join(v, ", "))
+	// }
+	// w.WriteHeader(entry.ResponseStatusCode())
+	//
+	// var err error
+	// acceptEncoding := r.Header.Get("Accept-Encoding")
+	// if u.opts.enableBrotli && strings.Contains(acceptEncoding, "br") {
+	// _, err = w.Write(e.responseBodyBrotli)
+	// // w.Header().Set("Content-Encoding", "br")
+	// } else if u.opts.enableGzip && strings.Contains(acceptEncoding, "gzip") {
+	// _, err = w.Write(e.responseBodyGzip)
+	// // w.Header().Set("Content-Encoding", "gzip")
+	// } else if u.opts.enableDeflate && strings.Contains(acceptEncoding, "deflate") {
+	// _, err = w.Write(e.responseBodyDeflate)
+	// // w.Header().Set("Content-Encoding", "deflate")
+	// } else {
+	// // writer = w
+	// _, err = w.Write(e.responseBody)
+	// }
+	//
+	// if err != nil {
+	// u.opts.log.LogWithLevelf(u.opts.encodingErrorLogLevel, "err rendering cacheEntry (%s)", err)
+	// }
+	// return
+	// }
+
+	u.rawRenderWithStatusCode(w, r, entry.ResponseStatusCode(), entry.ResponseModel())
 }

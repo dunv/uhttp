@@ -58,8 +58,9 @@ type uhttpOptions struct {
 	metricsPath   string
 
 	// Caching
-	cacheExposeHandlers      bool
-	cacheTTLEnforcerInterval time.Duration
+	cachePersistDifferentEncodings bool
+	cacheExposeHandlers            bool
+	cacheTTLEnforcerInterval       time.Duration
 
 	// Granular logging
 	logHandlerCalls                 bool
@@ -221,6 +222,12 @@ func WithSilentStaticFileRegistration(makeFileRegistrationSilent bool) UhttpOpti
 func WithExposeCacheHandlers() UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.cacheExposeHandlers = true
+	})
+}
+
+func WithCachePersistDifferentEncodings(persist bool) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.cachePersistDifferentEncodings = persist
 	})
 }
 

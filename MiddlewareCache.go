@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +30,7 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 	if registeredCache, ok := u.cache[handler.opts.HandlerPattern]; ok {
 		c = registeredCache
 	} else {
-		c = cache.NewCache(handler.opts.CacheMaxAge)
+		c = cache.NewCache(handler.opts.CacheMaxAge, u.opts.cachePersistDifferentEncodings)
 		ulog.PanicIfError(u.registerCache(handler.opts.HandlerPattern, c))
 
 		if u.opts.cacheExposeHandlers {
@@ -82,13 +81,9 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 				return
 			}
 
-			if entry, ok, key := c.Get(ExtractAndRestoreRequestBody(r), r.URL.RawQuery, r.Header); ok {
+			if entry, ok, key := c.Get(ExtractAndRestoreRequestBody(r), r.URL.RawQuery); ok {
 				if time.Since(entry.UpdatedOn()) < handler.opts.CacheMaxAge {
-					_ = AddLogOutput(w, "cached", "true")
-					w.Header().Add(CACHE_HEADER, "true")
-					w.Header().Add(CACHE_HEADER_AGE_HUMAN_READABLE, time.Since(entry.UpdatedOn()).String())
-					w.Header().Add(CACHE_HEADER_AGE_MS, strconv.FormatInt(time.Since(entry.UpdatedOn()).Milliseconds(), 10))
-					u.opts.log.LogIfError(entry.Write(w))
+					u.renderCacheEntry(w, r, entry)
 					return
 				}
 				c.Delete(key)
@@ -105,13 +100,11 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 
 // a response writer whch updates the cache as soon as a response is sent to the client
 type cachingResponseWriter struct {
-	r *http.Request
-	w http.ResponseWriter
-
-	cache *cache.Cache
-
-	responseBody       []byte
-	responseStatusCode int
+	r            *http.Request
+	w            http.ResponseWriter
+	cache        *cache.Cache
+	wroteHeader  bool
+	responseBody []byte
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client
@@ -129,16 +122,16 @@ func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 
 // a response writer whch updates the cache as soon as a response is sent to the client
 func (w *cachingResponseWriter) WriteHeader(code int) {
-	if w.responseStatusCode == 0 {
-		w.responseStatusCode = code
+	if !w.wroteHeader {
+		w.wroteHeader = true
 		w.w.WriteHeader(code)
 	}
 }
 
-func (w *cachingResponseWriter) Close() error {
+func (w *cachingResponseWriter) Close(model interface{}, statusCode int) error {
 	w.cache.Set(
 		ExtractAndRestoreRequestBody(w.r), w.r.URL.RawQuery, w.r.Header.Clone(),
-		w.responseBody, w.w.Header().Clone(), w.responseStatusCode,
+		model, w.responseBody, w.w.Header().Clone(), statusCode,
 	)
 	return nil
 }
