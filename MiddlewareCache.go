@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,25 +39,34 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 			map[string]cacheEntry{},
 		}
 		ulog.PanicIfError(u.registerCache(handler.opts.HandlerPattern, &c))
+
 		if u.opts.cacheExposeHandlers {
 			u.Handle(fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.HandlerPattern), specificCacheClearHandler(u, c))
 		}
+
 		if handler.opts.CacheAutomaticUpdatesInterval > 0 {
 			// Run automatic refresher
 			go func() {
-				f := handler.HandlerFunc(u)
+				f := handler.handlerFuncExcludeMiddlewareByName(u, handler.opts.CacheAutomaticUpdatesSkipMiddleware)
 				for {
 					r, err := http.NewRequest(http.MethodGet, NO_LOG_MAGIC_URL_FORCE_CACHE, nil)
 					if err != nil {
 						ulog.Errorf("this error should never happen (%s)", err)
+						time.Sleep(handler.opts.CacheAutomaticUpdatesInterval)
 						continue
 					}
 					r.Header.Set(handler.opts.CacheBypassHeader, "true")
-					f(&noopResponseWriter{}, r)
+					noopWriter := &noopResponseWriter{}
+					f(noopWriter, r)
+
+					if noopWriter.statusCode != http.StatusOK {
+						u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.HandlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
+					}
 					time.Sleep(handler.opts.CacheAutomaticUpdatesInterval)
 				}
 			}()
 		}
+
 	}
 	u.cacheLock.Unlock()
 
@@ -145,13 +155,19 @@ func (w *cachingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 
 // a response writer which does nothing (used for automatically updating the cache in the background)
 // it can simulate an actual call which discards the anwer to the client
-type noopResponseWriter struct{}
+type noopResponseWriter struct {
+	body       string
+	statusCode int
+}
 
 // a response writer which does nothing (used for automatically updating the cache in the background)
 func (w *noopResponseWriter) Header() http.Header { return http.Header{} }
 
 // a response writer which does nothing (used for automatically updating the cache in the background)
-func (w *noopResponseWriter) Write(data []byte) (int, error) { return 0, nil }
+func (w *noopResponseWriter) Write(data []byte) (int, error) {
+	w.body = string(data)
+	return 0, nil
+}
 
 // a response writer which does nothing (used for automatically updating the cache in the background)
-func (w *noopResponseWriter) WriteHeader(statusCode int) {}
+func (w *noopResponseWriter) WriteHeader(statusCode int) { w.statusCode = statusCode }

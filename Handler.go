@@ -3,6 +3,9 @@ package uhttp
 import (
 	"context"
 	"net/http"
+	"reflect"
+	"runtime"
+	"strings"
 )
 
 func NewHandler(opts ...HandlerOption) Handler {
@@ -54,6 +57,10 @@ func (h Handler) WsReady(u *UHTTP) Middleware {
 }
 
 func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
+	return h.handlerFuncExcludeMiddlewareByName(u, nil)
+}
+
+func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) http.HandlerFunc {
 
 	c := chain(
 		corsMiddleware(u),
@@ -73,11 +80,33 @@ func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
 
 	// Add global middlewares
 	for key := range u.opts.globalMiddlewares {
+		f := u.opts.globalMiddlewares[key]
+		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		if u.opts.logCustomMiddlewareRegistration {
+			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.HandlerPattern, fName)
+		}
+
+		if exclude != nil {
+			if strings.Contains(fName, *exclude) {
+				continue
+			}
+		}
 		c = chain(c, u.opts.globalMiddlewares[key])
 	}
 
 	// Add handler-specified middlewares
 	for key := range h.opts.Middlewares {
+		f := h.opts.Middlewares[key]
+		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		if u.opts.logCustomMiddlewareRegistration {
+			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.HandlerPattern, fName)
+		}
+
+		if exclude != nil {
+			if strings.Contains(fName, *exclude) {
+				continue
+			}
+		}
 		c = chain(c, h.opts.Middlewares[key])
 	}
 

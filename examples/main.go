@@ -15,7 +15,7 @@ func main() {
 
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
-		uhttp.WithExposeCacheHandlers(true),
+		uhttp.WithExposeCacheHandlers(),
 		uhttp.WithGranularLogging(false, true, true),
 	)
 

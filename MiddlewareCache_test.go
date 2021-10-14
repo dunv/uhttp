@@ -74,7 +74,7 @@ func TestCacheExpiry(t *testing.T) {
 
 func TestCacheClear(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(WithExposeCacheHandlers(true))
+	u := NewUHTTP(WithExposeCacheHandlers())
 	counter1 := 0
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
@@ -105,7 +105,7 @@ func TestCacheClear(t *testing.T) {
 
 func TestCacheClearSpecific(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(WithExposeCacheHandlers(true))
+	u := NewUHTTP(WithExposeCacheHandlers())
 	counter1 := 0
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
@@ -140,7 +140,7 @@ func TestCacheAutomatic(t *testing.T) {
 	counter1 := 0
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
-		WithAutomaticCacheUpdates(200*time.Millisecond),
+		WithAutomaticCacheUpdates(200*time.Millisecond, nil),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++
 			return map[string]int{"counter1": counter1}
