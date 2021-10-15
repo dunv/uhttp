@@ -3,6 +3,7 @@ package uhttp
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -213,6 +214,29 @@ func RequireHTTPBodyAndHeader(
 
 	actualHeaders := w.Header()
 
+	for key, expected := range expectedHeader {
+		actual := actualHeaders.Values(key)
+		require.ElementsMatch(t, expected, actual)
+	}
+}
+
+func RequireHTTPHeader(
+	t *testing.T,
+	handler http.HandlerFunc,
+	method string,
+	url string,
+	values url.Values,
+	expectedHeader http.Header,
+) {
+	w := httptest.NewRecorder()
+	req, err := http.NewRequest(method, url+"?"+values.Encode(), nil)
+	require.NoError(t, err)
+	handler(w, req)
+
+	actualHeaders := w.Header()
+	for k, header := range actualHeaders {
+		fmt.Println("header", k, header)
+	}
 	for key, expected := range expectedHeader {
 		actual := actualHeaders.Values(key)
 		require.ElementsMatch(t, expected, actual)
