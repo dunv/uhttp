@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dunv/ulog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -179,6 +180,11 @@ func TestExposeCacheManagement(t *testing.T) {
 
 	// check result
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 1, "sizeInBytes": 30}, "/cache2": {"entries": 0, "sizeInBytes": 0},  "total": {"entries": 1, "sizeInBytes": 30}}`)
+
+	// check result
+	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
+	require.Contains(t, body, `{"/cache1":{"336d5ebc5436534e61d16e63ddfca327":"{ updated:`)
+	require.Contains(t, body, `statusCode:200 model:true body:true bodyBr:false bodyGzip:false bodyDeflate:false }"},"/cache2":{}}`)
 
 	// populate second
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache2", nil, `{"all2": "ok"}`)
