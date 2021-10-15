@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dunv/ulog"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCacheHit(t *testing.T) {
@@ -132,6 +133,85 @@ func TestCacheClearSpecific(t *testing.T) {
 
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 2}`)
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`)
+}
+
+func TestExposeCacheManagementNotAvailable(t *testing.T) {
+	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	u := NewUHTTP()
+	handler1 := NewHandler(
+		WithCache(10*time.Second),
+		WithAutomaticCacheUpdates(200*time.Millisecond, nil),
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			return map[string]string{"all1": "ok"}
+		}),
+	)
+	u.Handle("/cache1", handler1)
+	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
+	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil)
+	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear", nil)
+	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache1", nil)
+}
+
+func TestExposeCacheManagement(t *testing.T) {
+	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	u := NewUHTTP(WithExposeCacheHandlers())
+	handler1 := NewHandler(
+		WithCache(10*time.Second),
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			return map[string]string{"all1": "ok"}
+		}),
+	)
+	handler2 := NewHandler(
+		WithCache(10*time.Second),
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			return map[string]string{"all2": "ok"}
+		}),
+	)
+
+	u.Handle("/cache1", handler1)
+	u.Handle("/cache2", handler2)
+
+	// check initial size
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 0, "sizeInBytes": 0}, "/cache2": {"entries": 0, "sizeInBytes": 0}, "total": {"entries": 0, "sizeInBytes": 0}}`)
+
+	// populate first
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache1", nil, `{"all1": "ok"}`)
+
+	// check result
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 1, "sizeInBytes": 30}, "/cache2": {"entries": 0, "sizeInBytes": 0},  "total": {"entries": 1, "sizeInBytes": 30}}`)
+
+	// populate second
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache2", nil, `{"all2": "ok"}`)
+
+	// check result
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 1, "sizeInBytes": 30}, "/cache2": {"entries": 1, "sizeInBytes": 30},  "total": {"entries": 2, "sizeInBytes": 60}}`)
+
+	// clear first
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache1", nil, `{"deletedEntries": 1}`)
+
+	// check result
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 0, "sizeInBytes": 0}, "/cache2": {"entries": 1, "sizeInBytes": 30},  "total": {"entries": 1, "sizeInBytes": 30}}`)
+
+	// clear second
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache2", nil, `{"deletedEntries": 1}`)
+
+	// check result
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 0, "sizeInBytes": 0}, "/cache2": {"entries": 0, "sizeInBytes": 0}, "total": {"entries": 0, "sizeInBytes": 0}}`)
+
+	// populate first
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache1", nil, `{"all1": "ok"}`)
+
+	// populate second
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache2", nil, `{"all2": "ok"}`)
+
+	// check result
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 1, "sizeInBytes": 30}, "/cache2": {"entries": 1, "sizeInBytes": 30},  "total": {"entries": 2, "sizeInBytes": 60}}`)
+
+	// clear all
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear", nil, `{"deletedEntries": 2}`)
+
+	// check result
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 0, "sizeInBytes": 0}, "/cache2": {"entries": 0, "sizeInBytes": 0}, "total": {"entries": 0, "sizeInBytes": 0}}`)
 }
 
 func TestCacheAutomatic(t *testing.T) {

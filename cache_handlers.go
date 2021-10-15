@@ -26,8 +26,8 @@ var cacheSizeHandler = func(u *UHTTP) Handler {
 			}
 			u.cacheLock.RUnlock()
 			res["total"] = map[string]uint64{
-				"sizeInBytes":  totalSize,
-				"totalEntries": totalEntries,
+				"sizeInBytes": totalSize,
+				"entries":     totalEntries,
 			}
 			return res
 		}),
