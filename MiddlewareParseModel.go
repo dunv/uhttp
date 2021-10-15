@@ -43,7 +43,7 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 
 				// Parse body
 				modelInterface := reflectModel.Interface()
-				err := GzipDecodeRequestBody(r, modelInterface)
+				err := decodeRequestBody(r, modelInterface)
 				if err != nil {
 					u.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
 					u.opts.log.LogWithLevelf(u.opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())

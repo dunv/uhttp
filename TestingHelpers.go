@@ -107,7 +107,7 @@ func ExecuteHandlerWithGzipResponse(
 		return
 	}
 
-	response, err := GzipDecodeResponseBody(res)
+	response, err := decodeResponseBody(res)
 	if err != nil {
 		t.Error(err)
 		return
@@ -141,7 +141,7 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 		return
 	}
 
-	encoded, err := GzipEncodeRequestBody(requestBody)
+	encoded, err := gzipEncodeRequestBody(requestBody)
 	if err != nil {
 		t.Error(err)
 		return
@@ -169,7 +169,7 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 		return
 	}
 
-	response, err := GzipDecodeResponseBody(res)
+	response, err := decodeResponseBody(res)
 	if err != nil {
 		t.Error(err)
 		return

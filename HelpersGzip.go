@@ -2,25 +2,32 @@ package uhttp
 
 import (
 	"bytes"
+	"compress/flate"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/itchio/go-brotli/dec"
 )
 
+// Wraps a reader in the correct decoder based on http-headers
 // inspired by https://medium.com/axiomzenteam/put-your-http-requests-on-a-diet-3e1e52333014
-func ReaderHelper(header http.Header, body io.ReadCloser) (io.Reader, error) {
-	var reader io.Reader
+func DecodingReader(header http.Header, body io.ReadCloser) (io.ReadCloser, error) {
+	var reader io.ReadCloser
 	switch header.Get("Content-Encoding") {
 	case "gzip":
 		gz, err := gzip.NewReader(body)
 		if err != nil {
 			return nil, fmt.Errorf("could not decode gzipped response (%s)", err)
 		}
-		defer gz.Close()
 		reader = gz
+	case "br":
+		reader = dec.NewBrotliReader(body)
+	case "deflate":
+		reader = flate.NewReader(body)
 	default:
 		reader = body
 	}
@@ -28,8 +35,8 @@ func ReaderHelper(header http.Header, body io.ReadCloser) (io.Reader, error) {
 	return reader, nil
 }
 
-func GzipDecodeRequestBody(r *http.Request, model interface{}) error {
-	reader, err := ReaderHelper(r.Header, r.Body)
+func decodeRequestBody(r *http.Request, model interface{}) error {
+	reader, err := DecodingReader(r.Header, r.Body)
 	if err != nil {
 		return fmt.Errorf("err parsing request (err getting reader %s)", err)
 	}
@@ -39,12 +46,13 @@ func GzipDecodeRequestBody(r *http.Request, model interface{}) error {
 		return fmt.Errorf("err parsing request (err decoding %s)", err)
 	}
 	defer r.Body.Close()
+	defer reader.Close()
 
 	return nil
 }
 
-func GzipDecodeResponseBody(res *http.Response) ([]byte, error) {
-	wrappedReader, err := ReaderHelper(res.Header, res.Body)
+func decodeResponseBody(res *http.Response) ([]byte, error) {
+	wrappedReader, err := DecodingReader(res.Header, res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +66,7 @@ func GzipDecodeResponseBody(res *http.Response) ([]byte, error) {
 	return decodedResponse, nil
 }
 
-func GzipEncodeRequestBody(body []byte) (io.ReadCloser, error) {
+func gzipEncodeRequestBody(body []byte) (io.ReadCloser, error) {
 	buffer := bytes.NewBuffer([]byte{})
 	writer, err := gzip.NewWriterLevel(buffer, 5)
 	if err != nil {

@@ -1,6 +1,7 @@
 package uhttp
 
 import (
+	"bufio"
 	"bytes"
 	"io/ioutil"
 	"net/http"
@@ -8,15 +9,19 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/dunv/ulog"
 )
 
-func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
+func setupSinglePage(t *testing.T) *UHTTP {
+	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	u := NewUHTTP()
 
 	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
 	if err != nil {
 		t.Error(err)
-		return
+		t.FailNow()
+		return nil
 	}
 	defer os.RemoveAll(tempDir)
 
@@ -28,19 +33,23 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 	if err != nil {
 		f.Close()
 		t.Error(err)
-		return
+		t.FailNow()
+		return nil
 	}
 	f.Close()
 
 	f2, err := os.OpenFile(filepath.Join(tempDir, "main.css"), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		t.Error(err)
+		t.FailNow()
+		return nil
 	}
-	_, err = f2.Write([]byte(".test{ font-weight:bold;"))
+	_, err = f2.Write([]byte(".test{ font-weight:bold;}"))
 	if err != nil {
 		f.Close()
 		t.Error(err)
-		return
+		t.FailNow()
+		return nil
 	}
 	f2.Close()
 
@@ -48,8 +57,15 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 	err = u.RegisterStaticFilesHandler(tempDir)
 	if err != nil {
 		t.Errorf("could not register staticFilesHandler (%s)", err)
-		return
+		t.FailNow()
+		return nil
 	}
+
+	return u
+}
+
+func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
+	u := setupSinglePage(t)
 
 	req := httptest.NewRequest("GET", "http://example.com/", nil)
 	w := httptest.NewRecorder()
@@ -70,45 +86,8 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 }
 
 func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
-	u := NewUHTTP()
+	u := setupSinglePage(t)
 
-	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer os.RemoveAll(tempDir)
-
-	f, err := os.OpenFile(filepath.Join(tempDir, "index.html"), os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = f.Write([]byte("<html></html>"))
-	if err != nil {
-		f.Close()
-		t.Error(err)
-		return
-	}
-	f.Close()
-
-	f2, err := os.OpenFile(filepath.Join(tempDir, "main.css"), os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = f2.Write([]byte(".test{ font-weight:bold;}"))
-	if err != nil {
-		f.Close()
-		t.Error(err)
-		return
-	}
-	f2.Close()
-
-	// Test for serving index.html when requesting
-	err = u.RegisterStaticFilesHandler(tempDir)
-	if err != nil {
-		t.Errorf("could not register staticFilesHandler (%s)", err)
-		return
-	}
 	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
 	w := httptest.NewRecorder()
 	staticFilesHandler(u)(w, req)
@@ -122,6 +101,87 @@ func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
 	expectedWithNewLine := []byte(`.test{ font-weight:bold;}`)
 	if !bytes.Equal(expectedWithNewLine, response) {
 		t.Errorf("expected does not match actual (expected: '%s', actual: '%s')", expectedWithNewLine, response)
+		return
+	}
+
+}
+
+func TestSinglePageAppHandlerReturnActualFileGzip(t *testing.T) {
+	u := setupSinglePage(t)
+
+	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
+	req.Header.Add("Accept-Encoding", "gzip")
+	w := httptest.NewRecorder()
+	staticFilesHandler(u)(w, req)
+	res := w.Result()
+	responseDecoded, err := decodeResponseBody(res)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("did not return http %d (actual: %d)", http.StatusOK, res.StatusCode)
+		return
+	}
+	expectedWithNewLine := []byte(`.test{ font-weight:bold;}`)
+
+	if !bytes.Equal(expectedWithNewLine, responseDecoded) {
+		t.Errorf("expected does not match actual (expected: '%s', actual: '%s')", expectedWithNewLine, responseDecoded)
+		return
+	}
+
+}
+
+func TestSinglePageAppHandlerReturnActualFileBrotli(t *testing.T) {
+	u := setupSinglePage(t)
+
+	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
+	req.Header.Add("Accept-Encoding", "br")
+	w := httptest.NewRecorder()
+	staticFilesHandler(u)(w, req)
+	res := w.Result()
+	responseDecoded, err := decodeResponseBody(res)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("did not return http %d (actual: %d)", http.StatusOK, res.StatusCode)
+		return
+	}
+	expectedWithNewLine := []byte(`.test{ font-weight:bold;}`)
+
+	if !bytes.Equal(expectedWithNewLine, responseDecoded) {
+		t.Errorf("expected does not match actual (expected: '%s', actual: '%s')", expectedWithNewLine, responseDecoded)
+		return
+	}
+
+}
+
+func TestSinglePageAppHandlerReturnActualFileDeflate(t *testing.T) {
+	u := setupSinglePage(t)
+
+	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
+	req.Header.Add("Accept-Encoding", "deflate")
+	w := httptest.NewRecorder()
+	staticFilesHandler(u)(w, req)
+	res := w.Result()
+	responseDecoded, err := decodeResponseBody(res)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("did not return http %d (actual: %d)", http.StatusOK, res.StatusCode)
+		return
+	}
+	expectedWithNewLine := []byte(`.test{ font-weight:bold;}`)
+
+	if !bytes.Equal(expectedWithNewLine, responseDecoded) {
+		t.Errorf("expected does not match actual (expected: '%s', actual: '%s')", expectedWithNewLine, responseDecoded)
 		return
 	}
 
