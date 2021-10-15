@@ -1,9 +1,14 @@
 package uhttp
 
 import (
+	"bufio"
 	"fmt"
+	"net/http"
+	"net/url"
 	"testing"
 	"time"
+
+	"github.com/dunv/ulog"
 )
 
 func testRequirementFail(requirement R, actual map[string]string, unexpectedKey string, t *testing.T) {
@@ -230,4 +235,57 @@ func TestRFC3339DateRequirementFail(t *testing.T) {
 		"test",
 		t,
 	)
+}
+
+func TestRequirementsInHandler(t *testing.T) {
+	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	u := NewUHTTP()
+	handler := NewHandler(
+		WithRequiredGet(R{
+			"string":      STRING,
+			"bool":        BOOL,
+			"int":         INT,
+			"int32":       INT32,
+			"int64":       INT64,
+			"float32":     FLOAT32,
+			"float64":     FLOAT64,
+			"shortDate":   SHORT_DATE,
+			"rfc3339Date": RFC3339_DATE,
+		}),
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			return map[string]interface{}{
+				"string":      GetAsString("string", r),
+				"bool":        GetAsBool("bool", r),
+				"int":         GetAsInt("int", r),
+				"int32":       GetAsInt32("int32", r),
+				"int64":       GetAsInt64("int64", r),
+				"float32":     GetAsFloat32("float32", r),
+				"float64":     GetAsFloat64("float64", r),
+				"shortDate":   GetAsTime("shortDate", r),
+				"rfc3339Date": GetAsTime("rfc3339Date", r),
+			}
+		}),
+	)
+	u.Handle("/test", handler)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/test", url.Values{
+		"string":      []string{"myString"},
+		"bool":        []string{"true"},
+		"int":         []string{"42"},
+		"int32":       []string{"42"},
+		"int64":       []string{"42"},
+		"float32":     []string{"42.42"},
+		"float64":     []string{"42.42"},
+		"shortDate":   []string{"2021-10-15"},
+		"rfc3339Date": []string{"2021-10-15T08:30:00Z"},
+	}, `{
+		"string": "myString",
+		"bool": true,
+		"int": 42,
+		"int32": 42,
+		"int64": 42,
+		"float32": 42.42,
+		"float64": 42.42,
+		"shortDate": "2021-10-15T00:00:00Z",
+		"rfc3339Date": "2021-10-15T08:30:00Z"
+	}`)
 }
