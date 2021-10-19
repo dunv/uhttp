@@ -66,6 +66,7 @@ type uhttpOptions struct {
 	logHandlerCalls                 bool
 	logHandlerErrors                bool
 	logHandlerRegistrations         bool
+	logCacheRuns                    bool
 	logCustomMiddlewareRegistration bool
 }
 
@@ -240,5 +241,11 @@ func WithCacheTTLEnforcerInterval(i time.Duration) UhttpOption {
 func WithLogCustomMiddlewareRegistration() UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.logCustomMiddlewareRegistration = true
+	})
+}
+
+func WithLogCacheRuns(logCacheRuns bool) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.logCacheRuns = logCacheRuns
 	})
 }

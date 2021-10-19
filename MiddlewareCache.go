@@ -2,6 +2,7 @@ package uhttp
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -50,8 +51,7 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 					}
 					r.Header.Set(handler.opts.CacheBypassHeader, "true")
 					noopWriter := &noopResponseWriter{}
-					f(noopWriter, r)
-
+					f(noopWriter, r.WithContext(context.WithValue(r.Context(), CtxKeyIsAutomaticCacheExecution, true)))
 					if noopWriter.statusCode != http.StatusOK {
 						u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.HandlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
 					}
@@ -73,11 +73,7 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 
 			bypassCache := r.Header.Get(handler.opts.CacheBypassHeader)
 			if bypassCache == "true" {
-				next.ServeHTTP(&cachingResponseWriter{
-					r:     r,
-					w:     w,
-					cache: c,
-				}, r)
+				next.ServeHTTP(newCachingResponseWriter(u, handler, w, r, c), r)
 				return
 			}
 
@@ -89,27 +85,44 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 				c.Delete(key)
 			}
 
-			next.ServeHTTP(&cachingResponseWriter{
-				r:     r,
-				w:     w,
-				cache: c,
-			}, r)
+			next.ServeHTTP(newCachingResponseWriter(u, handler, w, r, c), r)
 		}
 	}
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client
 type cachingResponseWriter struct {
+	u            *UHTTP
+	h            Handler
 	r            *http.Request
 	w            http.ResponseWriter
 	cache        *cache.Cache
 	wroteHeader  bool
 	responseBody []byte
+	startTime    time.Time
+}
+
+func newCachingResponseWriter(u *UHTTP, h Handler, w http.ResponseWriter, r *http.Request, cache *cache.Cache) *cachingResponseWriter {
+	if u.opts.logCacheRuns {
+		if r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
+			u.Log().Infof("Started automatic caching of %s", h.opts.HandlerPattern)
+		} else {
+			u.Log().Infof("Started caching of %s by userRequest", h.opts.HandlerPattern)
+		}
+	}
+
+	return &cachingResponseWriter{
+		u:         u,
+		h:         h,
+		w:         w,
+		r:         r,
+		cache:     cache,
+		startTime: time.Now(),
+	}
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client
 func (w *cachingResponseWriter) Header() http.Header {
-
 	return w.w.Header()
 }
 
@@ -133,6 +146,15 @@ func (w *cachingResponseWriter) Close(model interface{}, statusCode int) error {
 		ExtractAndRestoreRequestBody(w.r), w.r.URL.RawQuery, w.r.Header.Clone(),
 		model, w.responseBody, w.w.Header().Clone(), statusCode,
 	)
+
+	if w.u.opts.logCacheRuns {
+		if w.r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
+			w.u.Log().Infof("Finished automatic caching of %s in %s", w.h.opts.HandlerPattern, time.Since(w.startTime).String())
+		} else {
+			w.u.Log().Infof("Finished caching by userRequest of %s in %s", w.h.opts.HandlerPattern, time.Since(w.startTime).String())
+
+		}
+	}
 	return nil
 }
 
