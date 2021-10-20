@@ -2,8 +2,6 @@ package uhttp
 
 import (
 	"bytes"
-	"compress/flate"
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +9,8 @@ import (
 	"net/http"
 
 	"github.com/itchio/go-brotli/dec"
+	"github.com/klauspost/compress/flate"
+	"github.com/klauspost/compress/gzip"
 )
 
 // Wraps a reader in the correct decoder based on http-headers

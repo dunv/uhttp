@@ -9,6 +9,25 @@ import (
 	"github.com/dunv/ulog"
 )
 
+func selectMethodMiddleware(u *UHTTP, handlerOpts handlerOptions) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res, retCode := executeHandlerMethod(r, u, handlerOpts)
+
+		// Figure out, how to respond
+		if res != nil {
+			switch typed := res.(type) {
+			case error:
+				u.RenderErrorWithStatusCode(w, r, retCode, typed, u.opts.logHandlerErrors)
+			default:
+				u.RenderWithStatusCode(w, r, retCode, typed)
+			}
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 func executeHandlerMethod(r *http.Request, u *UHTTP, handlerOpts handlerOptions) (interface{}, int) {
 	// Figure out which method to invoke
 	var returnCode int
@@ -17,38 +36,38 @@ func executeHandlerMethod(r *http.Request, u *UHTTP, handlerOpts handlerOptions)
 	// this channel will be used to tell the main routine that the handler was processed
 	handlerProcessed := make(chan interface{})
 
-	if r.Method == http.MethodGet && handlerOpts.Get != nil {
+	if r.Method == http.MethodGet && handlerOpts.get != nil {
 		go func() {
 			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
-			handlerProcessed <- handlerOpts.Get(r, &returnCode)
+			handlerProcessed <- handlerOpts.get(r, &returnCode)
 		}()
-	} else if r.Method == http.MethodGet && handlerOpts.GetWithModel != nil {
+	} else if r.Method == http.MethodGet && handlerOpts.getWithModel != nil {
 		go func() {
 			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
 			model := parsedModel(r)
-			handlerProcessed <- handlerOpts.GetWithModel(r, model, &returnCode)
+			handlerProcessed <- handlerOpts.getWithModel(r, model, &returnCode)
 		}()
-	} else if r.Method == http.MethodPost && handlerOpts.Post != nil {
+	} else if r.Method == http.MethodPost && handlerOpts.post != nil {
 		go func() {
 			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
-			handlerProcessed <- handlerOpts.Post(r, &returnCode)
+			handlerProcessed <- handlerOpts.post(r, &returnCode)
 		}()
-	} else if r.Method == http.MethodPost && handlerOpts.PostWithModel != nil {
-		go func() {
-			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
-			model := parsedModel(r)
-			handlerProcessed <- handlerOpts.PostWithModel(r, model, &returnCode)
-		}()
-	} else if r.Method == http.MethodDelete && handlerOpts.Delete != nil {
-		go func() {
-			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
-			handlerProcessed <- handlerOpts.Delete(r, &returnCode)
-		}()
-	} else if r.Method == http.MethodDelete && handlerOpts.DeleteWithModel != nil {
+	} else if r.Method == http.MethodPost && handlerOpts.postWithModel != nil {
 		go func() {
 			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
 			model := parsedModel(r)
-			handlerProcessed <- handlerOpts.DeleteWithModel(r, model, &returnCode)
+			handlerProcessed <- handlerOpts.postWithModel(r, model, &returnCode)
+		}()
+	} else if r.Method == http.MethodDelete && handlerOpts.delete != nil {
+		go func() {
+			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+			handlerProcessed <- handlerOpts.delete(r, &returnCode)
+		}()
+	} else if r.Method == http.MethodDelete && handlerOpts.deleteWithModel != nil {
+		go func() {
+			defer recoverFromPanic(u, handlerProcessed, r, &returnCode)
+			model := parsedModel(r)
+			handlerProcessed <- handlerOpts.deleteWithModel(r, model, &returnCode)
 		}()
 	} else {
 		return fmt.Errorf("method not allowed"), http.StatusMethodNotAllowed

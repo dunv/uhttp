@@ -268,3 +268,20 @@ func RequireHTTPBodyAndNotHeader(
 		}
 	}
 }
+
+func Run(
+	t *testing.T,
+	u *UHTTP,
+	method string,
+	url string,
+	header map[string]string,
+) (int, string, http.Header, *http.Response) {
+	w := httptest.NewRecorder()
+	req, err := http.NewRequest(method, url, nil)
+	require.NoError(t, err)
+	for key, val := range header {
+		req.Header.Set(key, val)
+	}
+	u.ServeMux().ServeHTTP(w, req)
+	return w.Result().StatusCode, w.Body.String(), w.Header(), w.Result()
+}

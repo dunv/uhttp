@@ -2,7 +2,6 @@ package uhttp
 
 import (
 	"bytes"
-	"compress/gzip"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/ulog"
+	"github.com/klauspost/compress/gzip"
 )
 
 type cachedFile struct {

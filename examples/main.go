@@ -36,6 +36,7 @@ func main() {
 
 	counter1 := 0
 	u.Handle("/testCache1", uhttp.NewHandler(
+		uhttp.WithCachePersistEncodings(),
 		uhttp.WithCache(10*time.Minute),
 		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++

@@ -1,12 +1,13 @@
 package uhttp
 
 import (
-	"compress/flate"
-	"compress/gzip"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/klauspost/compress/flate"
+	"github.com/klauspost/compress/gzip"
 
 	"github.com/dunv/ulog"
 )
@@ -58,9 +59,9 @@ type uhttpOptions struct {
 	metricsPath   string
 
 	// Caching
-	cachePersistDifferentEncodings bool
-	cacheExposeHandlers            bool
-	cacheTTLEnforcerInterval       time.Duration
+	cacheExposeHandlers           bool
+	cacheExposeHandlersMiddleware []Middleware
+	cacheTTLEnforcerInterval      time.Duration
 
 	// Granular logging
 	logHandlerCalls                 bool
@@ -220,15 +221,10 @@ func WithSilentStaticFileRegistration(makeFileRegistrationSilent bool) UhttpOpti
 	})
 }
 
-func WithExposeCacheHandlers() UhttpOption {
+func WithExposeCacheHandlers(middlewares ...Middleware) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.cacheExposeHandlers = true
-	})
-}
-
-func WithCachePersistDifferentEncodings(persist bool) UhttpOption {
-	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.cachePersistDifferentEncodings = persist
+		o.cacheExposeHandlersMiddleware = middlewares
 	})
 }
 

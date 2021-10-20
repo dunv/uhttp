@@ -3,6 +3,7 @@ package uhttp
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -28,34 +29,36 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 
 	// only register cache once (this make the "HandlerFunc" callable more than once)
 	u.cacheLock.Lock()
-	if registeredCache, ok := u.cache[handler.opts.HandlerPattern]; ok {
+	if registeredCache, ok := u.cache[handler.opts.handlerPattern]; ok {
 		c = registeredCache
 	} else {
-		c = cache.NewCache(handler.opts.CacheMaxAge, u.opts.cachePersistDifferentEncodings)
-		ulog.PanicIfError(u.registerCache(handler.opts.HandlerPattern, c))
+		// enable wanted encodings in cache
+		c = cache.NewCache(handler.opts.cacheMaxAge)
+
+		ulog.PanicIfError(u.registerCache(handler.opts.handlerPattern, c))
 
 		if u.opts.cacheExposeHandlers {
-			u.Handle(fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.HandlerPattern), specificCacheClearHandler(u, c))
+			u.Handle(fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.handlerPattern), specificCacheClearHandler(u, c))
 		}
 
-		if handler.opts.CacheAutomaticUpdatesInterval > 0 {
+		if handler.opts.cacheAutomaticUpdatesInterval > 0 {
 			// Run automatic refresher
 			go func() {
-				f := handler.handlerFuncExcludeMiddlewareByName(u, handler.opts.CacheAutomaticUpdatesSkipMiddleware)
+				f := handler.handlerFuncExcludeMiddlewareByName(u, handler.opts.cacheAutomaticUpdatesSkipMiddleware)
 				for {
 					r, err := http.NewRequest(http.MethodGet, NO_LOG_MAGIC_URL_FORCE_CACHE, nil)
 					if err != nil {
 						ulog.Errorf("this error should never happen (%s)", err)
-						time.Sleep(handler.opts.CacheAutomaticUpdatesInterval)
+						time.Sleep(handler.opts.cacheAutomaticUpdatesInterval)
 						continue
 					}
-					r.Header.Set(handler.opts.CacheBypassHeader, "true")
+					r.Header.Set(handler.opts.cacheBypassHeader, "true")
 					noopWriter := &noopResponseWriter{}
 					f(noopWriter, r.WithContext(context.WithValue(r.Context(), CtxKeyIsAutomaticCacheExecution, true)))
 					if noopWriter.statusCode != http.StatusOK {
-						u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.HandlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
+						u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.handlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
 					}
-					time.Sleep(handler.opts.CacheAutomaticUpdatesInterval)
+					time.Sleep(handler.opts.cacheAutomaticUpdatesInterval)
 				}
 			}()
 		}
@@ -71,15 +74,15 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 				return
 			}
 
-			bypassCache := r.Header.Get(handler.opts.CacheBypassHeader)
+			bypassCache := r.Header.Get(handler.opts.cacheBypassHeader)
 			if bypassCache == "true" {
 				next.ServeHTTP(newCachingResponseWriter(u, handler, w, r, c), r)
 				return
 			}
 
 			if entry, ok, key := c.Get(ExtractAndRestoreRequestBody(r), r.URL.RawQuery); ok {
-				if time.Since(entry.UpdatedOn()) < handler.opts.CacheMaxAge {
-					u.renderCacheEntry(w, r, entry)
+				if time.Since(entry.UpdatedOn()) < handler.opts.cacheMaxAge {
+					u.renderCacheEntry(handler, w, r, entry)
 					return
 				}
 				c.Delete(key)
@@ -105,9 +108,9 @@ type cachingResponseWriter struct {
 func newCachingResponseWriter(u *UHTTP, h Handler, w http.ResponseWriter, r *http.Request, cache *cache.Cache) *cachingResponseWriter {
 	if u.opts.logCacheRuns {
 		if r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
-			u.Log().Infof("Started automatic caching of %s", h.opts.HandlerPattern)
+			u.Log().Infof("Started automatic caching of %s", h.opts.handlerPattern)
 		} else {
-			u.Log().Infof("Started caching of %s by userRequest", h.opts.HandlerPattern)
+			u.Log().Infof("Started caching of %s by userRequest", h.opts.handlerPattern)
 		}
 	}
 
@@ -127,7 +130,7 @@ func (w *cachingResponseWriter) Header() http.Header {
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client
-// Write always needs to be called AFTER WriteHeader, otherwise we get an error
+
 func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 	w.responseBody = append(w.responseBody, data...)
 	return w.w.Write(data)
@@ -141,21 +144,52 @@ func (w *cachingResponseWriter) WriteHeader(code int) {
 	}
 }
 
-func (w *cachingResponseWriter) Close(model interface{}, statusCode int) error {
+func (w *cachingResponseWriter) Close(model interface{}, statusCode int) {
+	var err error
+	var bodyPlain []byte
+	var bodyBrotli []byte
+	var bodyGzip []byte
+	var bodyDeflate []byte
+
+	if w.h.opts.cachePersistEncodings {
+		bodyPlain, err = json.Marshal(model)
+		if err != nil {
+			w.u.Log().Errorf("could not encode model for caching (%s)", err)
+		} else {
+			if w.u.opts.enableBrotli {
+				bodyBrotli, err = w.u.compressJSON(ENCODING_BROTLI, bodyPlain)
+				if err != nil {
+					w.u.Log().Errorf("could not compress JSON for caching (%s)", err)
+				}
+			}
+			if w.u.opts.enableGzip {
+				bodyGzip, err = w.u.compressJSON(ENCODING_GZIP, bodyPlain)
+				if err != nil {
+					w.u.Log().Errorf("could not compress JSON for caching (%s)", err)
+				}
+			}
+			if w.u.opts.enableDeflate {
+				bodyDeflate, err = w.u.compressJSON(ENCODING_DEFLATE, bodyPlain)
+				if err != nil {
+					w.u.Log().Errorf("could not compress JSON for caching (%s)", err)
+				}
+			}
+		}
+	}
+
 	w.cache.Set(
 		ExtractAndRestoreRequestBody(w.r), w.r.URL.RawQuery, w.r.Header.Clone(),
-		model, w.responseBody, w.w.Header().Clone(), statusCode,
+		model, w.w.Header().Clone(), statusCode,
+		bodyPlain, bodyBrotli, bodyGzip, bodyDeflate,
 	)
 
 	if w.u.opts.logCacheRuns {
 		if w.r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
-			w.u.Log().Infof("Finished automatic caching of %s in %s", w.h.opts.HandlerPattern, time.Since(w.startTime).String())
+			w.u.Log().Infof("Finished automatic caching of %s in %s", w.h.opts.handlerPattern, time.Since(w.startTime).String())
 		} else {
-			w.u.Log().Infof("Finished caching by userRequest of %s in %s", w.h.opts.HandlerPattern, time.Since(w.startTime).String())
-
+			w.u.Log().Infof("Finished caching by userRequest of %s in %s", w.h.opts.handlerPattern, time.Since(w.startTime).String())
 		}
 	}
-	return nil
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client

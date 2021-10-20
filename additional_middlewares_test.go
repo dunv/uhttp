@@ -49,7 +49,7 @@ func TestAdditionalMiddlewareHandlerMultiple(t *testing.T) {
 	u := NewUHTTP()
 
 	ctxKey := ContextKey("manuallyAddedMultipleHandler")
-	middleware := withContextMiddleware(u, ctxKey, map[string]string{"manuallyAdded": "manuallyAdded"})
+	middleware := WithContextMiddleware(ctxKey, map[string]string{"manuallyAdded": "manuallyAdded"})
 
 	handler := NewHandler(
 		WithGet(func(r *http.Request, ret *int) interface{} {

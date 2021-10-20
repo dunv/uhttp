@@ -12,35 +12,35 @@ type HandlerOption interface {
 }
 
 type handlerOptions struct {
-	Get          HandlerFunc
-	GetWithModel HandlerFuncWithModel
-	GetModel     interface{}
+	get          HandlerFunc
+	getWithModel HandlerFuncWithModel
+	getModel     interface{}
 
-	Post          HandlerFunc
-	PostWithModel HandlerFuncWithModel
-	PostModel     interface{}
+	post          HandlerFunc
+	postWithModel HandlerFuncWithModel
+	postModel     interface{}
 
-	Delete          HandlerFunc
-	DeleteWithModel HandlerFuncWithModel
-	DeleteModel     interface{}
+	delete          HandlerFunc
+	deleteWithModel HandlerFuncWithModel
+	deleteModel     interface{}
 
-	RequiredGet    R
-	OptionalGet    R
-	Middlewares    []Middleware
-	PreProcess     func(ctx context.Context) error
-	Timeout        time.Duration
-	TimeoutMessage string
+	requiredGet    R
+	optionalGet    R
+	middlewares    []Middleware
+	preProcess     func(ctx context.Context) error
+	timeout        time.Duration
+	timeoutMessage string
 
-	CacheEnable                         bool
-	CacheAutomaticUpdatesInterval       time.Duration
-	CacheAutomaticUpdatesSkipMiddleware *string
-	CacheMaxAge                         time.Duration
+	cacheEnable                         bool
+	cachePersistEncodings               bool
+	cacheAutomaticUpdatesInterval       time.Duration
+	cacheAutomaticUpdatesSkipMiddleware *string
+	cacheMaxAge                         time.Duration
 
 	// Read-only
-	CacheBypassHeader    string
-	CacheRelevantHeaders []string
+	cacheBypassHeader string
 
-	HandlerPattern string
+	handlerPattern string
 }
 
 type funcHandlerOption struct {
@@ -57,116 +57,140 @@ func newFuncHandlerOption(f func(*handlerOptions)) *funcHandlerOption {
 
 func withDefaults() HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.CacheBypassHeader = "X-UHTTP-BYPASS-CACHE"
-		o.CacheRelevantHeaders = []string{"Accept-Encoding"}
-		// o.CacheRelevantHeaders = []string{}
+		o.cacheBypassHeader = "X-UHTTP-BYPASS-CACHE"
 	})
 }
 
+// Func to be called when the request is invoked with `GET`
 func WithGet(h HandlerFunc) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		if o.GetWithModel != nil {
+		if o.getWithModel != nil {
 			ulog.Error("cannot use WithGetModel in conjunction with WithGet. WithGet will supercede this assignment")
 		}
 
-		o.Get = h
+		o.get = h
 	})
 }
 
+// Func to be called when the request is invoked with `GET`
+// and a request-body should be parsed into a model
 func WithGetModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		if o.Get != nil {
+		if o.get != nil {
 			ulog.Error("cannot use WithGetModel in conjunction with WithGet. WithGet will supercede this assignment")
 		}
 
-		o.GetModel = m
-		o.GetWithModel = h
+		o.getModel = m
+		o.getWithModel = h
 	})
 }
 
+// Func to be called when the request is invoked with `POST`
 func WithPost(h HandlerFunc) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		if o.PostWithModel != nil {
+		if o.postWithModel != nil {
 			ulog.Error("cannot use WithPostModel in conjunction with WithPost. WithPost will supercede this assignment")
 		}
 
-		o.Post = h
+		o.post = h
 	})
 }
 
+// Func to be called when the request is invoked with `POST`
+// and a request-body should be parsed into a model
 func WithPostModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		if o.Post != nil {
+		if o.post != nil {
 			ulog.Error("cannot use WithPostModel in conjunction with WithPost. WithPost will supercede this assignment")
 		}
 
-		o.PostModel = m
-		o.PostWithModel = h
+		o.postModel = m
+		o.postWithModel = h
 	})
 }
 
+// Func to be called when the request is invoked with `DELETE`
 func WithDelete(h HandlerFunc) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		if o.DeleteWithModel != nil {
+		if o.deleteWithModel != nil {
 			ulog.Error("cannot use WithDeleteModel in conjunction with WithDelete. WithDelete will supercede this assignment")
 		}
 
-		o.Delete = h
+		o.delete = h
 	})
 }
 
+// Func to be called when the request is invoked with `DELETE`
+// and a request-body should be parsed into a model
 func WithDeleteModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		if o.Delete != nil {
+		if o.delete != nil {
 			ulog.Error("cannot use WithDeleteModel in conjunction with WithDelete. WithDelete will supercede this assignment")
 		}
 
-		o.DeleteModel = m
-		o.DeleteWithModel = h
+		o.deleteModel = m
+		o.deleteWithModel = h
 	})
 }
 
+// Add required query-parameters which will be parsed and validated
+// The framework will make sure they are present
 func WithRequiredGet(r R) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.RequiredGet = r
+		o.requiredGet = r
 	})
 }
 
+// Add optional query-parameters which will be parsed and validated
 func WithOptionalGet(r R) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.OptionalGet = r
+		o.optionalGet = r
 	})
 }
 
+// Add additional middlewares
 func WithMiddlewares(m ...Middleware) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.Middlewares = m
+		o.middlewares = m
 	})
 }
 
+// Execute a function before the handler is invoked
 func WithPreProcess(p PreProcessFunc) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.PreProcess = p
+		o.preProcess = p
 	})
 }
 
+// Execute the handler with a timeout (wrapped in an original golang `http.TimeoutHandler`)
 func WithTimeout(timeout time.Duration, timeoutMessage string) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.Timeout = timeout
-		o.TimeoutMessage = timeoutMessage
+		o.timeout = timeout
+		o.timeoutMessage = timeoutMessage
 	})
 }
 
+// Cache handler invocations with a maxAge
 func WithCache(maxAge time.Duration) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.CacheEnable = true
-		o.CacheMaxAge = maxAge
+		o.cacheEnable = true
+		o.cacheMaxAge = maxAge
 	})
 }
 
+// Call handler in the background discarding the response (only useful if cache is enabled)
 func WithAutomaticCacheUpdates(interval time.Duration, skipMiddleware *string) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
-		o.CacheAutomaticUpdatesInterval = interval
-		o.CacheAutomaticUpdatesSkipMiddleware = skipMiddleware
+		o.cacheAutomaticUpdatesInterval = interval
+		o.cacheAutomaticUpdatesSkipMiddleware = skipMiddleware
+	})
+}
+
+// When creating the cache, not only keep the response model in the cache
+// but also create all enabled compressed versions of it
+// this will take load of the server if many calls hit the cache, but comes with a heavy memory penalty
+func WithCachePersistEncodings() HandlerOption {
+	return newFuncHandlerOption(func(o *handlerOptions) {
+		o.cachePersistEncodings = true
 	})
 }

@@ -10,6 +10,7 @@ const (
 	CtxKeyCache                     ContextKey = "uhttp.cache"
 	CtxKeyGetParams                 ContextKey = "uhttp.getParams"
 	CtxKeyResponseWriter            ContextKey = "uhttp.responseWriter"
+	CtxKeyTest                      ContextKey = "uhttp.test"
 )
 
 func IsAutomaticCacheExecution(r *http.Request) bool {

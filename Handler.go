@@ -29,7 +29,7 @@ type PreProcessFunc func(ctx context.Context) error
 
 func (h Handler) WsReady(u *UHTTP) Middleware {
 	c := chain(
-		parseModelMiddleware(u, h.opts.PostModel, h.opts.GetModel, h.opts.DeleteModel),
+		parseModelMiddleware(u, h.opts.postModel, h.opts.getModel, h.opts.deleteModel),
 		getParamsMiddleware(u, h.opts),
 		// Do not add logging here: a WS connection has more states which should be logged separately e.g. in the handler
 	)
@@ -39,7 +39,7 @@ func (h Handler) WsReady(u *UHTTP) Middleware {
 
 	// Add contexts
 	for key, value := range u.requestContext {
-		c = chain(c, withContextMiddleware(u, key, value))
+		c = chain(c, WithContextMiddleware(key, value))
 	}
 
 	// Add global middlewares
@@ -48,12 +48,12 @@ func (h Handler) WsReady(u *UHTTP) Middleware {
 	}
 
 	// Add handler-specified middlewares
-	for key := range h.opts.Middlewares {
-		c = chain(c, h.opts.Middlewares[key])
+	for key := range h.opts.middlewares {
+		c = chain(c, h.opts.middlewares[key])
 	}
 
 	// Add preProcess
-	return chain(c, preProcessMiddleware(u, h.opts.PreProcess))
+	return chain(c, preProcessMiddleware(u, h.opts.preProcess))
 }
 
 func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
@@ -65,7 +65,7 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 	c := chain(
 		corsMiddleware(u),
 		jsonResponseMiddleware(u),
-		parseModelMiddleware(u, h.opts.PostModel, h.opts.GetModel, h.opts.DeleteModel),
+		parseModelMiddleware(u, h.opts.postModel, h.opts.getModel, h.opts.deleteModel),
 		getParamsMiddleware(u, h.opts),
 		addLoggingMiddleware(u),
 	)
@@ -75,7 +75,7 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 
 	// Add contexts
 	for key, value := range u.requestContext {
-		c = chain(c, withContextMiddleware(u, key, value))
+		c = chain(c, WithContextMiddleware(key, value))
 	}
 
 	// Add global middlewares
@@ -83,7 +83,7 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 		f := u.opts.globalMiddlewares[key]
 		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 		if u.opts.logCustomMiddlewareRegistration {
-			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.HandlerPattern, fName)
+			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.handlerPattern, fName)
 		}
 
 		if exclude != nil {
@@ -95,11 +95,11 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 	}
 
 	// Add handler-specified middlewares
-	for key := range h.opts.Middlewares {
-		f := h.opts.Middlewares[key]
+	for key := range h.opts.middlewares {
+		f := h.opts.middlewares[key]
 		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 		if u.opts.logCustomMiddlewareRegistration {
-			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.HandlerPattern, fName)
+			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.handlerPattern, fName)
 		}
 
 		if exclude != nil {
@@ -107,19 +107,19 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 				continue
 			}
 		}
-		c = chain(c, h.opts.Middlewares[key])
+		c = chain(c, h.opts.middlewares[key])
 	}
 
 	// Add preProcess
-	c = chain(c, preProcessMiddleware(u, h.opts.PreProcess))
+	c = chain(c, preProcessMiddleware(u, h.opts.preProcess))
 
-	if h.opts.CacheEnable {
+	if h.opts.cacheEnable {
 		c = chain(c, cacheMiddleware(u, h))
 	}
 
 	// Timeouts
-	if h.opts.Timeout != 0 {
-		return http.TimeoutHandler(c(selectMethodMiddleware(u, h.opts)), h.opts.Timeout, h.opts.TimeoutMessage).ServeHTTP
+	if h.opts.timeout != 0 {
+		return http.TimeoutHandler(c(selectMethodMiddleware(u, h.opts)), h.opts.timeout, h.opts.timeoutMessage).ServeHTTP
 	}
 
 	return c(selectMethodMiddleware(u, h.opts))

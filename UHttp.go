@@ -1,8 +1,6 @@
 package uhttp
 
 import (
-	"compress/flate"
-	"compress/gzip"
 	"fmt"
 	"net/http"
 	"sync"
@@ -11,6 +9,8 @@ import (
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/uhttp/cache"
 	"github.com/dunv/ulog"
+	"github.com/klauspost/compress/flate"
+	"github.com/klauspost/compress/gzip"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -82,8 +82,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		logHandlerErrors:             true,
 		logHandlerRegistrations:      true,
 
-		cacheTTLEnforcerInterval:       30 * time.Second,
-		cachePersistDifferentEncodings: true,
+		cacheTTLEnforcerInterval: 30 * time.Second,
 	}
 	for _, opt := range opts {
 		opt.apply(mergedOpts)
@@ -154,15 +153,15 @@ func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
 
 // Handle configuration
 func (u *UHTTP) Handle(pattern string, handler Handler) {
-	handler.opts.HandlerPattern = pattern
+	handler.opts.handlerPattern = pattern
 	handlerFunc := handler.HandlerFunc(u)
 
 	if u.opts.logHandlerRegistrations {
-		if handler.opts.Get != nil || handler.opts.GetWithModel != nil {
+		if handler.opts.get != nil || handler.opts.getWithModel != nil {
 			u.opts.log.Infof("Registered http GET %s", pattern)
-		} else if handler.opts.Post != nil || handler.opts.PostWithModel != nil {
+		} else if handler.opts.post != nil || handler.opts.postWithModel != nil {
 			u.opts.log.Infof("Registered http POST %s", pattern)
-		} else if handler.opts.Delete != nil || handler.opts.DeleteWithModel != nil {
+		} else if handler.opts.delete != nil || handler.opts.deleteWithModel != nil {
 			u.opts.log.Infof("Registered http DELETE %s", pattern)
 		}
 	}
