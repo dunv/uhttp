@@ -75,3 +75,12 @@ func parseDate(value string, key string, format string, validatedMap R, errors *
 	}
 	validatedMap[key] = parsedDate
 }
+
+func parseDuration(value string, key string, validatedMap R, errors *[]error) {
+	parsedDuration, err := time.ParseDuration(value)
+	if err != nil {
+		*errors = append(*errors, fmt.Errorf("could not validate duration. got %s", value))
+		return
+	}
+	validatedMap[key] = parsedDuration
+}

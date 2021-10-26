@@ -18,6 +18,7 @@ const (
 	FLOAT64      string = "float64"
 	SHORT_DATE   string = "shortDate" // 2006-01-02
 	RFC3339_DATE string = "rfc3339Date"
+	DURATION     string = "duration"
 )
 
 func ENUM(values ...string) []string {
@@ -46,6 +47,8 @@ func (r R) Printable() (map[string]string, error) {
 			printable[key] = strconv.FormatFloat(typed, 'f', 2, 64)
 		case time.Time:
 			printable[key] = typed.Format(time.RFC3339)
+		case time.Duration:
+			printable[key] = typed.String()
 		default:
 			return nil, fmt.Errorf("could not print type %T", typed)
 		}
@@ -91,6 +94,8 @@ func (u *UHTTP) validateParams(requirement R, actual map[string]string, destinat
 				parseDate(actual[key], key, "2006-01-02", destination, &errors)
 			case RFC3339_DATE:
 				parseDate(actual[key], key, time.RFC3339, destination, &errors)
+			case DURATION:
+				parseDuration(actual[key], key, destination, &errors)
 			default:
 				return fmt.Errorf("unknown param requirement")
 			}

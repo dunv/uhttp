@@ -237,6 +237,25 @@ func TestRFC3339DateRequirementFail(t *testing.T) {
 	)
 }
 
+func TestDurationRequirementSuccess(t *testing.T) {
+	testRequirementSuccess(
+		R{"test": DURATION},
+		map[string]string{"test": "10h"},
+		"test",
+		time.Hour*10,
+		t,
+	)
+}
+
+func TestDurationRequirementFail(t *testing.T) {
+	testRequirementFail(
+		R{"test": DURATION},
+		map[string]string{"test": "5k"},
+		"test",
+		t,
+	)
+}
+
 func TestRequirementsInHandler(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	u := NewUHTTP()
@@ -251,6 +270,7 @@ func TestRequirementsInHandler(t *testing.T) {
 			"float64":     FLOAT64,
 			"shortDate":   SHORT_DATE,
 			"rfc3339Date": RFC3339_DATE,
+			"duration":    DURATION,
 		}),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]interface{}{
@@ -263,6 +283,7 @@ func TestRequirementsInHandler(t *testing.T) {
 				"float64":     GetAsFloat64("float64", r),
 				"shortDate":   GetAsTime("shortDate", r),
 				"rfc3339Date": GetAsTime("rfc3339Date", r),
+				"duration":    GetAsDuration("duration", r).String(),
 			}
 		}),
 	)
@@ -277,6 +298,7 @@ func TestRequirementsInHandler(t *testing.T) {
 		"float64":     []string{"42.42"},
 		"shortDate":   []string{"2021-10-15"},
 		"rfc3339Date": []string{"2021-10-15T08:30:00Z"},
+		"duration":    []string{"5m"},
 	}, `{
 		"string": "myString",
 		"bool": true,
@@ -286,6 +308,7 @@ func TestRequirementsInHandler(t *testing.T) {
 		"float32": 42.42,
 		"float64": 42.42,
 		"shortDate": "2021-10-15T00:00:00Z",
-		"rfc3339Date": "2021-10-15T08:30:00Z"
+		"rfc3339Date": "2021-10-15T08:30:00Z",
+		"duration": "5m0s"
 	}`)
 }

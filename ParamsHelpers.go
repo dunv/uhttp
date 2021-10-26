@@ -163,3 +163,22 @@ func GetAsTimeFromContext(key string, ctx context.Context) *time.Time {
 
 	return &value
 }
+
+func GetAsDuration(key string, r *http.Request) *time.Duration {
+	return GetAsDurationFromContext(key, r.Context())
+}
+
+func GetAsDurationFromContext(key string, ctx context.Context) *time.Duration {
+	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
+	if !ok {
+		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		return nil
+	}
+
+	value, ok := paramMap[key].(time.Duration)
+	if !ok {
+		return nil
+	}
+
+	return &value
+}
