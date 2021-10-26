@@ -9,20 +9,20 @@ import (
 	"unsafe"
 )
 
-func NewCache(maxAge time.Duration, persistEncodings bool) *Cache {
+func NewCache(
+	maxAge time.Duration,
+) *Cache {
 	return &Cache{
-		mu:               &sync.RWMutex{},
-		maxAge:           maxAge,
-		persistEncodings: persistEncodings,
-		data:             map[string]CacheEntry{},
+		mu:     &sync.RWMutex{},
+		maxAge: maxAge,
+		data:   map[string]CacheEntry{},
 	}
 }
 
 type Cache struct {
-	mu               *sync.RWMutex
-	maxAge           time.Duration
-	persistEncodings bool
-	data             map[string]CacheEntry
+	mu     *sync.RWMutex
+	maxAge time.Duration
+	data   map[string]CacheEntry
 }
 
 func (c Cache) MaxAge() time.Duration {
@@ -34,35 +34,28 @@ func (c Cache) Set(
 	requestParams string,
 	requestHeader http.Header,
 	responseModel interface{},
-	responseBody []byte,
 	responseHeader http.Header,
 	responseStatusCode int,
+	responseBodyPlain []byte,
+	responseBodyBrotli []byte,
+	responseBodyGzip []byte,
+	responseBodyDeflate []byte,
 ) {
-	dataCopy := make([]byte, len(responseBody))
-	copy(dataCopy, responseBody)
 	key := hash(requestBody, requestParams)
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	e := CacheEntry{
-		updatedOn:          time.Now(),
-		responseModel:      responseModel,
-		responseHeader:     responseHeader,
-		responseStatusCode: responseStatusCode,
+		updatedOn:           time.Now(),
+		responseModel:       responseModel,
+		responseHeader:      responseHeader,
+		responseStatusCode:  responseStatusCode,
+		responseBodyPlain:   responseBodyPlain,
+		responseBodyBrotli:  responseBodyBrotli,
+		responseBodyGzip:    responseBodyGzip,
+		responseBodyDeflate: responseBodyDeflate,
 	}
-	if c.persistEncodings {
-		encoding := responseHeader.Get("Content-Encoding")
-		switch encoding {
-		case "br":
-			e.responseBodyBrotli = responseBody
-		case "gzip":
-			e.responseBodyGzip = responseBody
-		case "deflate":
-			e.responseBodyDeflate = responseBody
-		case "":
-			e.responseBody = responseBody
-		}
-	}
+
 	c.data[key] = e
 }
 
@@ -112,7 +105,7 @@ func (c Cache) Size() uint64 {
 
 	total := uint64(0)
 	for _, entry := range c.data {
-		total += uint64(len(entry.responseBody))
+		total += uint64(len(entry.responseBodyPlain))
 		total += uint64(len(entry.responseBodyBrotli))
 		total += uint64(len(entry.responseBodyGzip))
 		total += uint64(len(entry.responseBodyDeflate))
@@ -130,7 +123,7 @@ func (c Cache) Count() int {
 type CacheEntry struct {
 	updatedOn           time.Time
 	responseModel       interface{}
-	responseBody        []byte
+	responseBodyPlain   []byte
 	responseBodyGzip    []byte
 	responseBodyBrotli  []byte
 	responseBodyDeflate []byte
@@ -139,10 +132,10 @@ type CacheEntry struct {
 }
 
 func (e *CacheEntry) Clone() CacheEntry {
-	var responseBodyCopy []byte
-	if e.responseBody != nil {
-		responseBodyCopy = make([]byte, len(e.responseBody))
-		copy(responseBodyCopy, e.responseBody)
+	var responseBodyPlainCopy []byte
+	if e.responseBodyPlain != nil {
+		responseBodyPlainCopy = make([]byte, len(e.responseBodyPlain))
+		copy(responseBodyPlainCopy, e.responseBodyPlain)
 	}
 
 	var responseBodyGzipCopy []byte
@@ -166,7 +159,7 @@ func (e *CacheEntry) Clone() CacheEntry {
 	return CacheEntry{
 		updatedOn:           e.updatedOn,
 		responseModel:       e.responseModel,
-		responseBody:        responseBodyCopy,
+		responseBodyPlain:   responseBodyPlainCopy,
 		responseBodyGzip:    responseBodyGzipCopy,
 		responseBodyBrotli:  responseBodyBrotliCopy,
 		responseBodyDeflate: responseBodyDeflateCopy,
@@ -183,8 +176,8 @@ func (e *CacheEntry) ResponseModel() interface{} {
 	return e.responseModel
 }
 
-func (e *CacheEntry) ResponseBody() []byte {
-	return e.responseBody
+func (e *CacheEntry) ResponseBodyPlain() []byte {
+	return e.responseBodyPlain
 }
 
 func (e *CacheEntry) ResponseBodyBrotli() []byte {
@@ -208,11 +201,11 @@ func (e *CacheEntry) ResponseStatusCode() int {
 }
 
 func (e *CacheEntry) String() string {
-	return fmt.Sprintf("{ updated:%s statusCode:%d model:%t body:%t bodyBr:%t bodyGzip:%t bodyDeflate:%t }",
+	return fmt.Sprintf("{ updated:%s statusCode:%d model:%t bodyPlain:%t bodyBr:%t bodyGzip:%t bodyDeflate:%t }",
 		e.updatedOn.Format(time.RFC3339),
 		e.responseStatusCode,
 		e.responseModel != nil,
-		e.responseBody != nil,
+		e.responseBodyPlain != nil,
 		e.responseBodyBrotli != nil,
 		e.responseBodyGzip != nil,
 		e.responseBodyDeflate != nil,

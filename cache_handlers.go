@@ -9,6 +9,7 @@ import (
 
 var cacheSizeHandler = func(u *UHTTP) Handler {
 	return NewHandler(
+		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			res := map[string]map[string]uint64{}
 			totalSize := uint64(0)
@@ -36,6 +37,7 @@ var cacheSizeHandler = func(u *UHTTP) Handler {
 
 var cacheDebugHandler = func(u *UHTTP) Handler {
 	return NewHandler(
+		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			res := map[string]map[string]string{}
 			u.cacheLock.RLock()
@@ -56,6 +58,7 @@ var cacheDebugHandler = func(u *UHTTP) Handler {
 
 var cacheClearHandler = func(u *UHTTP) Handler {
 	return NewHandler(
+		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
 		WithPost(func(r *http.Request, ret *int) interface{} {
 			deletedEntries := 0
 			u.cacheLock.RLock()
@@ -76,6 +79,7 @@ var cacheClearHandler = func(u *UHTTP) Handler {
 
 var specificCacheClearHandler = func(u *UHTTP, c *cache.Cache) Handler {
 	return NewHandler(
+		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
 		WithPost(func(r *http.Request, ret *int) interface{} {
 			deletedEntries := 0
 			keys := c.Keys()

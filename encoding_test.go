@@ -90,7 +90,7 @@ func TestEncodingDeflate(t *testing.T) {
 func TestEncodingNoEncoding(t *testing.T) {
 	u := setupEncodingTest(t, false, false, false)
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.Header.Set("Accept-Encoding", "br, gzip, deflate")
+	req.Header.Set("Accept-Encoding", "deflate")
 	w := httptest.NewRecorder()
 	u.ServeMux().ServeHTTP(w, req)
 	res := w.Result()
