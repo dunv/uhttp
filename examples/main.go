@@ -16,7 +16,7 @@ func main() {
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
 		uhttp.WithExposeCacheHandlers(),
-		uhttp.WithGranularLogging(false, true, true),
+		uhttp.WithGranularLogging(true, true, true),
 	)
 
 	u.Handle("/", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
@@ -82,7 +82,6 @@ func main() {
 
 	u.Handle("/testDatei", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		writer := r.Context().Value(uhttp.CtxKeyResponseWriter).(http.ResponseWriter)
-		writer.WriteHeader(http.StatusAccepted)
 
 		f, err := os.OpenFile("./testDatei", os.O_RDONLY, 0644)
 		if err != nil {
@@ -90,7 +89,10 @@ func main() {
 		}
 		defer f.Close()
 
+		writer.Header().Set("Content-Type", "application/zip")
+		writer.WriteHeader(http.StatusAccepted)
 		ulog.LogIfErrorSecondArg(io.Copy(writer, f))
+
 		return nil
 	})))
 

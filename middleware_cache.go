@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -133,15 +134,26 @@ func (w *cachingResponseWriter) Header() http.Header {
 
 func (w *cachingResponseWriter) Write(data []byte) (int, error) {
 	w.responseBody = append(w.responseBody, data...)
+
+	// the default implementation in net/http/server.go (line 1577 in go 1.17.2) writes the response-header as
+	// soon as write is called, if there are no headers written yet
+	if !w.wroteHeader {
+		w.w.WriteHeader(http.StatusOK)
+	}
 	return w.w.Write(data)
 }
 
 // a response writer whch updates the cache as soon as a response is sent to the client
 func (w *cachingResponseWriter) WriteHeader(code int) {
-	if !w.wroteHeader {
-		w.wroteHeader = true
-		w.w.WriteHeader(code)
+	if w.wroteHeader {
+		// copied straight out of the standard-library net/http/server.go
+		caller := relevantCaller()
+		w.u.opts.log.Warnf("superfluous response.WriteHeader call from %s (%s:%d). could happen if the responseWriter is used in a uhttp.Handler AND the function returns something non-nil", caller.Function, path.Base(caller.File), caller.Line)
+		return
 	}
+
+	w.wroteHeader = true
+	w.w.WriteHeader(code)
 }
 
 func (w *cachingResponseWriter) Close(model interface{}, statusCode int) {

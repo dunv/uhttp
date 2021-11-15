@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"path"
 	"sort"
 	"strconv"
 	"time"
@@ -17,18 +18,18 @@ import (
 const NO_LOG_MAGIC_URL_FORCE_CACHE = "UHTTP_NO_LOG_FORCE_CACHE"
 
 type LoggingResponseWriter struct {
-	underlyingResponseWriter http.ResponseWriter
-	statusCode               int
-	additionalOutput         map[string]string
-	headerWritten            bool
+	u                *UHTTP
+	w                http.ResponseWriter
+	statusCode       int
+	additionalOutput map[string]string
+	wroteHeader      bool
 }
 
-func newLoggingResponseWriter(w http.ResponseWriter) *LoggingResponseWriter {
+func newLoggingResponseWriter(w http.ResponseWriter, u *UHTTP) *LoggingResponseWriter {
 	return &LoggingResponseWriter{
-		w,
-		http.StatusOK,
-		map[string]string{},
-		false,
+		u:                u,
+		w:                w,
+		additionalOutput: map[string]string{},
 	}
 }
 
@@ -38,26 +39,37 @@ func (lrw *LoggingResponseWriter) AddLogOutput(key, value string) {
 
 // Delegate Header() to underlying responseWriter
 func (lrw *LoggingResponseWriter) Header() http.Header {
-	return lrw.underlyingResponseWriter.Header()
+	return lrw.w.Header()
 }
 
 // Delegate Write() to underlying responseWriter
 func (lrw *LoggingResponseWriter) Write(data []byte) (int, error) {
-	return lrw.underlyingResponseWriter.Write(data)
+	// the default implementation in net/http/server.go (line 1577 in go 1.17.2) writes the response-header as
+	// soon as write is called, if there are no headers written yet
+	if !lrw.wroteHeader {
+		lrw.WriteHeader(http.StatusOK)
+	}
+	return lrw.w.Write(data)
 }
 
 // Delegate WriteHeader() to underlying responseWriter AND save code
 func (lrw *LoggingResponseWriter) WriteHeader(code int) {
-	if !lrw.headerWritten {
-		lrw.statusCode = code
-		lrw.headerWritten = true
-		lrw.underlyingResponseWriter.WriteHeader(code)
+	// only write headers once
+	if lrw.wroteHeader {
+		// copied straight out of the standard-library net/http/server.go
+		caller := relevantCaller()
+		lrw.u.opts.log.Warnf("superfluous response.WriteHeader call from %s (%s:%d). could happen if the responseWriter is used in a uhttp.Handler AND the function returns something non-nil", caller.Function, path.Base(caller.File), caller.Line)
+		return
 	}
+
+	lrw.statusCode = code
+	lrw.wroteHeader = true
+	lrw.w.WriteHeader(code)
 }
 
 // Delegate Hijack() to underlying responseWriter
 func (lrw *LoggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := lrw.underlyingResponseWriter.(http.Hijacker)
+	h, ok := lrw.w.(http.Hijacker)
 	if !ok {
 		return nil, nil, errors.New("hijack not supported")
 	}
@@ -73,7 +85,7 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 				return
 			}
 
-			lrw := newLoggingResponseWriter(w)
+			lrw := newLoggingResponseWriter(w, u)
 			start := time.Now()
 
 			next.ServeHTTP(lrw, r)

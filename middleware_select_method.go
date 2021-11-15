@@ -13,7 +13,8 @@ func selectMethodMiddleware(u *UHTTP, handlerOpts handlerOptions) http.HandlerFu
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, retCode := executeHandlerMethod(r, u, handlerOpts)
 
-		// Figure out, how to respond
+		// Figure out how to respond
+		// if res == nil -> do not do ANYTHING with response (no header, no body)
 		if res != nil {
 			switch typed := res.(type) {
 			case error:
@@ -23,8 +24,6 @@ func selectMethodMiddleware(u *UHTTP, handlerOpts handlerOptions) http.HandlerFu
 			}
 			return
 		}
-
-		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"runtime"
+	"strings"
 )
 
 func ExtractAndRestoreRequestBody(r *http.Request) []byte {
@@ -19,4 +21,23 @@ func ExtractAndRestoreRequestBody(r *http.Request) []byte {
 		return bodyBytes
 	}
 	return []byte{}
+}
+
+// figures out the first caller of the function outside of github.com/dunv/http AND net/http
+// straight out of net/http/server.go
+func relevantCaller() runtime.Frame {
+	pc := make([]uintptr, 16)
+	n := runtime.Callers(1, pc)
+	frames := runtime.CallersFrames(pc[:n])
+	var frame runtime.Frame
+	for {
+		frame, more := frames.Next()
+		if !strings.HasPrefix(frame.Function, "github.com/dunv/uhttp") && !strings.HasPrefix(frame.Function, "net/http") {
+			return frame
+		}
+		if !more {
+			break
+		}
+	}
+	return frame
 }
