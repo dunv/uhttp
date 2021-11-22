@@ -18,7 +18,7 @@ func testMiddleware(key ContextKey, value interface{}) Middleware {
 func TestAdditionalMiddlewareGlobally(t *testing.T) {
 	ctxKey := ContextKey("manuallyAddedGlobally")
 	middleware := testMiddleware(ctxKey, map[string]string{"manuallyAdded": "manuallyAdded"})
-	u := NewUHTTP(WithGlobalMiddlewares([]Middleware{middleware}))
+	u := NewUHTTP(WithGlobalMiddlewares(middleware))
 
 	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
 		return r.Context().Value(ctxKey)

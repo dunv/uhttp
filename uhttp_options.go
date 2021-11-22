@@ -173,7 +173,7 @@ func WithIdleTimeout(idleTimeout time.Duration) UhttpOption {
 	})
 }
 
-func WithGlobalMiddlewares(middlewares []Middleware) UhttpOption {
+func WithGlobalMiddlewares(middlewares ...Middleware) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.globalMiddlewares = middlewares
 	})
