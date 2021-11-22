@@ -97,6 +97,17 @@ func recoverFromPanic(u *UHTTP, handlerProcessed chan interface{}, r *http.Reque
 		ulog.LogByteArrayLineByLine(stack, u.opts.log.Errorf, fmt.Sprintf("panic [path: %s] ", r.RequestURI))
 		err = fmt.Errorf("%s stackTrace: %s", err, strings.ReplaceAll(string(stack), "\n", "\\n"))
 		*returnCode = http.StatusInternalServerError
+
+		// let caller know if a panic happened
+		// do this asynchronously
+		if u.opts.handleHandlerPanics != nil {
+			for _, fn := range u.opts.handleHandlerPanics {
+				go func(fn func(r *http.Request, err error)) {
+					fn(r, err)
+				}(fn)
+			}
+		}
+
 		if u.opts.sendPanicInfoToClient {
 			handlerProcessed <- err
 			return

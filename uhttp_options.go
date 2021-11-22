@@ -27,6 +27,7 @@ type uhttpOptions struct {
 
 	// If handler panics, send the information to the client
 	sendPanicInfoToClient bool
+	handleHandlerPanics   []func(r *http.Request, err error)
 
 	// Http-Server options
 	address           string
@@ -175,7 +176,7 @@ func WithIdleTimeout(idleTimeout time.Duration) UhttpOption {
 
 func WithGlobalMiddlewares(middlewares ...Middleware) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.globalMiddlewares = middlewares
+		o.globalMiddlewares = append(o.globalMiddlewares, middlewares...)
 	})
 }
 
@@ -243,5 +244,11 @@ func WithLogCustomMiddlewareRegistration() UhttpOption {
 func WithLogCacheRuns(logCacheRuns bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.logCacheRuns = logCacheRuns
+	})
+}
+
+func WithHandleHandlerPanics(fn func(r *http.Request, err error)) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.handleHandlerPanics = append(o.handleHandlerPanics, fn)
 	})
 }
