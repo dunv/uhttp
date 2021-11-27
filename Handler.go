@@ -97,6 +97,12 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 	// Add handler-specified middlewares
 	for key := range h.opts.middlewares {
 		f := h.opts.middlewares[key]
+
+		// convenience feature: middleware can be nil (makes it easier to define handlers sometimes)
+		if f == nil {
+			continue
+		}
+
 		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 		if u.opts.logCustomMiddlewareRegistration {
 			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.handlerPattern, fName)
