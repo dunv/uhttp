@@ -61,12 +61,10 @@ func (h Handler) HandlerFunc(u *UHTTP) http.HandlerFunc {
 }
 
 func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) http.HandlerFunc {
-
+	// Outer middlewares
 	c := chain(
 		corsMiddleware(u),
 		jsonResponseMiddleware(u),
-		parseModelMiddleware(u, h.opts.postModel, h.opts.getModel, h.opts.deleteModel),
-		getParamsMiddleware(u, h.opts),
 		addLoggingMiddleware(u),
 	)
 
@@ -93,6 +91,10 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 		}
 		c = chain(c, u.opts.globalMiddlewares[key])
 	}
+
+	// Add parsers
+	c = chain(c, parseModelMiddleware(u, h.opts.postModel, h.opts.getModel, h.opts.deleteModel))
+	c = chain(c, getParamsMiddleware(u, h.opts))
 
 	// Add handler-specified middlewares
 	for key := range h.opts.middlewares {
