@@ -19,7 +19,7 @@ func main() {
 		uhttp.WithGranularLogging(true, true, true),
 	)
 
-	u.Handle("/", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
+	u.Handle("/hello", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		return map[string]string{"hello": "world"}
 	})))
 
@@ -95,6 +95,8 @@ func main() {
 
 		return nil
 	})))
+
+	ulog.FatalIfError(u.RegisterStaticFilesHandler("static"))
 
 	ulog.Fatal(u.ListenAndServe())
 }

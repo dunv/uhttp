@@ -102,13 +102,17 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		// Detect content-type automatically
 		contentType := http.DetectContentType(fileContent)
 
-		// For some reason it cannot detect minified js and css files -> manual override
+		// Cannot identify the following from the file itself
+		// Overrides (taken from)
+		// https://wiki.selfhtml.org/wiki/MIME-Type/%C3%9Cbersicht
 		if strings.HasSuffix(pattern, ".js") {
 			contentType = "text/javascript; charset=utf-8"
 		} else if strings.HasSuffix(pattern, ".css") {
 			contentType = "text/css; charset=utf-8"
 		} else if strings.HasSuffix(pattern, ".html") {
 			contentType = "text/html; charset=utf-8"
+		} else if strings.HasSuffix(pattern, ".svg") {
+			contentType = "image/svg+xml; charset=utf-8"
 		}
 
 		cached := cachedFile{
