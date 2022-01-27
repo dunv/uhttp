@@ -1,9 +1,7 @@
 package uhttp
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"hash"
 	"net/http"
 	"sync"
 	"time"
@@ -49,7 +47,6 @@ func init() {
 // TODO: actual size of cache cannot be determined
 
 type UHTTP struct {
-	sha256         hash.Hash
 	opts           *uhttpOptions
 	requestContext map[ContextKey]interface{}
 	metrics        map[string]interface{}
@@ -111,7 +108,6 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	}
 
 	u := &UHTTP{
-		sha256:         sha256.New(),
 		opts:           mergedOpts,
 		requestContext: map[ContextKey]interface{}{},
 		metrics:        metrics,

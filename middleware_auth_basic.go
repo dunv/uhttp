@@ -1,6 +1,7 @@
 package uhttp
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 
@@ -11,7 +12,7 @@ func AuthBasic(u *UHTTP, expectedUsername string, expectedHashedPasswordSha256 s
 	return Middleware(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			actualUsername, actualPlainPassword, ok := r.BasicAuth()
-			actualHashedPassword := fmt.Sprintf("%x", u.sha256.Sum([]byte(actualPlainPassword)))
+			actualHashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(actualPlainPassword)))
 
 			if !ok || actualUsername != expectedUsername || actualHashedPassword != expectedHashedPasswordSha256 {
 				u.RenderErrorWithStatusCode(w, r, http.StatusUnauthorized, fmt.Errorf("Unauthorized"), u.opts.logHandlerErrors)
