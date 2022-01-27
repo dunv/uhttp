@@ -2,6 +2,7 @@ package uhttp
 
 import (
 	"bufio"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -135,7 +136,7 @@ func TestCacheClearSpecific(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 1}`)
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`)
 
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cachedHandler1", nil, `{"deletedEntries": 1}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear", map[string][]string{"path": {"/cachedHandler1"}}, `{"deletedEntries": 1}`)
 
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 2}`)
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`)
@@ -152,16 +153,21 @@ func TestExposeCacheManagementNotAvailable(t *testing.T) {
 		}),
 	)
 	u.Handle("/cache1", handler1)
-	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
+	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil)
 	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil)
 	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear", nil)
-	require.HTTPError(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache1", nil)
 }
 
 func TestExposeCacheManagement(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	u := NewUHTTP()
 	u.ExposeCacheHandlers()
+
+	longResponseLength := 100000
+	longResponse := make([]byte, longResponseLength)
+	for i := 0; i < longResponseLength; i++ {
+		longResponse[i] = 'a'
+	}
 
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
@@ -172,7 +178,7 @@ func TestExposeCacheManagement(t *testing.T) {
 	handler2 := NewHandler(
 		WithCache(10*time.Second),
 		WithGet(func(r *http.Request, ret *int) interface{} {
-			return map[string]string{"all2": "ok"}
+			return map[string]string{"longerResponse": string(longResponse)}
 		}),
 	)
 
@@ -186,27 +192,27 @@ func TestExposeCacheManagement(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache1", nil, `{"all1": "ok"}`)
 
 	// check result
-	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
-	require.Contains(t, body, `{"/cache1":{"336d5ebc5436534e61d16e63ddfca327":"{ updated:`)
+	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil)
+	require.Contains(t, body, `{"/cache1":{"3333366435656263353433363533346536316431366536336464666361333237":"{ updated:`)
 	require.Contains(t, body, `statusCode:200 model:true bodyPlain:false bodyBr:false bodyGzip:false bodyDeflate:false }"},"/cache2":{}}`)
 
 	// check result
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 1, "sizeInBytes": 16}, "/cache2": {"entries": 0, "sizeInBytes": 0},  "total": {"entries": 1, "sizeInBytes": 16}}`)
 
 	// populate second
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache2", nil, `{"all2": "ok"}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache2", nil, fmt.Sprintf(`{"longerResponse": "%s"}`, longResponse))
 
 	// check result
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 1, "sizeInBytes": 16}, "/cache2": {"entries": 1, "sizeInBytes": 16},  "total": {"entries": 2, "sizeInBytes": 32}}`)
 
 	// clear first
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache1", nil, `{"deletedEntries": 1}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear", map[string][]string{"path": {"/cache1"}}, `{"deletedEntries": 1}`)
 
 	// check result
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 0, "sizeInBytes": 0}, "/cache2": {"entries": 1, "sizeInBytes": 16},  "total": {"entries": 1, "sizeInBytes": 16}}`)
 
 	// clear second
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache2", nil, `{"deletedEntries": 1}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear", map[string][]string{"path": {"/cache2"}}, `{"deletedEntries": 1}`)
 
 	// check result
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 0, "sizeInBytes": 0}, "/cache2": {"entries": 0, "sizeInBytes": 0}, "total": {"entries": 0, "sizeInBytes": 0}}`)
@@ -215,7 +221,7 @@ func TestExposeCacheManagement(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache1", nil, `{"all1": "ok"}`)
 
 	// populate second
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache2", nil, `{"all2": "ok"}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache2", nil, fmt.Sprintf(`{"longerResponse": "%s"}`, longResponse))
 
 	// check result
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"/cache1": {"entries": 1, "sizeInBytes": 16}, "/cache2": {"entries": 1, "sizeInBytes": 16},  "total": {"entries": 2, "sizeInBytes": 32}}`)
@@ -249,8 +255,8 @@ func TestCacheEncodings(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache", nil, `{"all": "ok"}`)
 
 	// check result
-	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
-	require.Contains(t, body, `{"/cache":{"336d5ebc5436534e61d16e63ddfca327":"{ updated:`)
+	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil)
+	require.Contains(t, body, `{"/cache":{"3333366435656263353433363533346536316431366536336464666361333237":"{ updated:`)
 	require.Contains(t, body, `statusCode:200 model:true bodyPlain:true bodyBr:true bodyGzip:true bodyDeflate:true }"}}`)
 }
 
@@ -276,8 +282,8 @@ func TestCacheEncodingsNoBrotli(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache", nil, `{"all": "ok"}`)
 
 	// check result
-	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
-	require.Contains(t, body, `{"/cache":{"336d5ebc5436534e61d16e63ddfca327":"{ updated:`)
+	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil)
+	require.Contains(t, body, `{"/cache":{"3333366435656263353433363533346536316431366536336464666361333237":"{ updated:`)
 	require.Contains(t, body, `statusCode:200 model:true bodyPlain:true bodyBr:false bodyGzip:true bodyDeflate:true }"}}`)
 }
 
@@ -303,8 +309,8 @@ func TestCacheEncodingsNoGzip(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache", nil, `{"all": "ok"}`)
 
 	// check result
-	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
-	require.Contains(t, body, `{"/cache":{"336d5ebc5436534e61d16e63ddfca327":"{ updated:`)
+	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil)
+	require.Contains(t, body, `{"/cache":{"3333366435656263353433363533346536316431366536336464666361333237":"{ updated:`)
 	require.Contains(t, body, `statusCode:200 model:true bodyPlain:true bodyBr:true bodyGzip:false bodyDeflate:true }"}}`)
 }
 
@@ -330,8 +336,8 @@ func TestCacheEncodingsNoDeflate(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache", nil, `{"all": "ok"}`)
 
 	// check result
-	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
-	require.Contains(t, body, `{"/cache":{"336d5ebc5436534e61d16e63ddfca327":"{ updated:`)
+	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil)
+	require.Contains(t, body, `{"/cache":{"3333366435656263353433363533346536316431366536336464666361333237":"{ updated:`)
 	require.Contains(t, body, `statusCode:200 model:true bodyPlain:true bodyBr:true bodyGzip:true bodyDeflate:false }"}}`)
 }
 
@@ -356,8 +362,8 @@ func TestCacheNoEncodings(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cache", nil, `{"all": "ok"}`)
 
 	// check result
-	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil)
-	require.Contains(t, body, `{"/cache":{"336d5ebc5436534e61d16e63ddfca327":"{ updated:`)
+	body := assert.HTTPBody(u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil)
+	require.Contains(t, body, `{"/cache":{"3333366435656263353433363533346536316431366536336464666361333237":"{ updated:`)
 	require.Contains(t, body, `statusCode:200 model:true bodyPlain:false bodyBr:false bodyGzip:false bodyDeflate:false }"}}`)
 }
 
@@ -387,15 +393,14 @@ func TestExposeCacheManagementMiddleware(t *testing.T) {
 	u.Handle("/cache", handler)
 
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size", nil, `{"err": "forbidden"}`)
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug", nil, `{"err": "forbidden"}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details", nil, `{"err": "forbidden"}`)
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear", nil, `{"err": "forbidden"}`)
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache", nil, `{"err": "forbidden"}`)
 
 	// working
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/size?testMiddleware", nil, `{"/cache": {"entries": 0, "sizeInBytes": 0},  "total": {"entries": 0, "sizeInBytes": 0}}`)
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/debug?testMiddleware", nil, `{"/cache": {}}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/uhttp/cache/details?testMiddleware", nil, `{"/cache": {}}`)
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear?testMiddleware", nil, `{"deletedEntries": 0}`)
-	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear/cache?testMiddleware", nil, `{"deletedEntries": 0}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodPost, "/uhttp/cache/clear?path=cache&testMiddleware", nil, `{"deletedEntries": 0}`)
 }
 
 func TestCacheAutomatic(t *testing.T) {

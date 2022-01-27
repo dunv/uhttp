@@ -60,9 +60,7 @@ type uhttpOptions struct {
 	metricsPath   string
 
 	// Caching
-	cacheExposeHandlers           bool
-	cacheExposeHandlerMiddlewares []Middleware
-	cacheTTLEnforcerInterval      time.Duration
+	cacheTTLEnforcerInterval time.Duration
 
 	// Granular logging
 	logHandlerCalls                 bool

@@ -3,54 +3,37 @@ package uhttp
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/dunv/uhttp/cache"
 )
 
-var cacheSizeHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
+var cacheDetailsHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 	return NewHandler(
 		WithMiddlewares(middlewares...),
-		WithGet(func(r *http.Request, ret *int) interface{} {
-			res := map[string]map[string]uint64{}
-			totalSize := uint64(0)
-			totalEntries := uint64(0)
-			u.cacheLock.RLock()
-			for pattern, cache := range u.cache {
-				size := cache.Size()
-				totalSize += size
-				entries := uint64(cache.Count())
-				totalEntries += entries
-				res[pattern] = map[string]uint64{
-					"sizeInBytes": size,
-					"entries":     entries,
-				}
-			}
-			u.cacheLock.RUnlock()
-			res["total"] = map[string]uint64{
-				"sizeInBytes": totalSize,
-				"entries":     totalEntries,
-			}
-			return res
+		WithOptionalGet(R{
+			"parsable": BOOL,
 		}),
-	)
-}
-
-var cacheDebugHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
-	return NewHandler(
-		WithMiddlewares(middlewares...),
 		WithGet(func(r *http.Request, ret *int) interface{} {
-			res := map[string]map[string]string{}
+			parsable := GetAsBool("parsable", r)
+			res := make(map[string]map[string]interface{})
 			u.cacheLock.RLock()
-			for pattern, cache := range u.cache {
-				res[pattern] = map[string]string{}
-				keys := cache.Keys()
+			defer u.cacheLock.RUnlock()
+			for pattern, c := range u.cache {
+				res[pattern] = make(map[string]interface{})
+				keys := c.Keys()
 				for _, key := range keys {
-					if data, ok := cache.GetByKey(key); ok {
-						res[pattern][fmt.Sprintf("%x", key)] = data.String()
+					if data, ok := c.GetByKey(key); ok {
+						if parsable != nil && *parsable {
+							stats, err := data.Stats(c)
+							if err != nil {
+								return err
+							}
+							res[pattern][fmt.Sprintf("%x", key)] = stats
+
+						} else {
+							res[pattern][fmt.Sprintf("%x", key)] = data.String()
+						}
 					}
 				}
 			}
-			u.cacheLock.RUnlock()
 			return res
 		}),
 	)
@@ -59,17 +42,33 @@ var cacheDebugHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 var cacheClearHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 	return NewHandler(
 		WithMiddlewares(middlewares...),
+		WithOptionalGet(R{
+			"path": STRING,
+			"hash": STRING,
+		}),
 		WithPost(func(r *http.Request, ret *int) interface{} {
 			deletedEntries := 0
+			path := GetAsString("path", r)
+			hash := GetAsString("hash", r)
+
 			u.cacheLock.RLock()
+			defer u.cacheLock.RUnlock()
+
 			for _, c := range u.cache {
+				if path != nil && *path != c.HandlerPattern() {
+					continue
+				}
+
 				keys := c.Keys()
 				for _, key := range keys {
+					if hash != nil && *hash != key {
+						continue
+					}
+
 					c.Delete(key)
 					deletedEntries++
 				}
 			}
-			u.cacheLock.RUnlock()
 			return map[string]int{
 				"deletedEntries": deletedEntries,
 			}
@@ -77,19 +76,30 @@ var cacheClearHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 	)
 }
 
-var specificCacheClearHandler = func(u *UHTTP, c *cache.Cache, middlewares ...Middleware) Handler {
+var cacheSizeHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 	return NewHandler(
 		WithMiddlewares(middlewares...),
-		WithPost(func(r *http.Request, ret *int) interface{} {
-			deletedEntries := 0
-			keys := c.Keys()
-			for _, key := range keys {
-				c.Delete(key)
-				deletedEntries++
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			res := make(map[string]map[string]interface{})
+			totalSize := uint64(0)
+			totalEntries := uint64(0)
+			u.cacheLock.RLock()
+			for pattern, cache := range u.cache {
+				size := cache.Size()
+				totalSize += size
+				entries := uint64(cache.Count())
+				totalEntries += entries
+				res[pattern] = map[string]interface{}{
+					"sizeInBytes": size,
+					"entries":     entries,
+				}
 			}
-			return map[string]int{
-				"deletedEntries": deletedEntries,
+			u.cacheLock.RUnlock()
+			res["total"] = map[string]interface{}{
+				"sizeInBytes": totalSize,
+				"entries":     totalEntries,
 			}
+			return res
 		}),
 	)
 }

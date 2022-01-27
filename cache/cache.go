@@ -4,25 +4,35 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 	"unsafe"
+
+	"github.com/dunv/uhelpers"
 )
 
 func NewCache(
 	maxAge time.Duration,
+	handlerPattern string,
 ) *Cache {
 	return &Cache{
-		mu:     &sync.RWMutex{},
-		maxAge: maxAge,
-		data:   map[string]CacheEntry{},
+		mu:             &sync.RWMutex{},
+		maxAge:         maxAge,
+		data:           map[string]CacheEntry{},
+		handlerPattern: handlerPattern,
 	}
 }
 
 type Cache struct {
-	mu     *sync.RWMutex
-	maxAge time.Duration
-	data   map[string]CacheEntry
+	mu             *sync.RWMutex
+	maxAge         time.Duration
+	data           map[string]CacheEntry
+	handlerPattern string
+}
+
+func (c Cache) HandlerPattern() string {
+	return c.handlerPattern
 }
 
 func (c Cache) MaxAge() time.Duration {
@@ -45,8 +55,22 @@ func (c Cache) Set(
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// shorten things -> this way the cache cannot be overwhelmed by bombarding it with long
+	// requestParams or requestBodies
+	secureRequestBody := requestBody
+	if len(secureRequestBody) > 1000 {
+		secureRequestBody = requestBody[:1000]
+	}
+	secureRequestParams := requestParams
+	if len(secureRequestParams) > 1000 {
+		secureRequestParams = requestParams[:1000]
+	}
+
 	e := CacheEntry{
 		updatedOn:           time.Now(),
+		requestParams:       secureRequestParams,
+		requestBody:         secureRequestBody,
 		responseModel:       responseModel,
 		responseHeader:      responseHeader,
 		responseStatusCode:  responseStatusCode,
@@ -102,14 +126,9 @@ func (c Cache) GetByKey(key string) (CacheEntry, bool) {
 func (c Cache) Size() uint64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-
 	total := uint64(0)
 	for _, entry := range c.data {
-		total += uint64(len(entry.responseBodyPlain))
-		total += uint64(len(entry.responseBodyBrotli))
-		total += uint64(len(entry.responseBodyGzip))
-		total += uint64(len(entry.responseBodyDeflate))
-		total += uint64(unsafe.Sizeof(entry.responseModel))
+		total += entry.EstimatedSize()
 	}
 	return total
 }
@@ -122,6 +141,8 @@ func (c Cache) Count() int {
 
 type CacheEntry struct {
 	updatedOn           time.Time
+	requestParams       string
+	requestBody         []byte
 	responseModel       interface{}
 	responseBodyPlain   []byte
 	responseBodyGzip    []byte
@@ -129,6 +150,17 @@ type CacheEntry struct {
 	responseBodyDeflate []byte
 	responseHeader      http.Header
 	responseStatusCode  int
+}
+
+func (e CacheEntry) EstimatedSize() uint64 {
+	total := uint64(0)
+	total += uint64(len(e.responseBodyPlain))
+	total += uint64(len(e.responseBodyBrotli))
+	total += uint64(len(e.responseBodyGzip))
+	total += uint64(len(e.responseBodyDeflate))
+	total += uint64(unsafe.Sizeof(e.responseModel))
+	// total += uint64(reflect.Indirect(reflect.ValueOf(entry.responseModel)).Type().Size())
+	return total
 }
 
 func (e *CacheEntry) Clone() CacheEntry {
@@ -158,6 +190,8 @@ func (e *CacheEntry) Clone() CacheEntry {
 
 	return CacheEntry{
 		updatedOn:           e.updatedOn,
+		requestParams:       e.requestParams,
+		requestBody:         e.requestBody,
 		responseModel:       e.responseModel,
 		responseBodyPlain:   responseBodyPlainCopy,
 		responseBodyGzip:    responseBodyGzipCopy,
@@ -212,8 +246,44 @@ func (e *CacheEntry) String() string {
 	)
 }
 
+type CacheEntryStats struct {
+	UpdatedOn          string     `json:"updatedOn"`
+	TTL                string     `json:"TTL"`
+	EstimatedSize      string     `json:"estimatedSize"`
+	EstimatedSizeBytes uint64     `json:"estimatedSizeBytes"`
+	StatusCode         int        `json:"statusCode"`
+	CachedModel        bool       `json:"cachedModel"`
+	CachedBodyPlain    bool       `json:"cachedBodyPlain"`
+	CachedBodyBrotli   bool       `json:"cachedBodyBrotli"`
+	CachedBodyGzip     bool       `json:"cachedBodyGzip"`
+	CachedBodyDeflate  bool       `json:"cachedBodyDeflate"`
+	RequestParams      url.Values `json:"requestParams"`
+	RequestBody        string     `json:"requestBody"`
+}
+
+func (e CacheEntry) Stats(c *Cache) (CacheEntryStats, error) {
+	queryParams, err := url.ParseQuery(e.requestParams)
+	if err != nil {
+		return CacheEntryStats{}, err
+	}
+	return CacheEntryStats{
+		UpdatedOn:          e.updatedOn.Format(time.RFC3339),
+		TTL:                time.Until(e.updatedOn.Add(c.maxAge)).Round(time.Second).String(),
+		EstimatedSize:      uhelpers.ByteCountIEC(int64(e.EstimatedSize())),
+		EstimatedSizeBytes: e.EstimatedSize(),
+		StatusCode:         e.responseStatusCode,
+		CachedModel:        e.responseModel != nil,
+		CachedBodyPlain:    e.responseBodyPlain != nil,
+		CachedBodyBrotli:   e.responseBodyBrotli != nil,
+		CachedBodyGzip:     e.responseBodyGzip != nil,
+		CachedBodyDeflate:  e.responseBodyDeflate != nil,
+		RequestParams:      queryParams,
+		RequestBody:        string(e.requestBody),
+	}, nil
+}
+
 func hash(body []byte, params string) string {
 	uniqueString := fmt.Sprintf("%s-%s", body, params)
 	s := md5.Sum([]byte(uniqueString))
-	return string(s[:])
+	return fmt.Sprintf("%x", s)
 }

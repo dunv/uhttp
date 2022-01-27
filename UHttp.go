@@ -46,6 +46,7 @@ func init() {
 }
 
 // TODO: queryStrings for auto-cache
+// TODO: actual size of cache cannot be determined
 
 type UHTTP struct {
 	sha256         hash.Hash
@@ -130,10 +131,10 @@ func (u *UHTTP) registerCache(pattern string, cache *cache.Cache) error {
 }
 
 func (u *UHTTP) ExposeCacheHandlers(middlewares ...Middleware) {
-	u.opts.cacheExposeHandlers = true
-	u.opts.cacheExposeHandlerMiddlewares = middlewares
+	// this handler is mainly exposed for testing
 	u.Handle("/uhttp/cache/size", cacheSizeHandler(u, middlewares...))
-	u.Handle("/uhttp/cache/debug", cacheDebugHandler(u, middlewares...))
+	// these handlers are for maintenance
+	u.Handle("/uhttp/cache/details", cacheDetailsHandler(u, middlewares...))
 	u.Handle("/uhttp/cache/clear", cacheClearHandler(u, middlewares...))
 }
 

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"path"
@@ -34,16 +33,9 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 		c = registeredCache
 	} else {
 		// enable wanted encodings in cache
-		c = cache.NewCache(handler.opts.cacheMaxAge)
+		c = cache.NewCache(handler.opts.cacheMaxAge, handler.opts.handlerPattern)
 
 		ulog.PanicIfError(u.registerCache(handler.opts.handlerPattern, c))
-
-		if u.opts.cacheExposeHandlers {
-			u.Handle(
-				fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.handlerPattern),
-				specificCacheClearHandler(u, c, u.opts.cacheExposeHandlerMiddlewares...),
-			)
-		}
 
 		if handler.opts.cacheAutomaticUpdatesInterval > 0 {
 			// Run automatic refresher
