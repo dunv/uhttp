@@ -61,7 +61,7 @@ type uhttpOptions struct {
 
 	// Caching
 	cacheExposeHandlers           bool
-	cacheExposeHandlersMiddleware []Middleware
+	cacheExposeHandlerMiddlewares []Middleware
 	cacheTTLEnforcerInterval      time.Duration
 
 	// Granular logging
@@ -219,13 +219,6 @@ func WithGranularLogging(logHandlerCalls bool, logHandlerErrors bool, logHandler
 func WithSilentStaticFileRegistration(makeFileRegistrationSilent bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.silentStaticFileRegistration = makeFileRegistrationSilent
-	})
-}
-
-func WithExposeCacheHandlers(middlewares ...Middleware) UhttpOption {
-	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.cacheExposeHandlers = true
-		o.cacheExposeHandlersMiddleware = middlewares
 	})
 }
 

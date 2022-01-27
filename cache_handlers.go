@@ -7,9 +7,9 @@ import (
 	"github.com/dunv/uhttp/cache"
 )
 
-var cacheSizeHandler = func(u *UHTTP) Handler {
+var cacheSizeHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 	return NewHandler(
-		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
+		WithMiddlewares(middlewares...),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			res := map[string]map[string]uint64{}
 			totalSize := uint64(0)
@@ -35,9 +35,9 @@ var cacheSizeHandler = func(u *UHTTP) Handler {
 	)
 }
 
-var cacheDebugHandler = func(u *UHTTP) Handler {
+var cacheDebugHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 	return NewHandler(
-		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
+		WithMiddlewares(middlewares...),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			res := map[string]map[string]string{}
 			u.cacheLock.RLock()
@@ -56,9 +56,9 @@ var cacheDebugHandler = func(u *UHTTP) Handler {
 	)
 }
 
-var cacheClearHandler = func(u *UHTTP) Handler {
+var cacheClearHandler = func(u *UHTTP, middlewares ...Middleware) Handler {
 	return NewHandler(
-		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
+		WithMiddlewares(middlewares...),
 		WithPost(func(r *http.Request, ret *int) interface{} {
 			deletedEntries := 0
 			u.cacheLock.RLock()
@@ -77,9 +77,9 @@ var cacheClearHandler = func(u *UHTTP) Handler {
 	)
 }
 
-var specificCacheClearHandler = func(u *UHTTP, c *cache.Cache) Handler {
+var specificCacheClearHandler = func(u *UHTTP, c *cache.Cache, middlewares ...Middleware) Handler {
 	return NewHandler(
-		WithMiddlewares(u.opts.cacheExposeHandlersMiddleware...),
+		WithMiddlewares(middlewares...),
 		WithPost(func(r *http.Request, ret *int) interface{} {
 			deletedEntries := 0
 			keys := c.Keys()

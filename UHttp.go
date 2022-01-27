@@ -1,7 +1,9 @@
 package uhttp
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"net/http"
 	"sync"
 	"time"
@@ -43,9 +45,10 @@ func init() {
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RegisterStaticFilesHandler", "uhttp.HandleStatic")
 }
 
-// TODO: queryStrings for cache
+// TODO: queryStrings for auto-cache
 
 type UHTTP struct {
+	sha256         hash.Hash
 	opts           *uhttpOptions
 	requestContext map[ContextKey]interface{}
 	metrics        map[string]interface{}
@@ -107,16 +110,12 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	}
 
 	u := &UHTTP{
+		sha256:         sha256.New(),
 		opts:           mergedOpts,
 		requestContext: map[ContextKey]interface{}{},
 		metrics:        metrics,
 		cache:          map[string]*cache.Cache{},
 		cacheLock:      &sync.RWMutex{},
-	}
-	if u.opts.cacheExposeHandlers {
-		u.Handle("/uhttp/cache/size", cacheSizeHandler(u))
-		u.Handle("/uhttp/cache/debug", cacheDebugHandler(u))
-		u.Handle("/uhttp/cache/clear", cacheClearHandler(u))
 	}
 
 	return u
@@ -128,6 +127,14 @@ func (u *UHTTP) registerCache(pattern string, cache *cache.Cache) error {
 	}
 	u.cache[pattern] = cache
 	return nil
+}
+
+func (u *UHTTP) ExposeCacheHandlers(middlewares ...Middleware) {
+	u.opts.cacheExposeHandlers = true
+	u.opts.cacheExposeHandlerMiddlewares = middlewares
+	u.Handle("/uhttp/cache/size", cacheSizeHandler(u, middlewares...))
+	u.Handle("/uhttp/cache/debug", cacheDebugHandler(u, middlewares...))
+	u.Handle("/uhttp/cache/clear", cacheClearHandler(u, middlewares...))
 }
 
 func (u *UHTTP) Log() ulog.ULogger {

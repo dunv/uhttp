@@ -39,7 +39,10 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 		ulog.PanicIfError(u.registerCache(handler.opts.handlerPattern, c))
 
 		if u.opts.cacheExposeHandlers {
-			u.Handle(fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.handlerPattern), specificCacheClearHandler(u, c))
+			u.Handle(
+				fmt.Sprintf("/uhttp/cache/clear%s", handler.opts.handlerPattern),
+				specificCacheClearHandler(u, c, u.opts.cacheExposeHandlerMiddlewares...),
+			)
 		}
 
 		if handler.opts.cacheAutomaticUpdatesInterval > 0 {

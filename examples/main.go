@@ -12,12 +12,11 @@ import (
 )
 
 func main() {
-
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
-		uhttp.WithExposeCacheHandlers(),
 		uhttp.WithGranularLogging(true, true, true),
 	)
+	u.ExposeCacheHandlers()
 
 	u.Handle("/hello", uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		return map[string]string{"hello": "world"}

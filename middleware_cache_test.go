@@ -77,7 +77,9 @@ func TestCacheExpiry(t *testing.T) {
 
 func TestCacheClear(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(WithExposeCacheHandlers())
+	u := NewUHTTP()
+	u.ExposeCacheHandlers()
+
 	counter1 := 0
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
@@ -108,7 +110,9 @@ func TestCacheClear(t *testing.T) {
 
 func TestCacheClearSpecific(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(WithExposeCacheHandlers())
+	u := NewUHTTP()
+	u.ExposeCacheHandlers()
+
 	counter1 := 0
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
@@ -156,7 +160,9 @@ func TestExposeCacheManagementNotAvailable(t *testing.T) {
 
 func TestExposeCacheManagement(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(WithExposeCacheHandlers())
+	u := NewUHTTP()
+	u.ExposeCacheHandlers()
+
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
 		WithGet(func(r *http.Request, ret *int) interface{} {
@@ -223,7 +229,9 @@ func TestExposeCacheManagement(t *testing.T) {
 
 func TestCacheEncodings(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(WithExposeCacheHandlers())
+	u := NewUHTTP()
+	u.ExposeCacheHandlers()
+
 	handler := NewHandler(
 		WithCache(10*time.Second),
 		WithCachePersistEncodings(),
@@ -248,10 +256,8 @@ func TestCacheEncodings(t *testing.T) {
 
 func TestCacheEncodingsNoBrotli(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(
-		WithExposeCacheHandlers(),
-		WithBrotliCompression(false, 5),
-	)
+	u := NewUHTTP(WithBrotliCompression(false, 5))
+	u.ExposeCacheHandlers()
 
 	handler := NewHandler(
 		WithCache(10*time.Second),
@@ -277,10 +283,8 @@ func TestCacheEncodingsNoBrotli(t *testing.T) {
 
 func TestCacheEncodingsNoGzip(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(
-		WithExposeCacheHandlers(),
-		WithGzipCompression(false, 5),
-	)
+	u := NewUHTTP(WithGzipCompression(false, 5))
+	u.ExposeCacheHandlers()
 
 	handler := NewHandler(
 		WithCache(10*time.Second),
@@ -306,10 +310,8 @@ func TestCacheEncodingsNoGzip(t *testing.T) {
 
 func TestCacheEncodingsNoDeflate(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(
-		WithExposeCacheHandlers(),
-		WithDeflateCompression(false, 5),
-	)
+	u := NewUHTTP(WithDeflateCompression(false, 5))
+	u.ExposeCacheHandlers()
 
 	handler := NewHandler(
 		WithCache(10*time.Second),
@@ -335,7 +337,9 @@ func TestCacheEncodingsNoDeflate(t *testing.T) {
 
 func TestCacheNoEncodings(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
-	u := NewUHTTP(WithExposeCacheHandlers())
+	u := NewUHTTP()
+	u.ExposeCacheHandlers()
+
 	handler := NewHandler(
 		WithCache(10*time.Second),
 		WithGet(func(r *http.Request, ret *int) interface{} {
@@ -371,7 +375,9 @@ func TestExposeCacheManagementMiddleware(t *testing.T) {
 		}
 	}
 
-	u := NewUHTTP(WithExposeCacheHandlers(requireQueryStringMiddleware))
+	u := NewUHTTP()
+	u.ExposeCacheHandlers(requireQueryStringMiddleware)
+
 	handler := NewHandler(
 		WithCache(10*time.Second),
 		WithGet(func(r *http.Request, ret *int) interface{} {
