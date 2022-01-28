@@ -1,6 +1,7 @@
 package uhttp
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -49,7 +50,9 @@ func init() {
 type UHTTP struct {
 	opts           *uhttpOptions
 	requestContext map[ContextKey]interface{}
-	metrics        map[string]interface{}
+
+	metricsServeMux *http.ServeMux
+	metrics         map[string]interface{}
 
 	// hold handle to all caches for calculating total and management
 	cache     map[string]*cache.Cache
@@ -89,8 +92,15 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		opt.apply(mergedOpts)
 	}
 
-	metrics := map[string]interface{}{}
+	u := &UHTTP{
+		opts:           mergedOpts,
+		requestContext: map[ContextKey]interface{}{},
+		cache:          map[string]*cache.Cache{},
+		cacheLock:      &sync.RWMutex{},
+	}
+
 	if mergedOpts.enableMetrics {
+		metrics := map[string]interface{}{}
 		metrics[Metric_Requests_Total] = promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "uhttp",
 			Subsystem: "requests",
@@ -105,14 +115,9 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 			Help:      "request durations",
 			Buckets:   []float64{1, 100, 500, 1000, 5000, 10000, 60000},
 		}, []string{"method", "code", "handler"})
-	}
 
-	u := &UHTTP{
-		opts:           mergedOpts,
-		requestContext: map[ContextKey]interface{}{},
-		metrics:        metrics,
-		cache:          map[string]*cache.Cache{},
-		cacheLock:      &sync.RWMutex{},
+		u.metrics = metrics
+		u.metricsServeMux = http.NewServeMux()
 	}
 
 	return u
@@ -144,6 +149,13 @@ func (u *UHTTP) CORS() string {
 
 func (u *UHTTP) ServeMux() *http.ServeMux {
 	return u.opts.serveMux
+}
+
+func (u *UHTTP) MetricsServeMux() (*http.ServeMux, error) {
+	if u.metricsServeMux != nil {
+		return u.metricsServeMux, nil
+	}
+	return nil, errors.New("cannot get metricsServeMux if not initialized")
 }
 
 func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
@@ -186,10 +198,9 @@ func (u *UHTTP) ListenAndServe() error {
 
 	var metricsServer *http.Server
 	if u.opts.enableMetrics {
-		mux := http.NewServeMux()
-		mux.Handle(u.opts.metricsPath, promhttp.Handler())
+		u.metricsServeMux.Handle(u.opts.metricsPath, promhttp.Handler())
 		metricsServer = &http.Server{
-			Handler:           mux,
+			Handler:           u.metricsServeMux,
 			Addr:              u.opts.metricsSocket,
 			ReadTimeout:       u.opts.readTimeout,
 			ReadHeaderTimeout: u.opts.readHeaderTimeout,
