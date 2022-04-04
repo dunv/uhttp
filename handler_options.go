@@ -32,6 +32,7 @@ type handlerOptions struct {
 	timeoutMessage string
 
 	cacheEnable                         bool
+	cacheFailedRequests                 bool
 	cachePersistEncodings               bool
 	cacheAutomaticUpdatesInterval       time.Duration
 	cacheAutomaticUpdatesSkipMiddleware *string
@@ -176,6 +177,13 @@ func WithCache(maxAge time.Duration) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.cacheEnable = true
 		o.cacheMaxAge = maxAge
+	})
+}
+
+// Also cache failed requests
+func WithCacheFailedRequests() HandlerOption {
+	return newFuncHandlerOption(func(o *handlerOptions) {
+		o.cacheFailedRequests = true
 	})
 }
 

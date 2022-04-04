@@ -167,6 +167,10 @@ func (w *cachingResponseWriter) Close(model interface{}, statusCode int) {
 	var bodyGzip []byte
 	var bodyDeflate []byte
 
+	if !w.h.opts.cacheFailedRequests && statusCode != http.StatusOK {
+		return
+	}
+
 	if w.h.opts.cachePersistEncodings {
 		bodyPlain, err = json.Marshal(model)
 		if err != nil {

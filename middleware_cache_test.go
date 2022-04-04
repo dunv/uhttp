@@ -44,6 +44,43 @@ func TestCacheHit(t *testing.T) {
 	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`)
 }
 
+func TestCacheNoCacheWhenNotOK(t *testing.T) {
+	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	u := NewUHTTP()
+	counter := 0
+	handler := NewHandler(
+		WithCache(10*time.Second),
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			counter++
+			return fmt.Errorf("counter:%d", counter)
+		}),
+	)
+	u.Handle("/cachedHandler", handler)
+
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil, `{"error": "counter:1"}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil, `{"error": "counter:2"}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil, `{"error": "counter:3"}`)
+}
+
+func TestCacheForceCacheWhenNotOK(t *testing.T) {
+	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	u := NewUHTTP()
+	counter := 0
+	handler := NewHandler(
+		WithCache(10*time.Second),
+		WithCacheFailedRequests(),
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			counter++
+			return fmt.Errorf("counter:%d", counter)
+		}),
+	)
+	u.Handle("/cachedHandler", handler)
+
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil, `{"error": "counter:1"}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil, `{"error": "counter:1"}`)
+	RequireHTTPBodyJSONEq(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil, `{"error": "counter:1"}`)
+}
+
 func TestCacheExpiry(t *testing.T) {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	u := NewUHTTP()
