@@ -167,7 +167,7 @@ func (w *cachingResponseWriter) Close(model interface{}, statusCode int) {
 	var bodyGzip []byte
 	var bodyDeflate []byte
 
-	if !w.h.opts.cacheFailedRequests && statusCode != http.StatusOK {
+	if !w.h.opts.cacheFailedRequests && (statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices) {
 		return
 	}
 
