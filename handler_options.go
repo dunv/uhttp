@@ -35,6 +35,7 @@ type handlerOptions struct {
 	cachePersistEncodings               bool
 	cacheAutomaticUpdatesInterval       time.Duration
 	cacheAutomaticUpdatesSkipMiddleware *string
+	cacheAutomaticUpdatesParameters     []map[string]string
 	cacheMaxAge                         time.Duration
 
 	// Read-only
@@ -179,10 +180,15 @@ func WithCache(maxAge time.Duration) HandlerOption {
 }
 
 // Call handler in the background discarding the response (only useful if cache is enabled)
-func WithAutomaticCacheUpdates(interval time.Duration, skipMiddleware *string) HandlerOption {
+func WithAutomaticCacheUpdates(interval time.Duration, skipMiddleware *string, parameters []map[string]string) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.cacheAutomaticUpdatesInterval = interval
 		o.cacheAutomaticUpdatesSkipMiddleware = skipMiddleware
+		if parameters == nil {
+			o.cacheAutomaticUpdatesParameters = []map[string]string{{}}
+		} else {
+			o.cacheAutomaticUpdatesParameters = parameters
+		}
 	})
 }
 

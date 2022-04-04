@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -147,7 +148,7 @@ func TestExposeCacheManagementNotAvailable(t *testing.T) {
 	u := NewUHTTP()
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
-		WithAutomaticCacheUpdates(200*time.Millisecond, nil),
+		WithAutomaticCacheUpdates(200*time.Millisecond, nil, nil),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all1": "ok"}
 		}),
@@ -409,7 +410,7 @@ func TestCacheAutomatic(t *testing.T) {
 	counter1 := 0
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
-		WithAutomaticCacheUpdates(200*time.Millisecond, nil),
+		WithAutomaticCacheUpdates(200*time.Millisecond, nil, nil),
 		WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++
 			return map[string]int{"counter1": counter1}
@@ -449,6 +450,71 @@ func TestCacheAutomatic(t *testing.T) {
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, map[string][]string{
 		CACHE_HEADER: {"true"},
 	})
+}
+
+func TestCacheAutomaticWithParameters(t *testing.T) {
+	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	u := NewUHTTP()
+	counterParam0 := 0
+	counterParam1 := 0
+	counterParam2 := 0
+	handler := NewHandler(
+		WithCache(10*time.Second),
+		WithAutomaticCacheUpdates(200*time.Millisecond, nil, []map[string]string{
+			{"param1": "param1"},
+			{"param2": "param2"},
+		}),
+		WithGet(func(r *http.Request, ret *int) interface{} {
+			if r.URL.Query().Get("param1") == "" && r.URL.Query().Get("param2") == "" {
+				counterParam0++
+			}
+			if r.URL.Query().Get("param1") == "param1" {
+				counterParam1++
+			}
+			if r.URL.Query().Get("param2") == "param2" {
+				counterParam2++
+			}
+
+			return map[string]interface{}{
+				"counterParam0": counterParam0,
+				"counterParam1": counterParam1,
+				"counterParam2": counterParam2,
+			}
+		}),
+	)
+	u.Handle("/cachedHandler", handler)
+
+	// wait for initial update to have run through
+	time.Sleep(50 * time.Millisecond)
+
+	// cache should be initialized automatically. Since during the first cacheRun the one with param2 was not run yet -> counter == 0
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param1": []string{"param1"}},
+		`{"counterParam0": 0, "counterParam1": 1, "counterParam2": 0}`,
+		map[string][]string{CACHE_HEADER: {"true"}})
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param2": []string{"param2"}},
+		`{"counterParam0": 0, "counterParam1": 1, "counterParam2": 1}`,
+		map[string][]string{CACHE_HEADER: {"true"}})
+
+	// this request should not have been cached yet
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil,
+		`{"counterParam0": 1, "counterParam1": 1, "counterParam2": 1}`,
+		map[string][]string{})
+
+	// wait for automatic update
+	time.Sleep(200 * time.Millisecond)
+
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param1": []string{"param1"}},
+		`{"counterParam0": 1, "counterParam1": 2, "counterParam2": 1}`,
+		map[string][]string{CACHE_HEADER: {"true"}})
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param2": []string{"param2"}},
+		`{"counterParam0": 1, "counterParam1": 2, "counterParam2": 2}`,
+		map[string][]string{CACHE_HEADER: {"true"}})
+
+	// should still deliver the old response, as the regular cache-time is 10s
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil,
+		`{"counterParam0": 1, "counterParam1": 1, "counterParam2": 1}`,
+		map[string][]string{CACHE_HEADER: {"true"}})
+
 }
 
 func setupCacheEncodingTest(t *testing.T) *UHTTP {

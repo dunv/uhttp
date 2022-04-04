@@ -9,6 +9,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dunv/uhelpers"
@@ -80,7 +81,7 @@ func (lrw *LoggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
+			if strings.Contains(r.URL.String(), NO_LOG_MAGIC_URL_FORCE_CACHE) {
 				next.ServeHTTP(w, r)
 				return
 			}

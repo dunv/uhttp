@@ -42,18 +42,27 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 			go func() {
 				f := handler.handlerFuncExcludeMiddlewareByName(u, handler.opts.cacheAutomaticUpdatesSkipMiddleware)
 				for {
-					r, err := http.NewRequest(http.MethodGet, NO_LOG_MAGIC_URL_FORCE_CACHE, nil)
-					if err != nil {
-						ulog.Errorf("this error should never happen (%s)", err)
-						time.Sleep(handler.opts.cacheAutomaticUpdatesInterval)
-						continue
+					// parameters are populated with a single empty set by default
+					for _, paramSet := range handler.opts.cacheAutomaticUpdatesParameters {
+						r, err := http.NewRequest(http.MethodGet, NO_LOG_MAGIC_URL_FORCE_CACHE, nil)
+						if err != nil {
+							ulog.Errorf("this error should never happen (%s)", err)
+							continue
+						}
+						q := r.URL.Query()
+						for paramKey, paramValue := range paramSet {
+							q.Add(paramKey, paramValue)
+						}
+						r.URL.RawQuery = q.Encode()
+						r.Header.Set(handler.opts.cacheBypassHeader, "true")
+
+						noopWriter := &noopResponseWriter{}
+						f(noopWriter, r.WithContext(context.WithValue(r.Context(), CtxKeyIsAutomaticCacheExecution, true)))
+						if noopWriter.statusCode != http.StatusOK {
+							u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.handlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
+						}
 					}
-					r.Header.Set(handler.opts.cacheBypassHeader, "true")
-					noopWriter := &noopResponseWriter{}
-					f(noopWriter, r.WithContext(context.WithValue(r.Context(), CtxKeyIsAutomaticCacheExecution, true)))
-					if noopWriter.statusCode != http.StatusOK {
-						u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.handlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
-					}
+
 					time.Sleep(handler.opts.cacheAutomaticUpdatesInterval)
 				}
 			}()
@@ -103,7 +112,7 @@ type cachingResponseWriter struct {
 
 func newCachingResponseWriter(u *UHTTP, h Handler, w http.ResponseWriter, r *http.Request, cache *cache.Cache) *cachingResponseWriter {
 	if u.opts.logCacheRuns {
-		if r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
+		if strings.Contains(r.URL.String(), NO_LOG_MAGIC_URL_FORCE_CACHE) {
 			u.Log().Infof("Started automatic caching of %s", h.opts.handlerPattern)
 		} else {
 			u.Log().Infof("Started caching of %s by userRequest", h.opts.handlerPattern)
