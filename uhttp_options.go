@@ -68,6 +68,7 @@ type uhttpOptions struct {
 	logHandlerRegistrations         bool
 	logCacheRuns                    bool
 	logCustomMiddlewareRegistration bool
+	logStaticFileAccess             bool
 }
 
 type funcUhttpOption struct {
@@ -205,11 +206,12 @@ func WithSendPanicInfoToClient(sendPanicInfoToClient bool) UhttpOption {
 	})
 }
 
-func WithGranularLogging(logHandlerCalls bool, logHandlerErrors bool, logHandlerRegistrations bool) UhttpOption {
+func WithGranularLogging(logHandlerCalls bool, logHandlerErrors bool, logHandlerRegistrations bool, logStaticFileAccess bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.logHandlerCalls = logHandlerCalls
 		o.logHandlerErrors = logHandlerErrors
 		o.logHandlerRegistrations = logHandlerRegistrations
+		o.logStaticFileAccess = logStaticFileAccess
 	})
 }
 

@@ -39,6 +39,8 @@ type handlerOptions struct {
 	cacheAutomaticUpdatesParameters     []map[string]string
 	cacheMaxAge                         time.Duration
 
+	loggingDisable bool
+
 	// Read-only
 	cacheBypassHeader string
 
@@ -206,5 +208,12 @@ func WithAutomaticCacheUpdates(interval time.Duration, skipMiddleware *string, p
 func WithCachePersistEncodings() HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.cachePersistEncodings = true
+	})
+}
+
+// Disable access-log for this handler
+func WithDisableAccessLogging() HandlerOption {
+	return newFuncHandlerOption(func(o *handlerOptions) {
+		o.loggingDisable = true
 	})
 }

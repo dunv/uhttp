@@ -65,7 +65,7 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 	c := chain(
 		corsMiddleware(u),
 		jsonResponseMiddleware(u),
-		addLoggingMiddleware(u),
+		addLoggingMiddleware(u, &h, false),
 	)
 
 	// Add original responseWriter

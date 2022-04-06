@@ -14,7 +14,7 @@ import (
 func main() {
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
-		uhttp.WithGranularLogging(true, true, true),
+		uhttp.WithGranularLogging(true, true, true, true),
 	)
 	u.ExposeCacheHandlers()
 

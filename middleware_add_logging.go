@@ -78,9 +78,11 @@ func (lrw *LoggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 }
 
 // Logging log time, method and path of an HTTP-Request
-func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc {
+func addLoggingMiddleware(u *UHTTP, h *Handler, isStaticFileAccess bool) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+
+			// are we in an automatic-cache creation run?
 			if strings.Contains(r.URL.String(), NO_LOG_MAGIC_URL_FORCE_CACHE) {
 				next.ServeHTTP(w, r)
 				return
@@ -91,8 +93,28 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 
 			next.ServeHTTP(lrw, r)
 
-			logLineParams := map[string]string{}
 			duration := time.Since(start)
+			if u.opts.enableMetrics {
+				u.opts.log.LogIfError(HandleMetrics(u.metrics, r.Method, lrw.statusCode, r.URL.EscapedPath(), duration))
+			}
+
+			// check if logging of all calls has been disabled
+			if !u.opts.logHandlerCalls {
+				return
+			}
+
+			// are we logging access to static files?
+			if !u.opts.logStaticFileAccess && isStaticFileAccess {
+				return
+			}
+
+			// is this handler explicitly configured to supress logging?
+			if h != nil && h.opts.loggingDisable {
+				return
+			}
+
+			// General fields to log
+			logLineParams := map[string]string{}
 			logLineParams["duration"] = uhelpers.FmtDuration(duration)
 			realIP := r.Header.Get("X-Real-IP") // nginx-proxy adds this header
 			if realIP == "" {
@@ -102,8 +124,8 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 			logLineParams["status"] = strconv.Itoa(lrw.statusCode)
 			logLineParams["method"] = r.Method
 			logLineParams["uri"] = r.URL.EscapedPath()
-			logString := "Uhttp"
 
+			// Log all getParams of the request
 			if paramsRaw, ok := r.Context().Value(CtxKeyGetParams).(R); ok {
 				params, err := paramsRaw.Printable()
 				if err != nil {
@@ -116,25 +138,25 @@ func addLoggingMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc
 				}
 			}
 
+			// Were any additional params specified during the handler run?
+			if len(lrw.additionalOutput) != 0 {
+				for key, value := range lrw.additionalOutput {
+					logLineParams[key] = value
+					// logString = fmt.Sprintf("%s [%s: %s]", logString, key, value)
+				}
+			}
+
+			// Sort alphabetically so we have a consistent output
 			keys := uhelpers.StringKeysFromMap(logLineParams)
 			sort.Strings(keys)
+
+			// construct log
+			logString := "Uhttp"
 			for _, key := range keys {
 				logString = fmt.Sprintf("%s [%s: %s]", logString, key, logLineParams[key])
 			}
 
-			if len(lrw.additionalOutput) != 0 {
-				for key, value := range lrw.additionalOutput {
-					logString = fmt.Sprintf("%s [%s: %s]", logString, key, value)
-				}
-			}
-
-			if u.opts.enableMetrics {
-				u.opts.log.LogIfError(HandleMetrics(u.metrics, r.Method, lrw.statusCode, r.URL.EscapedPath(), duration))
-			}
-
-			if u.opts.logHandlerCalls {
-				u.opts.log.Info(logString)
-			}
+			u.opts.log.Info(logString)
 		}
 	}
 }

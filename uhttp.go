@@ -85,6 +85,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		logHandlerCalls:              true,
 		logHandlerErrors:             true,
 		logHandlerRegistrations:      true,
+		logStaticFileAccess:          true,
 
 		cacheTTLEnforcerInterval: 30 * time.Second,
 	}
