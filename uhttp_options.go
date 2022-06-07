@@ -21,6 +21,7 @@ type uhttpOptions struct {
 	log                     ulog.ULogger
 	encodingErrorLogLevel   ulog.LogLevel
 	parseModelErrorLogLevel ulog.LogLevel
+	handlerErrorLogLevel    ulog.LogLevel
 
 	// Global middlewares
 	globalMiddlewares []Middleware
@@ -143,6 +144,13 @@ func WithParseModelErrorLogLevel(level ulog.LogLevel) UhttpOption {
 	})
 }
 
+func WithHandlerErrorLogLevel(logErrors bool, level ulog.LogLevel) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.logHandlerErrors = logErrors
+		o.handlerErrorLogLevel = level
+	})
+}
+
 func WithAddress(address string) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.address = address
@@ -206,10 +214,9 @@ func WithSendPanicInfoToClient(sendPanicInfoToClient bool) UhttpOption {
 	})
 }
 
-func WithGranularLogging(logHandlerCalls bool, logHandlerErrors bool, logHandlerRegistrations bool, logStaticFileAccess bool) UhttpOption {
+func WithGranularLogging(logHandlerCalls bool, logHandlerRegistrations bool, logStaticFileAccess bool) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.logHandlerCalls = logHandlerCalls
-		o.logHandlerErrors = logHandlerErrors
 		o.logHandlerRegistrations = logHandlerRegistrations
 		o.logStaticFileAccess = logStaticFileAccess
 	})

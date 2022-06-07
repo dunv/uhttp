@@ -12,9 +12,11 @@ import (
 )
 
 func main() {
+	ulog.EnableColors()
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
-		uhttp.WithGranularLogging(true, true, true, true),
+		uhttp.WithHandlerErrorLogLevel(true, ulog.LEVEL_INFO),
+		uhttp.WithGranularLogging(true, true, true),
 	)
 	u.ExposeCacheHandlers()
 

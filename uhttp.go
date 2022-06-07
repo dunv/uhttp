@@ -42,10 +42,8 @@ func init() {
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe.func1", "uhttp.ListenAndServe")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).Handle", "uhttp.Handle")
 	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RegisterStaticFilesHandler", "uhttp.HandleStatic")
+	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RenderErrorWithStatusCode", "uhttp.HandlerError")
 }
-
-// TODO: queryStrings for auto-cache
-// TODO: actual size of cache cannot be determined
 
 type UHTTP struct {
 	opts           *uhttpOptions
@@ -65,6 +63,7 @@ func NewUHTTP(opts ...UhttpOption) *UHTTP {
 		log:                     ulog.NewUlog(),
 		encodingErrorLogLevel:   ulog.LEVEL_ERROR,
 		parseModelErrorLogLevel: ulog.LEVEL_ERROR,
+		handlerErrorLogLevel:    ulog.LEVEL_ERROR,
 		sendPanicInfoToClient:   false,
 		serveMux:                http.NewServeMux(),
 		address:                 "0.0.0.0:8080",

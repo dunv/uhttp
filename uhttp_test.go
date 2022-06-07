@@ -55,5 +55,3 @@ func TestJSONResponse(t *testing.T) {
 		t.Errorf("did not set Content-Type as expeceted")
 	}
 }
-
-// TODO: write more tests

@@ -29,7 +29,7 @@ func (u *UHTTP) RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		u.rawRenderWithStatusCode(w, r, statusCode, NewHttpErrorResponse(err))
 		if logOut {
-			u.opts.log.Errorf("renderError [path: %s] %s", r.RequestURI, err.Error())
+			u.opts.log.LogWithLevelf(u.opts.handlerErrorLogLevel, "[uri: %s] err: %s", r.RequestURI, err.Error())
 		}
 	} else {
 		u.opts.log.Panic("Error to be rendered is nil")
