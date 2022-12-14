@@ -44,6 +44,7 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 				for {
 					// parameters are populated with a single empty set by default
 					for _, paramSet := range handler.opts.cacheAutomaticUpdatesParameters {
+						u.opts.log.Infof("Running automatic cache of %s for params:%s", handler.opts.handlerPattern, paramSet)
 						r, err := http.NewRequest(http.MethodGet, NO_LOG_MAGIC_URL_FORCE_CACHE, nil)
 						if err != nil {
 							ulog.Errorf("this error should never happen (%s)", err)
@@ -60,6 +61,8 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 						f(noopWriter, r.WithContext(context.WithValue(r.Context(), CtxKeyIsAutomaticCacheExecution, true)))
 						if noopWriter.statusCode != http.StatusOK {
 							u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.handlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
+						} else {
+							u.opts.log.Infof("Finished automatic cache of %s for params:%s", handler.opts.handlerPattern, paramSet)
 						}
 					}
 

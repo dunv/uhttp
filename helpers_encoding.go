@@ -3,7 +3,6 @@ package uhttp
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -74,7 +73,7 @@ func (u *UHTTP) compressJSON(encoding string, data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	encoded, err := ioutil.ReadAll(&b)
+	encoded, err := io.ReadAll(&b)
 	if err != nil {
 		return nil, err
 	}

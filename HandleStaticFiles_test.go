@@ -3,7 +3,7 @@ package uhttp
 import (
 	"bufio"
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -17,7 +17,7 @@ func setupSinglePage(t *testing.T) *UHTTP {
 	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	u := NewUHTTP()
 
-	tempDir, err := ioutil.TempDir(os.TempDir(), "uhttpTest")
+	tempDir, err := os.MkdirTemp(os.TempDir(), "uhttpTest")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -71,7 +71,7 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 	w := httptest.NewRecorder()
 	staticFilesHandler(u)(w, req)
 	res := w.Result()
-	response, _ := ioutil.ReadAll(res.Body)
+	response, _ := io.ReadAll(res.Body)
 
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("did not return http %d (actual: %d)", http.StatusOK, res.StatusCode)
@@ -92,7 +92,7 @@ func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
 	w := httptest.NewRecorder()
 	staticFilesHandler(u)(w, req)
 	res := w.Result()
-	response, _ := ioutil.ReadAll(res.Body)
+	response, _ := io.ReadAll(res.Body)
 
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("did not return http %d (actual: %d)", http.StatusOK, res.StatusCode)

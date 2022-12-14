@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -41,7 +41,7 @@ func ExecuteHandler(
 	request := &http.Request{
 		Method: method,
 		URL:    url,
-		Body:   ioutil.NopCloser(bytes.NewReader(requestBody)),
+		Body:   io.NopCloser(bytes.NewReader(requestBody)),
 	}
 
 	res, err := c.Do(request)
@@ -50,7 +50,7 @@ func ExecuteHandler(
 		return
 	}
 
-	response, err := ioutil.ReadAll(res.Body)
+	response, err := io.ReadAll(res.Body)
 	if err != nil {
 		t.Error(err)
 	}
@@ -94,7 +94,7 @@ func ExecuteHandlerWithGzipResponse(
 	request := &http.Request{
 		Method: method,
 		URL:    url,
-		Body:   ioutil.NopCloser(bytes.NewReader(requestBody)),
+		Body:   io.NopCloser(bytes.NewReader(requestBody)),
 		Header: http.Header{"Accept-Encoding": []string{"gzip"}},
 	}
 

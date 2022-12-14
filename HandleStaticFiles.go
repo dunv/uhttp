@@ -3,7 +3,7 @@ package uhttp
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -80,7 +80,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 			ulog.Infof("Skipping '%s'", fileName)
 			continue
 		}
-		fileContent, err := ioutil.ReadFile(fileName)
+		fileContent, err := os.ReadFile(fileName)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 			if err != nil {
 				return err
 			}
-			cached.GzippedContent, err = ioutil.ReadAll(&gzipBuffer)
+			cached.GzippedContent, err = io.ReadAll(&gzipBuffer)
 			if err != nil {
 				return err
 			}
@@ -153,7 +153,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 			if err != nil {
 				return err
 			}
-			cached.BrContent, err = ioutil.ReadAll(&brotliBuffer)
+			cached.BrContent, err = io.ReadAll(&brotliBuffer)
 			if err != nil {
 				return err
 			}

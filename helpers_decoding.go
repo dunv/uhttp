@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/itchio/go-brotli/dec"
@@ -57,7 +56,7 @@ func decodeResponseBody(res *http.Response) ([]byte, error) {
 		return nil, err
 	}
 
-	decodedResponse, err := ioutil.ReadAll(wrappedReader)
+	decodedResponse, err := io.ReadAll(wrappedReader)
 	if err != nil {
 		return nil, err
 	}
@@ -80,5 +79,5 @@ func gzipEncodeRequestBody(body []byte) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not flush gzip writer (%s)", err)
 	}
-	return ioutil.NopCloser(bytes.NewReader(buffer.Bytes())), nil
+	return io.NopCloser(bytes.NewReader(buffer.Bytes())), nil
 }

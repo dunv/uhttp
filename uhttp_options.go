@@ -1,7 +1,7 @@
 package uhttp
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -188,7 +188,7 @@ func WithGlobalMiddlewares(middlewares ...Middleware) UhttpOption {
 }
 
 func WithTLS(certPath string, keyPath string, tlsErrorLogger *log.Logger) UhttpOption {
-	usedLogger := log.New(ioutil.Discard, "", log.Lshortfile)
+	usedLogger := log.New(io.Discard, "", log.Lshortfile)
 	if tlsErrorLogger != nil {
 		usedLogger = tlsErrorLogger
 	}

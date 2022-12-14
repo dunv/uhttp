@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 )
@@ -31,14 +31,14 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 				var bodyBytes []byte
 				if r.Body != nil {
 					var err error
-					bodyBytes, err = ioutil.ReadAll(r.Body)
+					bodyBytes, err = io.ReadAll(r.Body)
 					defer r.Body.Close()
 					if err != nil {
 						u.RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
 						u.opts.log.LogWithLevelf(u.opts.parseModelErrorLogLevel, "parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 						return
 					}
-					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 
 				// Parse body
@@ -52,7 +52,7 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 
 				// Restore body
 				if r.Body != nil {
-					r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 
 				ctx := context.WithValue(r.Context(), CtxKeyPostModel, modelInterface)
