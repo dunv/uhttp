@@ -1,9 +1,9 @@
 language: go
 go:
- - 1.18.x
+  - 1.19.x
 
 script:
- - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
+  - go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
 after_success:
- - bash <(curl -s https://codecov.io/bash)
+  - bash <(curl -s https://codecov.io/bash)
