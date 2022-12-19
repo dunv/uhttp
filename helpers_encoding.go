@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/itchio/go-brotli/enc"
+	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
 )
@@ -32,7 +32,7 @@ func (n nopCloser) Close() error {
 func (u *UHTTP) encodingWriter(w io.Writer, encoding string) io.WriteCloser {
 	switch encoding {
 	case ENCODING_BROTLI:
-		return enc.NewBrotliWriter(w, &enc.BrotliWriterOptions{Quality: u.opts.brotliCompressionLevel})
+		return brotli.NewWriterLevel(w, u.opts.brotliCompressionLevel)
 	case ENCODING_GZIP:
 		// we check that we are using a supported level when assigning the option
 		ww, _ := gzip.NewWriterLevel(w, u.opts.gzipCompressionLevel)

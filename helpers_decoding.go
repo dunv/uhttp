@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/itchio/go-brotli/dec"
+	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
 )
@@ -24,7 +24,7 @@ func DecodingReader(header http.Header, body io.ReadCloser) (io.ReadCloser, erro
 		}
 		reader = gz
 	case "br":
-		reader = dec.NewBrotliReader(body)
+		reader = io.NopCloser(brotli.NewReader(body))
 	case "deflate":
 		reader = flate.NewReader(body)
 	default:

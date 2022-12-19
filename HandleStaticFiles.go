@@ -9,8 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/itchio/go-brotli/enc"
-
+	"github.com/andybalholm/brotli"
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/ulog"
 	"github.com/klauspost/compress/gzip"
@@ -144,7 +143,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		if u.opts.enableBrotli {
 			// Compress brotli
 			var brotliBuffer bytes.Buffer
-			brotliWriter := enc.NewBrotliWriter(&brotliBuffer, &enc.BrotliWriterOptions{Quality: u.opts.brotliCompressionLevel})
+			brotliWriter := brotli.NewWriterLevel(&brotliBuffer, u.opts.brotliCompressionLevel)
 			_, err = brotliWriter.Write(fileContent)
 			if err != nil {
 				return err
