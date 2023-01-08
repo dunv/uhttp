@@ -1,8 +1,9 @@
-module uhttp_cli
+module github.com/dunv/uhttp/cli
 
 go 1.19
 
 require (
+	github.com/andybalholm/brotli v1.0.4
 	github.com/dunv/ulog v1.0.32
 	github.com/klauspost/compress v1.15.14
 	github.com/spf13/cobra v1.6.1
