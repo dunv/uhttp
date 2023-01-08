@@ -1,7 +1,6 @@
 package uhttp
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"net/http"
@@ -9,12 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/dunv/ulog"
 )
 
 func setupSinglePage(t *testing.T) *UHTTP {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
 	u := NewUHTTP()
 
 	tempDir, err := os.MkdirTemp(os.TempDir(), "uhttpTest")

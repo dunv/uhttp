@@ -3,7 +3,7 @@ package uhttp
 import (
 	"bytes"
 	"errors"
-	"io"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,6 +12,7 @@ import (
 	"github.com/andybalholm/brotli"
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/ulog"
+	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
 )
 
@@ -19,6 +20,7 @@ type cachedFile struct {
 	Content        []byte
 	GzippedContent []byte
 	BrContent      []byte
+	DeflateContent []byte
 	ContentType    string
 }
 
@@ -49,6 +51,9 @@ func staticFilesHandler(u *UHTTP) http.HandlerFunc {
 		} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "gzip") && u.opts.enableGzip {
 			w.Header().Add("Content-Encoding", "gzip")
 			ulog.LogIfErrorSecondArg(w.Write(cachedFile.GzippedContent))
+		} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "deflate") && u.opts.enableDeflate {
+			w.Header().Add("Content-Encoding", "deflate")
+			ulog.LogIfErrorSecondArg(w.Write(cachedFile.DeflateContent))
 		} else {
 			ulog.LogIfErrorSecondArg(w.Write(cachedFile.Content))
 		}
@@ -64,7 +69,7 @@ func staticFilesHandler(u *UHTTP) http.HandlerFunc {
 func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 	fileNames := []string{}
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if path != root && !info.IsDir() {
+		if path != root && !info.IsDir() && !strings.HasSuffix(path, ".brotli") && !strings.HasSuffix(path, ".gz") && !strings.HasSuffix(path, ".deflate") {
 			fileNames = append(fileNames, path)
 		}
 		return nil
@@ -120,51 +125,91 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		}
 
 		if u.opts.enableGzip {
-			// Compress gzip
-			var gzipBuffer bytes.Buffer
-			gzipWriter, err := gzip.NewWriterLevel(&gzipBuffer, gzip.BestCompression)
-			if err != nil {
-				return err
-			}
-			_, err = gzipWriter.Write(fileContent)
-			if err != nil {
-				return err
-			}
-			err = gzipWriter.Close()
-			if err != nil {
-				return err
-			}
-			cached.GzippedContent, err = io.ReadAll(&gzipBuffer)
-			if err != nil {
-				return err
+			if _, err := os.Stat(fmt.Sprintf("%s.gz", fileName)); err == nil {
+				ulog.Tracef("http static: gzip-compressed file %s exists, not compressing again", pattern)
+				cached.GzippedContent, err = os.ReadFile(fmt.Sprintf("%s.gz", fileName))
+				if err != nil {
+					return err
+				}
+			} else {
+				var buffer bytes.Buffer
+				ulog.Tracef("http static: gzip-compressed file %s does not exist. Compressing", pattern)
+				gzipWriter, err := gzip.NewWriterLevel(&buffer, u.opts.gzipCompressionLevel)
+				if err != nil {
+					return err
+				}
+				if _, err = gzipWriter.Write(fileContent); err != nil {
+					return err
+				}
+				if err := gzipWriter.Flush(); err != nil {
+					return err
+				}
+				if err := gzipWriter.Close(); err != nil {
+					return err
+				}
+				cached.GzippedContent = buffer.Bytes()
 			}
 		}
 
 		if u.opts.enableBrotli {
-			// Compress brotli
-			var brotliBuffer bytes.Buffer
-			brotliWriter := brotli.NewWriterLevel(&brotliBuffer, u.opts.brotliCompressionLevel)
-			_, err = brotliWriter.Write(fileContent)
-			if err != nil {
-				return err
+			if _, err := os.Stat(fmt.Sprintf("%s.brotli", fileName)); err == nil {
+				ulog.Tracef("http static: brotli-compressed file %s exists, not compressing again", pattern)
+				cached.BrContent, err = os.ReadFile(fmt.Sprintf("%s.brotli", fileName))
+				if err != nil {
+					return err
+				}
+			} else {
+				var buffer bytes.Buffer
+				ulog.Tracef("http static: brotli-compressed file %s does not exist. Compressing", pattern)
+				brotliWriter := brotli.NewWriterLevel(&buffer, u.opts.brotliCompressionLevel)
+				if _, err = brotliWriter.Write(fileContent); err != nil {
+					return err
+				}
+				if err := brotliWriter.Flush(); err != nil {
+					return err
+				}
+				if err := brotliWriter.Close(); err != nil {
+					return err
+				}
+				cached.BrContent = buffer.Bytes()
 			}
-			err = brotliWriter.Close()
-			if err != nil {
-				return err
-			}
-			cached.BrContent, err = io.ReadAll(&brotliBuffer)
-			if err != nil {
-				return err
+		}
+
+		if u.opts.enableDeflate {
+			if _, err := os.Stat(fmt.Sprintf("%s.deflate", fileName)); err == nil {
+				ulog.Tracef("http static: deflate-compressed file %s exists, not compressing again", pattern)
+				cached.DeflateContent, err = os.ReadFile(fmt.Sprintf("%s.deflate", fileName))
+				if err != nil {
+					return err
+				}
+			} else {
+				var buffer bytes.Buffer
+				ulog.Tracef("http static: deflate-compressed file %s does not exist. Compressing", pattern)
+				deflateWriter, err := flate.NewWriter(&buffer, u.opts.deflateCompressionLevel)
+				if err != nil {
+					return err
+				}
+				if _, err = deflateWriter.Write(fileContent); err != nil {
+					return err
+				}
+				if err := deflateWriter.Flush(); err != nil {
+					return err
+				}
+				if err := deflateWriter.Close(); err != nil {
+					return err
+				}
+				cached.DeflateContent = buffer.Bytes()
 			}
 		}
 
 		filesCache[pattern] = cached
 		if !u.opts.silentStaticFileRegistration {
-			ulog.Infof("Registered http static %s (%s, gzip:%s, br:%s)",
+			ulog.Infof("Registered http static %s (%s, gzip:%s, br:%s, deflate:%s)",
 				pattern,
 				uhelpers.ByteCountIEC(int64(len(fileContent))),
 				uhelpers.ByteCountIEC(int64(len(cached.GzippedContent))),
 				uhelpers.ByteCountIEC(int64(len(cached.BrContent))),
+				uhelpers.ByteCountIEC(int64(len(cached.DeflateContent))),
 			)
 		}
 		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler(u))
