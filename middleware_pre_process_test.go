@@ -1,9 +1,9 @@
 package uhttp
 
 import (
-	"bufio"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"testing"
 
@@ -12,7 +12,7 @@ import (
 )
 
 func TestPreProcess(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 
 	originalMessage := "??"
@@ -31,7 +31,7 @@ func TestPreProcess(t *testing.T) {
 }
 
 func TestPreError(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	originalMessage := "??"
 	handler := NewHandler(

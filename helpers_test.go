@@ -1,7 +1,6 @@
 package uhttp
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -25,7 +24,7 @@ func ExecuteHandler(
 	t *testing.T,
 ) {
 	// Suppress log-output
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	// ulog.SetDebug()
 
 	ts := httptest.NewServer(handler.HandlerFunc(u))
@@ -79,7 +78,7 @@ func ExecuteHandlerWithGzipResponse(
 	t *testing.T,
 ) {
 	// Suppress log-output
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 
 	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()
@@ -131,7 +130,7 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 	t *testing.T,
 ) {
 	// Suppress log-output
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 
 	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()

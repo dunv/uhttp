@@ -1,8 +1,8 @@
 package uhttp
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestCacheHit(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	counter1 := 0
 	handler1 := NewHandler(
@@ -45,7 +45,7 @@ func TestCacheHit(t *testing.T) {
 }
 
 func TestCacheNoCacheWhenNotOK(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	counter := 0
 	handler := NewHandler(
@@ -63,7 +63,7 @@ func TestCacheNoCacheWhenNotOK(t *testing.T) {
 }
 
 func TestCacheForceCacheWhenNotOK(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	counter := 0
 	handler := NewHandler(
@@ -82,7 +82,7 @@ func TestCacheForceCacheWhenNotOK(t *testing.T) {
 }
 
 func TestCacheExpiry(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	counter1 := 0
 	handler1 := NewHandler(
@@ -115,7 +115,7 @@ func TestCacheExpiry(t *testing.T) {
 }
 
 func TestCacheClear(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	u.ExposeCacheHandlers()
 
@@ -148,7 +148,7 @@ func TestCacheClear(t *testing.T) {
 }
 
 func TestCacheClearSpecific(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	u.ExposeCacheHandlers()
 
@@ -181,7 +181,7 @@ func TestCacheClearSpecific(t *testing.T) {
 }
 
 func TestExposeCacheManagementNotAvailable(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	handler1 := NewHandler(
 		WithCache(10*time.Second),
@@ -197,7 +197,7 @@ func TestExposeCacheManagementNotAvailable(t *testing.T) {
 }
 
 func TestExposeCacheManagement(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	u.ExposeCacheHandlers()
 
@@ -272,7 +272,7 @@ func TestExposeCacheManagement(t *testing.T) {
 }
 
 func TestCacheEncodings(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	u.ExposeCacheHandlers()
 
@@ -299,7 +299,7 @@ func TestCacheEncodings(t *testing.T) {
 }
 
 func TestCacheEncodingsNoBrotli(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP(WithBrotliCompression(false, 5))
 	u.ExposeCacheHandlers()
 
@@ -326,7 +326,7 @@ func TestCacheEncodingsNoBrotli(t *testing.T) {
 }
 
 func TestCacheEncodingsNoGzip(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP(WithGzipCompression(false, 5))
 	u.ExposeCacheHandlers()
 
@@ -353,7 +353,7 @@ func TestCacheEncodingsNoGzip(t *testing.T) {
 }
 
 func TestCacheEncodingsNoDeflate(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP(WithDeflateCompression(false, 5))
 	u.ExposeCacheHandlers()
 
@@ -380,7 +380,7 @@ func TestCacheEncodingsNoDeflate(t *testing.T) {
 }
 
 func TestCacheNoEncodings(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	u.ExposeCacheHandlers()
 
@@ -406,7 +406,7 @@ func TestCacheNoEncodings(t *testing.T) {
 }
 
 func TestExposeCacheManagementMiddleware(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	requireQueryStringMiddleware := func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			if !strings.Contains(r.URL.RawQuery, "testMiddleware") {
@@ -442,7 +442,7 @@ func TestExposeCacheManagementMiddleware(t *testing.T) {
 }
 
 func TestCacheAutomatic(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	counter1 := 0
 	handler1 := NewHandler(
@@ -490,7 +490,7 @@ func TestCacheAutomatic(t *testing.T) {
 }
 
 func TestCacheAutomaticWithParameters(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	counterParam0 := 0
 	counterParam1 := 0
@@ -555,7 +555,7 @@ func TestCacheAutomaticWithParameters(t *testing.T) {
 }
 
 func setupCacheEncodingTest(t *testing.T) *UHTTP {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	counter := 0
 	handler := NewHandler(

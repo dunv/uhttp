@@ -1,8 +1,8 @@
 package uhttp
 
 import (
-	"bufio"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestErrorModel(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 
 	handler := NewHandler(

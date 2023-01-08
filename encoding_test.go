@@ -1,7 +1,7 @@
 package uhttp
 
 import (
-	"bufio"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +11,7 @@ import (
 )
 
 func setupEncodingTest(t *testing.T, enableBrotli, enableGzip, enableDeflate bool) *UHTTP {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	opts := []UhttpOption{}
 	if !enableBrotli {
 		opts = append(opts, WithBrotliCompression(false, 5))

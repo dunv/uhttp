@@ -1,7 +1,7 @@
 package uhttp
 
 import (
-	"bufio"
+	"io"
 	"net/http"
 	"testing"
 
@@ -10,7 +10,7 @@ import (
 )
 
 func TestSelectMethodNotAllowed(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	// All success cases are already tested by other tests
 	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
@@ -23,7 +23,7 @@ func TestSelectMethodNotAllowed(t *testing.T) {
 }
 
 func TestRecover(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
 		panic("handlerPanic")
@@ -35,7 +35,7 @@ func TestRecover(t *testing.T) {
 }
 
 func TestRecoverWithStackTrace(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP(WithSendPanicInfoToClient(true))
 	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
 		panic("handlerPanic")

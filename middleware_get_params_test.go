@@ -1,8 +1,8 @@
 package uhttp
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"testing"
@@ -257,7 +257,7 @@ func TestDurationRequirementFail(t *testing.T) {
 }
 
 func TestRequirementsInHandler(t *testing.T) {
-	ulog.SetWriter(bufio.NewWriter(nil), nil)
+	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	handler := NewHandler(
 		WithRequiredGet(R{
