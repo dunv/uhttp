@@ -1,4 +1,4 @@
-module github.com/dunv/uhttp/cli
+module github.com/dunv/uhttp/uhttpcli
 
 go 1.19
 
