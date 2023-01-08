@@ -10,8 +10,8 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "uhttp_cli",
-	Short: "A brief description of your application",
+	Use:   "uhttpcli",
+	Short: "Command-line tools for uhttp",
 	Long:  `Command-line tools for uhttp`,
 }
 
