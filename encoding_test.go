@@ -1,17 +1,14 @@
 package uhttp
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dunv/ulog"
 	"github.com/stretchr/testify/require"
 )
 
 func setupEncodingTest(t *testing.T, enableBrotli, enableGzip, enableDeflate bool) *UHTTP {
-	ulog.SetWriter(io.Discard, nil)
 	opts := []UhttpOption{}
 	if !enableBrotli {
 		opts = append(opts, WithBrotliCompression(false, 5))

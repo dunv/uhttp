@@ -4,8 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"net/http"
-
-	"github.com/dunv/ulog"
 )
 
 func AuthBasic(u *UHTTP, expectedUsername string, expectedHashedPasswordSha256 string) Middleware {
@@ -18,8 +16,12 @@ func AuthBasic(u *UHTTP, expectedUsername string, expectedHashedPasswordSha256 s
 				u.RenderErrorWithStatusCode(w, r, http.StatusUnauthorized, fmt.Errorf("Unauthorized"), u.opts.logHandlerErrors)
 				return
 			}
-			ulog.LogIfError(AddLogOutput(w, "authMethod", "basic"))
-			ulog.LogIfError(AddLogOutput(w, "user", actualUsername))
+			if err := AddLogOutput(w, "authMethod", "basic"); err != nil {
+				u.Log().Sugar().Error(err)
+			}
+			if err := AddLogOutput(w, "user", actualUsername); err != nil {
+				u.Log().Sugar().Error(err)
+			}
 			next.ServeHTTP(w, r)
 		}
 	})

@@ -2,13 +2,10 @@ package uhttp
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"testing"
 	"time"
-
-	"github.com/dunv/ulog"
 )
 
 func testRequirementFail(requirement R, actual map[string]string, unexpectedKey string, t *testing.T) {
@@ -257,7 +254,6 @@ func TestDurationRequirementFail(t *testing.T) {
 }
 
 func TestRequirementsInHandler(t *testing.T) {
-	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	handler := NewHandler(
 		WithRequiredGet(R{

@@ -35,7 +35,9 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 		// enable wanted encodings in cache
 		c = cache.NewCache(handler.opts.cacheMaxAge, handler.opts.handlerPattern)
 
-		ulog.PanicIfError(u.registerCache(handler.opts.handlerPattern, c))
+		if err := u.registerCache(handler.opts.handlerPattern, c); err != nil {
+			u.Log().Sugar().DPanic(err)
+		}
 
 		if handler.opts.cacheAutomaticUpdatesInterval > 0 {
 			// Run automatic refresher
@@ -44,7 +46,7 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 				for {
 					// parameters are populated with a single empty set by default
 					for _, paramSet := range handler.opts.cacheAutomaticUpdatesParameters {
-						u.opts.log.Infof("Running automatic cache of %s for params:%s", handler.opts.handlerPattern, paramSet)
+						u.opts.log.Sugar().Infof("Running automatic cache of %s for params:%s", handler.opts.handlerPattern, paramSet)
 						r, err := http.NewRequest(http.MethodGet, NO_LOG_MAGIC_URL_FORCE_CACHE, nil)
 						if err != nil {
 							ulog.Errorf("this error should never happen (%s)", err)
@@ -60,9 +62,9 @@ func cacheMiddleware(u *UHTTP, handler Handler) func(next http.HandlerFunc) http
 						noopWriter := &noopResponseWriter{}
 						f(noopWriter, r.WithContext(context.WithValue(r.Context(), CtxKeyIsAutomaticCacheExecution, true)))
 						if noopWriter.statusCode != http.StatusOK {
-							u.opts.log.Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.handlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
+							u.opts.log.Sugar().Errorf("could not populate cache of %s. statusCode:%d body:%s", handler.opts.handlerPattern, noopWriter.statusCode, strings.TrimSpace(noopWriter.body))
 						} else {
-							u.opts.log.Infof("Finished automatic cache of %s for params:%s", handler.opts.handlerPattern, paramSet)
+							u.opts.log.Sugar().Infof("Finished automatic cache of %s for params:%s", handler.opts.handlerPattern, paramSet)
 						}
 					}
 
@@ -116,9 +118,9 @@ type cachingResponseWriter struct {
 func newCachingResponseWriter(u *UHTTP, h Handler, w http.ResponseWriter, r *http.Request, cache *cache.Cache) *cachingResponseWriter {
 	if u.opts.logCacheRuns {
 		if strings.Contains(r.URL.String(), NO_LOG_MAGIC_URL_FORCE_CACHE) {
-			u.Log().Infof("Started automatic caching of %s", h.opts.handlerPattern)
+			u.Log().Sugar().Infof("Started automatic caching of %s", h.opts.handlerPattern)
 		} else {
-			u.Log().Infof("Started caching of %s by userRequest", h.opts.handlerPattern)
+			u.Log().Sugar().Infof("Started caching of %s by userRequest", h.opts.handlerPattern)
 		}
 	}
 
@@ -155,7 +157,7 @@ func (w *cachingResponseWriter) WriteHeader(code int) {
 	if w.wroteHeader {
 		// copied straight out of the standard-library net/http/server.go
 		caller := relevantCaller()
-		w.u.opts.log.Warnf("superfluous response.WriteHeader call from %s (%s:%d). could happen if the responseWriter is used in a uhttp.Handler AND the function returns something non-nil", caller.Function, path.Base(caller.File), caller.Line)
+		w.u.opts.log.Sugar().Warnf("superfluous response.WriteHeader call from %s (%s:%d). could happen if the responseWriter is used in a uhttp.Handler AND the function returns something non-nil", caller.Function, path.Base(caller.File), caller.Line)
 		return
 	}
 
@@ -177,24 +179,24 @@ func (w *cachingResponseWriter) Close(model interface{}, statusCode int) {
 	if w.h.opts.cachePersistEncodings {
 		bodyPlain, err = json.Marshal(model)
 		if err != nil {
-			w.u.Log().Errorf("could not encode model for caching (%s)", err)
+			w.u.Log().Sugar().Errorf("could not encode model for caching (%s)", err)
 		} else {
 			if w.u.opts.enableBrotli {
 				bodyBrotli, err = w.u.compressJSON(ENCODING_BROTLI, bodyPlain)
 				if err != nil {
-					w.u.Log().Errorf("could not compress JSON for caching (%s)", err)
+					w.u.Log().Sugar().Errorf("could not compress JSON for caching (%s)", err)
 				}
 			}
 			if w.u.opts.enableGzip {
 				bodyGzip, err = w.u.compressJSON(ENCODING_GZIP, bodyPlain)
 				if err != nil {
-					w.u.Log().Errorf("could not compress JSON for caching (%s)", err)
+					w.u.Log().Sugar().Errorf("could not compress JSON for caching (%s)", err)
 				}
 			}
 			if w.u.opts.enableDeflate {
 				bodyDeflate, err = w.u.compressJSON(ENCODING_DEFLATE, bodyPlain)
 				if err != nil {
-					w.u.Log().Errorf("could not compress JSON for caching (%s)", err)
+					w.u.Log().Sugar().Errorf("could not compress JSON for caching (%s)", err)
 				}
 			}
 		}
@@ -208,9 +210,9 @@ func (w *cachingResponseWriter) Close(model interface{}, statusCode int) {
 
 	if w.u.opts.logCacheRuns {
 		if w.r.URL.String() == NO_LOG_MAGIC_URL_FORCE_CACHE {
-			w.u.Log().Infof("Finished automatic caching of %s in %s", w.h.opts.handlerPattern, time.Since(w.startTime).String())
+			w.u.Log().Sugar().Infof("Finished automatic caching of %s in %s", w.h.opts.handlerPattern, time.Since(w.startTime).String())
 		} else {
-			w.u.Log().Infof("Finished caching by userRequest of %s in %s", w.h.opts.handlerPattern, time.Since(w.startTime).String())
+			w.u.Log().Sugar().Infof("Finished caching by userRequest of %s in %s", w.h.opts.handlerPattern, time.Since(w.startTime).String())
 		}
 	}
 }

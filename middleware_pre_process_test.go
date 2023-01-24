@@ -3,16 +3,13 @@ package uhttp
 import (
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"testing"
 
-	"github.com/dunv/ulog"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPreProcess(t *testing.T) {
-	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 
 	originalMessage := "??"
@@ -31,7 +28,6 @@ func TestPreProcess(t *testing.T) {
 }
 
 func TestPreError(t *testing.T) {
-	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	originalMessage := "??"
 	handler := NewHandler(

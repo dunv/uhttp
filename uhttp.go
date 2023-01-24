@@ -9,41 +9,14 @@ import (
 
 	"github.com/dunv/uhelpers"
 	"github.com/dunv/uhttp/cache"
-	"github.com/dunv/ulog"
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
-
-func init() {
-	// Make expected output (which is only for info, not for debugging) more readable
-	ulog.AddSkipFunctions(
-		"github.com/dunv/uhttp.RenderError",
-		"github.com/dunv/uhttp/helpers.RenderError",
-		"github.com/dunv/uhttp.RenderErrorWithStatusCode",
-		"github.com/dunv/uhttp/helpers.RenderErrorWithStatusCode",
-		"github.com/dunv/uhttp.RenderMessage",
-		"github.com/dunv/uhttp/helpers.RenderMessage",
-		"github.com/dunv/uhttp.RenderMessageWithStatusCode",
-		"github.com/dunv/uhttp/helpers.RenderMessageWithStatusCode",
-		"github.com/dunv/uhttp.renderMessageWithStatusCode",
-		"github.com/dunv/uhttp/helpers.renderMessageWithStatusCode",
-		"github.com/dunv/uhttp.renderErrorWithStatusCode",
-		"github.com/dunv/uhttp/helpers.renderErrorWithStatusCode",
-		"github.com/dunv/uhttp.renderErrorWithStatusCode",
-		"github.com/dunv/uhttp/helpers.renderErrorWithStatusCode",
-		"github.com/dunv/uhttp.rawRenderErrorWithStatusCode",
-		"github.com/dunv/uhttp/helpers.rawRenderErrorWithStatusCode",
-	)
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.addLoggingMiddleware.func1.1", "uhttp.Log")
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe", "uhttp.ListenAndServe")
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).ListenAndServe.func1", "uhttp.ListenAndServe")
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).Handle", "uhttp.Handle")
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RegisterStaticFilesHandler", "uhttp.HandleStatic")
-	ulog.AddReplaceFunction("github.com/dunv/uhttp.(*UHTTP).RenderErrorWithStatusCode", "uhttp.HandlerError")
-}
 
 type UHTTP struct {
 	opts           *uhttpOptions
@@ -60,10 +33,10 @@ type UHTTP struct {
 func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	mergedOpts := &uhttpOptions{
 		cors:                    "*",
-		log:                     ulog.NewUlog(),
-		encodingErrorLogLevel:   ulog.LEVEL_ERROR,
-		parseModelErrorLogLevel: ulog.LEVEL_ERROR,
-		handlerErrorLogLevel:    ulog.LEVEL_ERROR,
+		log:                     zap.L(),
+		encodingErrorLogLevel:   zapcore.ErrorLevel,
+		parseModelErrorLogLevel: zapcore.ErrorLevel,
+		handlerErrorLogLevel:    zapcore.ErrorLevel,
 		sendPanicInfoToClient:   false,
 		serveMux:                http.NewServeMux(),
 		address:                 "0.0.0.0:8080",
@@ -139,7 +112,7 @@ func (u *UHTTP) ExposeCacheHandlers(middlewares ...Middleware) {
 	u.Handle("/uhttp/cache/clear", cacheClearHandler(u, middlewares...))
 }
 
-func (u *UHTTP) Log() ulog.ULogger {
+func (u *UHTTP) Log() *zap.Logger {
 	return u.opts.log
 }
 
@@ -174,11 +147,11 @@ func (u *UHTTP) Handle(pattern string, handler Handler) {
 
 	if u.opts.logHandlerRegistrations {
 		if handler.opts.get != nil || handler.opts.getWithModel != nil {
-			u.opts.log.Infof("Registered http GET %s", pattern)
+			u.opts.log.Sugar().Infof("Registered http GET %s", pattern)
 		} else if handler.opts.post != nil || handler.opts.postWithModel != nil {
-			u.opts.log.Infof("Registered http POST %s", pattern)
+			u.opts.log.Sugar().Infof("Registered http POST %s", pattern)
 		} else if handler.opts.delete != nil || handler.opts.deleteWithModel != nil {
-			u.opts.log.Infof("Registered http DELETE %s", pattern)
+			u.opts.log.Sugar().Infof("Registered http DELETE %s", pattern)
 		}
 	}
 
@@ -232,21 +205,21 @@ func (u *UHTTP) ListenAndServe() error {
 	if !u.opts.enableTLS {
 		if u.opts.enableMetrics {
 			go func() {
-				ulog.Infof("Serving metrics at %s", u.opts.metricsSocket)
-				ulog.Fatal(metricsServer.ListenAndServe())
+				u.Log().Sugar().Infof("Serving metrics at %s", u.opts.metricsSocket)
+				u.Log().Sugar().Fatal(metricsServer.ListenAndServe())
 			}()
 		}
 
-		ulog.Infof("Serving at %s", u.opts.address)
+		u.Log().Sugar().Infof("Serving at %s", u.opts.address)
 		return srv.ListenAndServe()
 	}
 
 	if u.opts.enableMetrics {
 		go func() {
-			ulog.Infof("ServingTLS metrics at %s", u.opts.metricsSocket)
-			ulog.Fatal(metricsServer.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath))
+			u.Log().Sugar().Infof("ServingTLS metrics at %s", u.opts.metricsSocket)
+			u.Log().Sugar().Fatal(metricsServer.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath))
 		}()
 	}
-	ulog.Infof("ServingTLS at %s", u.opts.address)
+	u.Log().Sugar().Infof("ServingTLS at %s", u.opts.address)
 	return srv.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath)
 }

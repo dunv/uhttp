@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/dunv/ulog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,9 +22,6 @@ func ExecuteHandler(
 	u *UHTTP,
 	t *testing.T,
 ) {
-	// Suppress log-output
-	ulog.SetWriter(io.Discard, nil)
-	// ulog.SetDebug()
 
 	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()
@@ -77,8 +73,6 @@ func ExecuteHandlerWithGzipResponse(
 	u *UHTTP,
 	t *testing.T,
 ) {
-	// Suppress log-output
-	ulog.SetWriter(io.Discard, nil)
 
 	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()
@@ -129,8 +123,6 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 	u *UHTTP,
 	t *testing.T,
 ) {
-	// Suppress log-output
-	ulog.SetWriter(io.Discard, nil)
 
 	ts := httptest.NewServer(handler.HandlerFunc(u))
 	defer ts.Close()

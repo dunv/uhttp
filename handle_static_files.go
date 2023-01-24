@@ -11,7 +11,6 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/dunv/uhelpers"
-	"github.com/dunv/ulog"
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
 )
@@ -47,15 +46,23 @@ func staticFilesHandler(u *UHTTP) http.HandlerFunc {
 		// If client accepts br or gzip -> return compressed
 		if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "br") && u.opts.enableBrotli {
 			w.Header().Add("Content-Encoding", "br")
-			ulog.LogIfErrorSecondArg(w.Write(cachedFile.BrContent))
+			if _, err := w.Write(cachedFile.BrContent); err != nil {
+				u.Log().Sugar().Error(err)
+			}
 		} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "gzip") && u.opts.enableGzip {
 			w.Header().Add("Content-Encoding", "gzip")
-			ulog.LogIfErrorSecondArg(w.Write(cachedFile.GzippedContent))
+			if _, err := w.Write(cachedFile.GzippedContent); err != nil {
+				u.Log().Sugar().Error(err)
+			}
 		} else if acceptEncoding := r.Header.Get("Accept-Encoding"); strings.Contains(acceptEncoding, "deflate") && u.opts.enableDeflate {
 			w.Header().Add("Content-Encoding", "deflate")
-			ulog.LogIfErrorSecondArg(w.Write(cachedFile.DeflateContent))
+			if _, err := w.Write(cachedFile.DeflateContent); err != nil {
+				u.Log().Sugar().Error(err)
+			}
 		} else {
-			ulog.LogIfErrorSecondArg(w.Write(cachedFile.Content))
+			if _, err := w.Write(cachedFile.Content); err != nil {
+				u.Log().Sugar().Error(err)
+			}
 		}
 	})
 }
@@ -81,7 +88,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 	foundMainFile := false
 	for _, fileName := range fileNames {
 		if strings.Contains(fileName, ".DS_Store") {
-			ulog.Infof("Skipping '%s'", fileName)
+			u.Log().Sugar().Infof("Skipping '%s'", fileName)
 			continue
 		}
 		fileContent, err := os.ReadFile(fileName)
@@ -126,14 +133,14 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 
 		if u.opts.enableGzip {
 			if _, err := os.Stat(fmt.Sprintf("%s.gz", fileName)); err == nil {
-				ulog.Tracef("http static: gzip-compressed file %s exists, not compressing again", pattern)
+				u.Log().Sugar().Debugf("http static: gzip-compressed file %s exists, not compressing again", pattern)
 				cached.GzippedContent, err = os.ReadFile(fmt.Sprintf("%s.gz", fileName))
 				if err != nil {
 					return err
 				}
 			} else {
 				var buffer bytes.Buffer
-				ulog.Tracef("http static: gzip-compressed file %s does not exist. Compressing", pattern)
+				u.Log().Sugar().Debugf("http static: gzip-compressed file %s does not exist. Compressing", pattern)
 				gzipWriter, err := gzip.NewWriterLevel(&buffer, u.opts.gzipCompressionLevel)
 				if err != nil {
 					return err
@@ -153,14 +160,14 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 
 		if u.opts.enableBrotli {
 			if _, err := os.Stat(fmt.Sprintf("%s.brotli", fileName)); err == nil {
-				ulog.Tracef("http static: brotli-compressed file %s exists, not compressing again", pattern)
+				u.Log().Sugar().Debugf("http static: brotli-compressed file %s exists, not compressing again", pattern)
 				cached.BrContent, err = os.ReadFile(fmt.Sprintf("%s.brotli", fileName))
 				if err != nil {
 					return err
 				}
 			} else {
 				var buffer bytes.Buffer
-				ulog.Tracef("http static: brotli-compressed file %s does not exist. Compressing", pattern)
+				u.Log().Sugar().Debugf("http static: brotli-compressed file %s does not exist. Compressing", pattern)
 				brotliWriter := brotli.NewWriterLevel(&buffer, u.opts.brotliCompressionLevel)
 				if _, err = brotliWriter.Write(fileContent); err != nil {
 					return err
@@ -177,14 +184,14 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 
 		if u.opts.enableDeflate {
 			if _, err := os.Stat(fmt.Sprintf("%s.deflate", fileName)); err == nil {
-				ulog.Tracef("http static: deflate-compressed file %s exists, not compressing again", pattern)
+				u.Log().Sugar().Debugf("http static: deflate-compressed file %s exists, not compressing again", pattern)
 				cached.DeflateContent, err = os.ReadFile(fmt.Sprintf("%s.deflate", fileName))
 				if err != nil {
 					return err
 				}
 			} else {
 				var buffer bytes.Buffer
-				ulog.Tracef("http static: deflate-compressed file %s does not exist. Compressing", pattern)
+				u.Log().Sugar().Debugf("http static: deflate-compressed file %s does not exist. Compressing", pattern)
 				deflateWriter, err := flate.NewWriter(&buffer, u.opts.deflateCompressionLevel)
 				if err != nil {
 					return err
@@ -204,7 +211,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 
 		filesCache[pattern] = cached
 		if !u.opts.silentStaticFileRegistration {
-			ulog.Infof("Registered http static %s (%s, gzip:%s, br:%s, deflate:%s)",
+			u.Log().Sugar().Infof("Registered http static %s (%s, gzip:%s, br:%s, deflate:%s)",
 				pattern,
 				uhelpers.ByteCountIEC(int64(len(fileContent))),
 				uhelpers.ByteCountIEC(int64(len(cached.GzippedContent))),
@@ -214,7 +221,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		}
 		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler(u))
 	}
-	ulog.Infof("Registered http static / -> /index.html")
+	u.Log().Sugar().Infof("Registered http static / -> /index.html")
 	u.opts.serveMux.HandleFunc("/", staticFilesHandler(u))
 
 	if !foundMainFile {

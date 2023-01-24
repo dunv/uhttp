@@ -8,8 +8,8 @@ import (
 
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
-
-	"github.com/dunv/ulog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type UhttpOption interface {
@@ -18,10 +18,10 @@ type UhttpOption interface {
 
 type uhttpOptions struct {
 	cors                    string
-	log                     ulog.ULogger
-	encodingErrorLogLevel   ulog.LogLevel
-	parseModelErrorLogLevel ulog.LogLevel
-	handlerErrorLogLevel    ulog.LogLevel
+	log                     *zap.Logger
+	encodingErrorLogLevel   zapcore.Level
+	parseModelErrorLogLevel zapcore.Level
+	handlerErrorLogLevel    zapcore.Level
 
 	// Global middlewares
 	globalMiddlewares []Middleware
@@ -90,7 +90,7 @@ func WithCORS(cors string) UhttpOption {
 	})
 }
 
-func WithLogger(logger ulog.ULogger) UhttpOption {
+func WithLogger(logger *zap.Logger) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.log = logger
 	})
@@ -132,19 +132,19 @@ func WithDeflateCompression(enable bool, level int) UhttpOption {
 	})
 }
 
-func WithEncodingErrorLogLevel(level ulog.LogLevel) UhttpOption {
+func WithEncodingErrorLogLevel(level zapcore.Level) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.encodingErrorLogLevel = level
 	})
 }
 
-func WithParseModelErrorLogLevel(level ulog.LogLevel) UhttpOption {
+func WithParseModelErrorLogLevel(level zapcore.Level) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.parseModelErrorLogLevel = level
 	})
 }
 
-func WithHandlerErrorLogLevel(logErrors bool, level ulog.LogLevel) UhttpOption {
+func WithHandlerErrorLogLevel(logErrors bool, level zapcore.Level) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.logHandlerErrors = logErrors
 		o.handlerErrorLogLevel = level

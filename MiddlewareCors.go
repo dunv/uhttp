@@ -2,8 +2,6 @@ package uhttp
 
 import (
 	"net/http"
-
-	"github.com/dunv/ulog"
 )
 
 // Set CORS response headers
@@ -21,7 +19,9 @@ func corsMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc {
 				w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Request-Headers"))
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				w.Header().Set("Access-Control-Allow-Max-Age", "86400")
-				ulog.LogIfErrorSecondArg(w.Write([]byte{}))
+				if _, err := w.Write([]byte{}); err != nil {
+					u.Log().Sugar().Error(err)
+				}
 				return
 			}
 

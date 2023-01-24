@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dunv/ulog"
+	"go.uber.org/zap"
 )
 
 // A long list of helpers with identical code... I am missing generics here
@@ -20,7 +20,7 @@ func GetAsStringFromContext(key string, ctx context.Context) *string {
 	// it obviously points to a bug in the code not an error on the user's side
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 	}
 
 	stringValue, ok := paramMap[key].(string)
@@ -38,7 +38,7 @@ func GetAsBool(key string, r *http.Request) *bool {
 func GetAsBoolFromContext(key string, ctx context.Context) *bool {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -57,7 +57,7 @@ func GetAsInt(key string, r *http.Request) *int {
 func GetAsIntFromContext(key string, ctx context.Context) *int {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -76,7 +76,7 @@ func GetAsInt32(key string, r *http.Request) *int32 {
 func GetAsInt32FromContext(key string, ctx context.Context) *int32 {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -95,7 +95,7 @@ func GetAsInt64(key string, r *http.Request) *int64 {
 func GetAsInt64FromContext(key string, ctx context.Context) *int64 {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -114,7 +114,7 @@ func GetAsFloat32(key string, r *http.Request) *float32 {
 func GetAsFloat32FromContext(key string, ctx context.Context) *float32 {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -133,7 +133,7 @@ func GetAsFloat64(key string, r *http.Request) *float64 {
 func GetAsFloat64FromContext(key string, ctx context.Context) *float64 {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -152,7 +152,7 @@ func GetAsTime(key string, r *http.Request) *time.Time {
 func GetAsTimeFromContext(key string, ctx context.Context) *time.Time {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 
@@ -171,7 +171,7 @@ func GetAsDuration(key string, r *http.Request) *time.Duration {
 func GetAsDurationFromContext(key string, ctx context.Context) *time.Duration {
 	paramMap, ok := ctx.Value(CtxKeyGetParams).(R)
 	if !ok {
-		ulog.Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
+		zap.S().Panic("ContextKeyGetParams is not present in the request's context. please check the handler's definition")
 		return nil
 	}
 

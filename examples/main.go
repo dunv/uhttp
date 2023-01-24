@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/dunv/uhttp"
-	"github.com/dunv/ulog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	ulog.EnableColors()
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
-		uhttp.WithHandlerErrorLogLevel(true, ulog.LEVEL_INFO),
+		uhttp.WithHandlerErrorLogLevel(true, zapcore.InfoLevel),
 		uhttp.WithGranularLogging(true, true, true),
 	)
 	u.ExposeCacheHandlers()
@@ -77,7 +77,9 @@ func main() {
 		writer := r.Context().Value(uhttp.CtxKeyResponseWriter).(http.ResponseWriter)
 		writer.WriteHeader(http.StatusAccepted)
 
-		ulog.LogIfErrorSecondArg(writer.Write([]byte(`{"nothing":"toSay"}` + "\n")))
+		if _, err := writer.Write([]byte(`{"nothing":"toSay"}` + "\n")); err != nil {
+			zap.S().Error(err)
+		}
 		return nil
 	})))
 
@@ -92,12 +94,16 @@ func main() {
 
 		writer.Header().Set("Content-Type", "application/zip")
 		writer.WriteHeader(http.StatusAccepted)
-		ulog.LogIfErrorSecondArg(io.Copy(writer, f))
+		if _, err := io.Copy(writer, f); err != nil {
+			zap.S().Error(err)
+		}
 
 		return nil
 	})))
 
-	ulog.FatalIfError(u.RegisterStaticFilesHandler("static"))
+	if err := u.RegisterStaticFilesHandler("static"); err != nil {
+		zap.S().Error(err)
+	}
 
-	ulog.Fatal(u.ListenAndServe())
+	zap.S().Fatal(u.ListenAndServe())
 }

@@ -14,8 +14,8 @@ import (
 	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
+	"go.uber.org/zap"
 
-	"github.com/dunv/ulog"
 	"github.com/spf13/cobra"
 )
 
@@ -123,7 +123,9 @@ var precompressStaticFilesCmd = &cobra.Command{
 
 func init() {
 	precompressStaticFilesCmd.Flags().StringP("rootDir", "r", ".", "root directory of files")
-	ulog.LogIfError(precompressStaticFilesCmd.MarkFlagRequired("rootDir"))
+	if err := precompressStaticFilesCmd.MarkFlagRequired("rootDir"); err != nil {
+		zap.S().Error(err)
+	}
 
 	precompressStaticFilesCmd.Flags().Bool("gzip", false, "add gzip")
 	precompressStaticFilesCmd.Flags().Bool("brotli", false, "add brotli")

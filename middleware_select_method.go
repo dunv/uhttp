@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/dunv/ulog"
+	"github.com/dunv/uhelpers"
 )
 
 func selectMethodMiddleware(u *UHTTP, handlerOpts handlerOptions) http.HandlerFunc {
@@ -92,9 +92,9 @@ func executeHandlerMethod(r *http.Request, u *UHTTP, handlerOpts handlerOptions)
 func recoverFromPanic(u *UHTTP, handlerProcessed chan interface{}, r *http.Request, returnCode *int) {
 	if rec := recover(); rec != nil {
 		err := fmt.Errorf("panic: handlerExecution (%s)", rec)
-		u.opts.log.Errorf("panic [path: %s] %s", r.RequestURI, err)
+		u.opts.log.Sugar().Errorf("panic [path: %s] %s", r.RequestURI, err)
 		stack := debug.Stack()
-		ulog.LogByteArrayLineByLine(stack, u.opts.log.Errorf, fmt.Sprintf("panic [path: %s] ", r.RequestURI))
+		uhelpers.CallForByteArrayLineByLine(stack, u.opts.log.Sugar().Errorf, fmt.Sprintf("panic [path: %s] ", r.RequestURI))
 		err = fmt.Errorf("%s stackTrace: %s", err, strings.ReplaceAll(string(stack), "\n", "\\n"))
 		*returnCode = http.StatusInternalServerError
 
