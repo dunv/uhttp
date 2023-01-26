@@ -2,9 +2,8 @@ package uhttp
 
 import (
 	"context"
+	"log"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type HandlerOption interface {
@@ -69,7 +68,7 @@ func withDefaults() HandlerOption {
 func WithGet(h HandlerFunc) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		if o.getWithModel != nil {
-			zap.S().Error("cannot use WithGetModel in conjunction with WithGet. WithGet will supercede this assignment")
+			log.Println("ERROR cannot use WithGetModel in conjunction with WithGet. WithGet will supercede this assignment")
 		}
 
 		o.get = h
@@ -81,7 +80,7 @@ func WithGet(h HandlerFunc) HandlerOption {
 func WithGetModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		if o.get != nil {
-			zap.S().Error("cannot use WithGetModel in conjunction with WithGet. WithGet will supercede this assignment")
+			log.Println("ERROR cannot use WithGetModel in conjunction with WithGet. WithGet will supercede this assignment")
 		}
 
 		o.getModel = m
@@ -93,7 +92,7 @@ func WithGetModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 func WithPost(h HandlerFunc) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		if o.postWithModel != nil {
-			zap.S().Error("cannot use WithPostModel in conjunction with WithPost. WithPost will supercede this assignment")
+			log.Println("ERROR cannot use WithPostModel in conjunction with WithPost. WithPost will supercede this assignment")
 		}
 
 		o.post = h
@@ -105,7 +104,7 @@ func WithPost(h HandlerFunc) HandlerOption {
 func WithPostModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		if o.post != nil {
-			zap.S().Error("cannot use WithPostModel in conjunction with WithPost. WithPost will supercede this assignment")
+			log.Println("ERROR cannot use WithPostModel in conjunction with WithPost. WithPost will supercede this assignment")
 		}
 
 		o.postModel = m
@@ -117,7 +116,7 @@ func WithPostModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 func WithDelete(h HandlerFunc) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		if o.deleteWithModel != nil {
-			zap.S().Error("cannot use WithDeleteModel in conjunction with WithDelete. WithDelete will supercede this assignment")
+			log.Println("ERROR cannot use WithDeleteModel in conjunction with WithDelete. WithDelete will supercede this assignment")
 		}
 
 		o.delete = h
@@ -129,7 +128,7 @@ func WithDelete(h HandlerFunc) HandlerOption {
 func WithDeleteModel(m interface{}, h HandlerFuncWithModel) HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		if o.delete != nil {
-			zap.S().Error("cannot use WithDeleteModel in conjunction with WithDelete. WithDelete will supercede this assignment")
+			log.Println("ERROR cannot use WithDeleteModel in conjunction with WithDelete. WithDelete will supercede this assignment")
 		}
 
 		o.deleteModel = m

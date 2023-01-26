@@ -35,7 +35,7 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 					defer r.Body.Close()
 					if err != nil {
 						u.RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
-						u.opts.log.Log(u.opts.parseModelErrorLogLevel, fmt.Sprintf("parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error()))
+						u.opts.logParseModelError("parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 						return
 					}
 					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -46,7 +46,7 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 				err := decodeRequestBody(r, modelInterface)
 				if err != nil {
 					u.RenderErrorWithStatusCode(w, r, http.StatusBadRequest, fmt.Errorf("Could not decode request body (%s)", err), false)
-					u.opts.log.Log(u.opts.parseModelErrorLogLevel, fmt.Sprintf("parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error()))
+					u.opts.logParseModelError("parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 					return
 				}
 

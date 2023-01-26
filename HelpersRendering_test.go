@@ -4,8 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-
-	"go.uber.org/zap/zapcore"
 )
 
 func TestRender(t *testing.T) {
@@ -49,7 +47,9 @@ func TestRenderErrorWithStatusCode(t *testing.T) {
 }
 
 func TestRenderMessageWithStatusCodeAndLogLevelOverride(t *testing.T) {
-	u := NewUHTTP(WithEncodingErrorLogLevel(zapcore.InfoLevel))
+	// TODO: logLevel?
+	// u := NewUHTTP(WithEncodingErrorLogLevel(zapcore.InfoLevel))
+	u := NewUHTTP()
 
 	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
 		*ret = http.StatusConflict

@@ -14,8 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type UHTTP struct {
@@ -33,10 +31,10 @@ type UHTTP struct {
 func NewUHTTP(opts ...UhttpOption) *UHTTP {
 	mergedOpts := &uhttpOptions{
 		cors:                    "*",
-		log:                     zap.L(),
-		encodingErrorLogLevel:   zapcore.ErrorLevel,
-		parseModelErrorLogLevel: zapcore.ErrorLevel,
-		handlerErrorLogLevel:    zapcore.ErrorLevel,
+		log:                     NewDiscardLogger(),
+		logEncodingError:        func(string, ...interface{}) {},
+		logParseModelError:      func(string, ...interface{}) {},
+		logHandlerError:         func(string, ...interface{}) {},
 		sendPanicInfoToClient:   false,
 		serveMux:                http.NewServeMux(),
 		address:                 "0.0.0.0:8080",
@@ -112,7 +110,7 @@ func (u *UHTTP) ExposeCacheHandlers(middlewares ...Middleware) {
 	u.Handle("/uhttp/cache/clear", cacheClearHandler(u, middlewares...))
 }
 
-func (u *UHTTP) Log() *zap.Logger {
+func (u *UHTTP) Log() Logger {
 	return u.opts.log
 }
 
@@ -147,11 +145,11 @@ func (u *UHTTP) Handle(pattern string, handler Handler) {
 
 	if u.opts.logHandlerRegistrations {
 		if handler.opts.get != nil || handler.opts.getWithModel != nil {
-			u.opts.log.Sugar().Infof("Registered http GET %s", pattern)
+			u.opts.log.Infof("Registered http GET %s", pattern)
 		} else if handler.opts.post != nil || handler.opts.postWithModel != nil {
-			u.opts.log.Sugar().Infof("Registered http POST %s", pattern)
+			u.opts.log.Infof("Registered http POST %s", pattern)
 		} else if handler.opts.delete != nil || handler.opts.deleteWithModel != nil {
-			u.opts.log.Sugar().Infof("Registered http DELETE %s", pattern)
+			u.opts.log.Infof("Registered http DELETE %s", pattern)
 		}
 	}
 
@@ -205,21 +203,21 @@ func (u *UHTTP) ListenAndServe() error {
 	if !u.opts.enableTLS {
 		if u.opts.enableMetrics {
 			go func() {
-				u.Log().Sugar().Infof("Serving metrics at %s", u.opts.metricsSocket)
-				u.Log().Sugar().Fatal(metricsServer.ListenAndServe())
+				u.Log().Infof("Serving metrics at %s", u.opts.metricsSocket)
+				u.Log().Errorf("%s", metricsServer.ListenAndServe())
 			}()
 		}
 
-		u.Log().Sugar().Infof("Serving at %s", u.opts.address)
+		u.Log().Infof("Serving at %s", u.opts.address)
 		return srv.ListenAndServe()
 	}
 
 	if u.opts.enableMetrics {
 		go func() {
-			u.Log().Sugar().Infof("ServingTLS metrics at %s", u.opts.metricsSocket)
-			u.Log().Sugar().Fatal(metricsServer.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath))
+			u.Log().Infof("ServingTLS metrics at %s", u.opts.metricsSocket)
+			u.Log().Errorf("%s", metricsServer.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath))
 		}()
 	}
-	u.Log().Sugar().Infof("ServingTLS at %s", u.opts.address)
+	u.Log().Infof("ServingTLS at %s", u.opts.address)
 	return srv.ListenAndServeTLS(*u.opts.tlsCertPath, *u.opts.tlsKeyPath)
 }

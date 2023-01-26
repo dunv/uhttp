@@ -8,8 +8,6 @@ import (
 
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type UhttpOption interface {
@@ -17,11 +15,11 @@ type UhttpOption interface {
 }
 
 type uhttpOptions struct {
-	cors                    string
-	log                     *zap.Logger
-	encodingErrorLogLevel   zapcore.Level
-	parseModelErrorLogLevel zapcore.Level
-	handlerErrorLogLevel    zapcore.Level
+	cors               string
+	log                Logger
+	logEncodingError   func(template string, args ...interface{})
+	logParseModelError func(template string, args ...interface{})
+	logHandlerError    func(template string, args ...interface{})
 
 	// Global middlewares
 	globalMiddlewares []Middleware
@@ -90,7 +88,7 @@ func WithCORS(cors string) UhttpOption {
 	})
 }
 
-func WithLogger(logger *zap.Logger) UhttpOption {
+func WithLogger(logger Logger) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
 		o.log = logger
 	})
@@ -132,24 +130,24 @@ func WithDeflateCompression(enable bool, level int) UhttpOption {
 	})
 }
 
-func WithEncodingErrorLogLevel(level zapcore.Level) UhttpOption {
-	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.encodingErrorLogLevel = level
-	})
-}
+// func WithEncodingErrorLogLevel(level zapcore.Level) UhttpOption {
+// 	return newFuncUhttpOption(func(o *uhttpOptions) {
+// 		o.logEncodingError = level
+// 	})
+// }
 
-func WithParseModelErrorLogLevel(level zapcore.Level) UhttpOption {
-	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.parseModelErrorLogLevel = level
-	})
-}
+// func WithParseModelErrorLogLevel(level zapcore.Level) UhttpOption {
+// 	return newFuncUhttpOption(func(o *uhttpOptions) {
+// 		o.logParseModelError = level
+// 	})
+// }
 
-func WithHandlerErrorLogLevel(logErrors bool, level zapcore.Level) UhttpOption {
-	return newFuncUhttpOption(func(o *uhttpOptions) {
-		o.logHandlerErrors = logErrors
-		o.handlerErrorLogLevel = level
-	})
-}
+// func WithHandlerErrorLogLevel(logErrors bool, level zapcore.Level) UhttpOption {
+// 	return newFuncUhttpOption(func(o *uhttpOptions) {
+// 		o.logHandlerErrors = logErrors
+// 		o.logHandlerError = level
+// 	})
+// }
 
 func WithAddress(address string) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {

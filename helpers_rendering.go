@@ -2,7 +2,6 @@ package uhttp
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -30,10 +29,10 @@ func (u *UHTTP) RenderErrorWithStatusCode(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		u.rawRenderWithStatusCode(w, r, statusCode, NewHttpErrorResponse(err))
 		if logOut {
-			u.opts.log.Log(u.opts.handlerErrorLogLevel, fmt.Sprintf("[uri: %s] err: %s", r.RequestURI, err.Error()))
+			u.opts.logHandlerError("[uri: %s] err: %s", r.RequestURI, err.Error())
 		}
 	} else {
-		u.opts.log.Panic("Error to be rendered is nil")
+		panic("Error to be rendered is nil")
 	}
 }
 
@@ -53,7 +52,7 @@ func (u *UHTTP) rawRenderWithStatusCode(w http.ResponseWriter, r *http.Request, 
 	// Write body
 	err := json.NewEncoder(ew).Encode(model)
 	if err != nil {
-		u.opts.log.Log(u.opts.encodingErrorLogLevel, fmt.Sprintf("err encoding http response (%s)", err))
+		u.opts.logEncodingError("err encoding http response (%s)", err)
 		return
 	}
 

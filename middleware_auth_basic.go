@@ -17,10 +17,10 @@ func AuthBasic(u *UHTTP, expectedUsername string, expectedHashedPasswordSha256 s
 				return
 			}
 			if err := AddLogOutput(w, "authMethod", "basic"); err != nil {
-				u.Log().Sugar().Error(err)
+				u.Log().Errorf("%s", err)
 			}
 			if err := AddLogOutput(w, "user", actualUsername); err != nil {
-				u.Log().Sugar().Error(err)
+				u.Log().Errorf("%s", err)
 			}
 			next.ServeHTTP(w, r)
 		}

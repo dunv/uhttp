@@ -59,7 +59,7 @@ func (lrw *LoggingResponseWriter) WriteHeader(code int) {
 	if lrw.wroteHeader {
 		// copied straight out of the standard-library net/http/server.go
 		caller := relevantCaller()
-		lrw.u.opts.log.Sugar().Warnf("superfluous response.WriteHeader call from %s (%s:%d). could happen if the responseWriter is used in a uhttp.Handler AND the function returns something non-nil", caller.Function, path.Base(caller.File), caller.Line)
+		lrw.u.opts.log.Errorf("superfluous response.WriteHeader call from %s (%s:%d). could happen if the responseWriter is used in a uhttp.Handler AND the function returns something non-nil", caller.Function, path.Base(caller.File), caller.Line)
 		return
 	}
 
@@ -96,7 +96,7 @@ func addLoggingMiddleware(u *UHTTP, h *Handler, isStaticFileAccess bool) func(ne
 			duration := time.Since(start)
 			if u.opts.enableMetrics {
 				if err := HandleMetrics(u.metrics, r.Method, lrw.statusCode, r.URL.EscapedPath(), duration); err != nil {
-					u.opts.log.Sugar().Error(err)
+					u.opts.log.Errorf("%s", err)
 				}
 			}
 
@@ -158,7 +158,7 @@ func addLoggingMiddleware(u *UHTTP, h *Handler, isStaticFileAccess bool) func(ne
 				logString = fmt.Sprintf("%s [%s: %s]", logString, key, logLineParams[key])
 			}
 
-			u.opts.log.Info(logString)
+			u.opts.log.Infof("%s", logString)
 		}
 	}
 }

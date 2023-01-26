@@ -20,7 +20,7 @@ func corsMiddleware(u *UHTTP) func(next http.HandlerFunc) http.HandlerFunc {
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				w.Header().Set("Access-Control-Allow-Max-Age", "86400")
 				if _, err := w.Write([]byte{}); err != nil {
-					u.Log().Sugar().Error(err)
+					u.Log().Errorf("%s", err)
 				}
 				return
 			}

@@ -6,6 +6,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/flate"
 	"github.com/klauspost/compress/gzip"
-	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"
 )
@@ -124,7 +124,7 @@ var precompressStaticFilesCmd = &cobra.Command{
 func init() {
 	precompressStaticFilesCmd.Flags().StringP("rootDir", "r", ".", "root directory of files")
 	if err := precompressStaticFilesCmd.MarkFlagRequired("rootDir"); err != nil {
-		zap.S().Error(err)
+		log.Println("ERR", err)
 	}
 
 	precompressStaticFilesCmd.Flags().Bool("gzip", false, "add gzip")

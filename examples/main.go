@@ -3,19 +3,17 @@ package main
 import (
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/dunv/uhttp"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 func main() {
 	u := uhttp.NewUHTTP(
 		uhttp.WithSendPanicInfoToClient(true),
-		uhttp.WithHandlerErrorLogLevel(true, zapcore.InfoLevel),
 		uhttp.WithGranularLogging(true, true, true),
 	)
 	u.ExposeCacheHandlers()
@@ -78,7 +76,7 @@ func main() {
 		writer.WriteHeader(http.StatusAccepted)
 
 		if _, err := writer.Write([]byte(`{"nothing":"toSay"}` + "\n")); err != nil {
-			zap.S().Error(err)
+			log.Println(err)
 		}
 		return nil
 	})))
@@ -95,15 +93,15 @@ func main() {
 		writer.Header().Set("Content-Type", "application/zip")
 		writer.WriteHeader(http.StatusAccepted)
 		if _, err := io.Copy(writer, f); err != nil {
-			zap.S().Error(err)
+			log.Println(err)
 		}
 
 		return nil
 	})))
 
 	if err := u.RegisterStaticFilesHandler("static"); err != nil {
-		zap.S().Error(err)
+		log.Println(err)
 	}
 
-	zap.S().Fatal(u.ListenAndServe())
+	log.Fatal(u.ListenAndServe())
 }

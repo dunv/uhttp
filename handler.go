@@ -81,7 +81,7 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 		f := u.opts.globalMiddlewares[key]
 		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 		if u.opts.logCustomMiddlewareRegistration {
-			u.opts.log.Sugar().Infof("Registering custom-middleware for handler %s: %s", h.opts.handlerPattern, fName)
+			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.handlerPattern, fName)
 		}
 
 		if exclude != nil {
@@ -107,7 +107,7 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 
 		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 		if u.opts.logCustomMiddlewareRegistration {
-			u.opts.log.Sugar().Infof("Registering custom-middleware for handler %s: %s", h.opts.handlerPattern, fName)
+			u.opts.log.Infof("Registering custom-middleware for handler %s: %s", h.opts.handlerPattern, fName)
 		}
 
 		if exclude != nil {
