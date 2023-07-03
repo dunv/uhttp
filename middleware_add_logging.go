@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/dunv/uhelpers"
-	"github.com/dunv/ulog"
 )
 
 const NO_LOG_MAGIC_URL_FORCE_CACHE = "UHTTP_NO_LOG_FORCE_CACHE"
@@ -131,7 +130,7 @@ func addLoggingMiddleware(u *UHTTP, h *Handler, isStaticFileAccess bool) func(ne
 			if paramsRaw, ok := r.Context().Value(CtxKeyGetParams).(R); ok {
 				params, err := paramsRaw.Printable()
 				if err != nil {
-					ulog.Errorf("error when trying to log %s", err)
+					u.opts.log.Errorf("error when trying to log %s", err)
 					u.RenderError(w, r, errors.New("internal server error"))
 					return
 				}

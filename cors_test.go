@@ -1,17 +1,14 @@
 package uhttp
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dunv/ulog"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCORS(t *testing.T) {
-	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 	handler1 := NewHandler(
 		WithGet(func(r *http.Request, ret *int) interface{} {
@@ -36,7 +33,6 @@ func TestCORS(t *testing.T) {
 }
 
 func TestNoCORS(t *testing.T) {
-	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP(
 		WithCORS(""),
 	)

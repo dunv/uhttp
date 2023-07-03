@@ -2,17 +2,14 @@ package uhttp
 
 import (
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dunv/ulog"
 	"github.com/stretchr/testify/require"
 )
 
 func TestErrorModel(t *testing.T) {
-	ulog.SetWriter(io.Discard, nil)
 	u := NewUHTTP()
 
 	handler := NewHandler(

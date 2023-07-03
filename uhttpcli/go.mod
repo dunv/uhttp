@@ -1,10 +1,10 @@
 module github.com/dunv/uhttp/uhttpcli
 
-go 1.19
+go 1.20
 
 require (
-	github.com/andybalholm/brotli v1.0.4
-	github.com/klauspost/compress v1.15.14
+	github.com/andybalholm/brotli v1.0.5
+	github.com/klauspost/compress v1.16.6
 	github.com/spf13/cobra v1.6.1
 )
 
