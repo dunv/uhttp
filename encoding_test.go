@@ -1,28 +1,29 @@
-package uhttp
+package uhttp_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/dunv/uhttp"
 	"github.com/stretchr/testify/require"
 )
 
-func setupEncodingTest(t *testing.T, enableBrotli, enableGzip, enableDeflate bool) *UHTTP {
-	opts := []UhttpOption{}
+func setupEncodingTest(t *testing.T, enableBrotli, enableGzip, enableDeflate bool) *uhttp.UHTTP {
+	opts := []uhttp.UhttpOption{}
 	if !enableBrotli {
-		opts = append(opts, WithBrotliCompression(false, 5))
+		opts = append(opts, uhttp.WithBrotliCompression(false, 5))
 	}
 	if !enableGzip {
-		opts = append(opts, WithGzipCompression(false, 5))
+		opts = append(opts, uhttp.WithGzipCompression(false, 5))
 	}
 	if !enableDeflate {
-		opts = append(opts, WithDeflateCompression(false, 5))
+		opts = append(opts, uhttp.WithDeflateCompression(false, 5))
 	}
 
-	u := NewUHTTP(opts...)
-	handler := NewHandler(
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	u := uhttp.NewUHTTP(opts...)
+	handler := uhttp.NewHandler(
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"hello": "world"}
 		}),
 	)
@@ -37,7 +38,7 @@ func TestEncodingBrotli(t *testing.T) {
 	w := httptest.NewRecorder()
 	u.ServeMux().ServeHTTP(w, req)
 	res := w.Result()
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "br", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"hello": "world"}`, string(body))
@@ -51,7 +52,7 @@ func TestEncodingNoBrotli(t *testing.T) {
 	w := httptest.NewRecorder()
 	u.ServeMux().ServeHTTP(w, req)
 	res := w.Result()
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "gzip", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"hello": "world"}`, string(body))
@@ -65,7 +66,7 @@ func TestEncodingGzip(t *testing.T) {
 	w := httptest.NewRecorder()
 	u.ServeMux().ServeHTTP(w, req)
 	res := w.Result()
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "gzip", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"hello": "world"}`, string(body))
@@ -78,7 +79,7 @@ func TestEncodingDeflate(t *testing.T) {
 	w := httptest.NewRecorder()
 	u.ServeMux().ServeHTTP(w, req)
 	res := w.Result()
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "deflate", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"hello": "world"}`, string(body))
@@ -91,7 +92,7 @@ func TestEncodingNoEncoding(t *testing.T) {
 	w := httptest.NewRecorder()
 	u.ServeMux().ServeHTTP(w, req)
 	res := w.Result()
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"hello": "world"}`, string(body))

@@ -1,4 +1,4 @@
-package uhttp
+package uhttp_test
 
 import (
 	"context"
@@ -6,19 +6,20 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/dunv/uhttp"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPreProcess(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 
 	originalMessage := "??"
-	handler := NewHandler(
-		WithPreProcess(func(ctx context.Context) error {
+	handler := uhttp.NewHandler(
+		uhttp.WithPreProcess(func(ctx context.Context) error {
 			originalMessage = "world"
 			return nil
 		}),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"hello": originalMessage}
 		}),
 	)
@@ -28,13 +29,13 @@ func TestPreProcess(t *testing.T) {
 }
 
 func TestPreError(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	originalMessage := "??"
-	handler := NewHandler(
-		WithPreProcess(func(ctx context.Context) error {
+	handler := uhttp.NewHandler(
+		uhttp.WithPreProcess(func(ctx context.Context) error {
 			return errors.New("did not work")
 		}),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"hello": originalMessage}
 		}),
 	)

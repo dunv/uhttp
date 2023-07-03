@@ -27,7 +27,7 @@ var filesCache = map[string]cachedFile{}
 
 // static files handler which only works if initialized with "RegisterStaticFilesHandler"
 // (only serves from initialized cache)
-func staticFilesHandler(u *UHTTP) http.HandlerFunc {
+func StaticFilesHandler(u *UHTTP) http.HandlerFunc {
 	return chain(addLoggingMiddleware(u, nil, true))(func(w http.ResponseWriter, r *http.Request) {
 		if len(filesCache) == 0 {
 			u.RenderError(w, r, errors.New("staticFilesHandler used but not initialized"))
@@ -219,10 +219,10 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 				uhelpers.ByteCountIEC(int64(len(cached.DeflateContent))),
 			)
 		}
-		u.opts.serveMux.HandleFunc(pattern, staticFilesHandler(u))
+		u.opts.serveMux.HandleFunc(pattern, StaticFilesHandler(u))
 	}
 	u.Log().Infof("Registered http static / -> /index.html")
-	u.opts.serveMux.HandleFunc("/", staticFilesHandler(u))
+	u.opts.serveMux.HandleFunc("/", StaticFilesHandler(u))
 
 	if !foundMainFile {
 		return errors.New("could not find index.html")

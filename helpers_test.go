@@ -1,4 +1,4 @@
-package uhttp
+package uhttp_test
 
 import (
 	"bytes"
@@ -9,17 +9,18 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/dunv/uhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func ExecuteHandler(
-	handler Handler,
+func executeHandler(
+	handler uhttp.Handler,
 	method string,
 	expectedStatus int,
 	requestBody []byte,
 	expectedResponseBody []byte,
-	u *UHTTP,
+	u *uhttp.UHTTP,
 	t *testing.T,
 ) {
 
@@ -64,13 +65,13 @@ func ExecuteHandler(
 	}
 }
 
-func ExecuteHandlerWithGzipResponse(
-	handler Handler,
+func executeHandlerWithGzipResponse(
+	handler uhttp.Handler,
 	method string,
 	expectedStatus int,
 	requestBody []byte,
 	expectedResponseBody []byte,
-	u *UHTTP,
+	u *uhttp.UHTTP,
 	t *testing.T,
 ) {
 
@@ -101,7 +102,7 @@ func ExecuteHandlerWithGzipResponse(
 		return
 	}
 
-	response, err := decodeResponseBody(res)
+	response, err := uhttp.DecodeResponseBody(res)
 	if err != nil {
 		t.Error(err)
 		return
@@ -114,13 +115,13 @@ func ExecuteHandlerWithGzipResponse(
 	}
 }
 
-func ExecuteHandlerWithGzipRequestAndResponse(
-	handler Handler,
+func executeHandlerWithGzipRequestAndResponse(
+	handler uhttp.Handler,
 	method string,
 	expectedStatus int,
 	requestBody []byte,
 	expectedResponseBody []byte,
-	u *UHTTP,
+	u *uhttp.UHTTP,
 	t *testing.T,
 ) {
 
@@ -133,7 +134,7 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 		return
 	}
 
-	encoded, err := gzipEncodeRequestBody(requestBody)
+	encoded, err := uhttp.GzipEncodeRequestBody(requestBody)
 	if err != nil {
 		t.Error(err)
 		return
@@ -161,7 +162,7 @@ func ExecuteHandlerWithGzipRequestAndResponse(
 		return
 	}
 
-	response, err := decodeResponseBody(res)
+	response, err := uhttp.DecodeResponseBody(res)
 	if err != nil {
 		t.Error(err)
 		return
@@ -262,7 +263,7 @@ func RequireHTTPBodyAndNotHeader(
 
 func Run(
 	t *testing.T,
-	u *UHTTP,
+	u *uhttp.UHTTP,
 	method string,
 	url string,
 	header map[string]string,

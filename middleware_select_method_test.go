@@ -1,16 +1,17 @@
-package uhttp
+package uhttp_test
 
 import (
 	"net/http"
 	"testing"
 
+	"github.com/dunv/uhttp"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSelectMethodNotAllowed(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	// All success cases are already tested by other tests
-	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		return map[string]string{"test": "test"}
 	}))
 	u.Handle("/test", handler)
@@ -20,8 +21,8 @@ func TestSelectMethodNotAllowed(t *testing.T) {
 }
 
 func TestRecover(t *testing.T) {
-	u := NewUHTTP()
-	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
+	u := uhttp.NewUHTTP()
+	handler := uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		panic("handlerPanic")
 	}))
 	u.Handle("/panic", handler)
@@ -31,8 +32,8 @@ func TestRecover(t *testing.T) {
 }
 
 func TestRecoverWithStackTrace(t *testing.T) {
-	u := NewUHTTP(WithSendPanicInfoToClient(true))
-	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
+	u := uhttp.NewUHTTP(uhttp.WithSendPanicInfoToClient(true))
+	handler := uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		panic("handlerPanic")
 	}))
 	u.Handle("/panic", handler)

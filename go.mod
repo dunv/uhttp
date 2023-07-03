@@ -5,9 +5,9 @@ go 1.20
 require (
 	github.com/andybalholm/brotli v1.0.5
 	github.com/dunv/uhelpers v1.0.17
-	github.com/klauspost/compress v1.16.6
+	github.com/klauspost/compress v1.16.7
 	github.com/prometheus/client_golang v1.16.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 )
 
 require (

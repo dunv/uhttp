@@ -1,14 +1,16 @@
-package uhttp
+package uhttp_test
 
 import (
 	"net/http"
 	"testing"
+
+	"github.com/dunv/uhttp"
 )
 
 func TestWithContextMiddleware(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 
-	ctxKey := ContextKey("testKey")
+	ctxKey := uhttp.ContextKey("testKey")
 
 	err := u.AddContext(ctxKey, map[string]string{"addedContext": "testAddedContext"})
 	if err != nil {
@@ -16,11 +18,11 @@ func TestWithContextMiddleware(t *testing.T) {
 		return
 	}
 
-	handler := NewHandler(WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 		return r.Context().Value(ctxKey)
 	}))
 
 	expectedResponseBody := []byte(`{"addedContext":"testAddedContext"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, u, t)
+	executeHandler(handler, http.MethodGet, http.StatusOK, nil, expectedResponseBody, u, t)
 }

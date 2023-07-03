@@ -1,4 +1,4 @@
-package uhttp
+package uhttp_test
 
 import (
 	"fmt"
@@ -6,12 +6,14 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/dunv/uhttp"
 )
 
-func testRequirementFail(requirement R, actual map[string]string, unexpectedKey string, t *testing.T) {
-	u := NewUHTTP()
-	validatedMap := R{}
-	err := u.validateParams(requirement, actual, validatedMap, true)
+func testRequirementFail(requirement uhttp.R, actual map[string]string, unexpectedKey string, t *testing.T) {
+	u := uhttp.NewUHTTP()
+	validatedMap := uhttp.R{}
+	err := u.ValidateParams(requirement, actual, validatedMap, true)
 	if err == nil {
 		t.Error(fmt.Errorf("validation mistakenly succeeded"))
 	}
@@ -20,10 +22,10 @@ func testRequirementFail(requirement R, actual map[string]string, unexpectedKey 
 	}
 }
 
-func testRequirementSuccess(requirement R, actual map[string]string, expectedKey string, expectedValue interface{}, t *testing.T) {
-	u := NewUHTTP()
-	validatedMap := R{}
-	err := u.validateParams(requirement, actual, validatedMap, true)
+func testRequirementSuccess(requirement uhttp.R, actual map[string]string, expectedKey string, expectedValue interface{}, t *testing.T) {
+	u := uhttp.NewUHTTP()
+	validatedMap := uhttp.R{}
+	err := u.ValidateParams(requirement, actual, validatedMap, true)
 	if err != nil {
 		t.Error(fmt.Errorf("validation mistakenly failed"))
 	}
@@ -45,7 +47,7 @@ func testRequirementSuccess(requirement R, actual map[string]string, expectedKey
 
 func TestEnumRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": ENUM("test1", "test2")},
+		uhttp.R{"test": uhttp.ENUM("test1", "test2")},
 		map[string]string{"test": "test2"},
 		"test",
 		"test2",
@@ -55,7 +57,7 @@ func TestEnumRequirementSuccess(t *testing.T) {
 
 func TestEnumRequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": ENUM("test1", "test2")},
+		uhttp.R{"test": uhttp.ENUM("test1", "test2")},
 		map[string]string{"test": "test3"},
 		"test",
 		t,
@@ -64,7 +66,7 @@ func TestEnumRequirementFail(t *testing.T) {
 
 func TestStringRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": STRING},
+		uhttp.R{"test": uhttp.STRING},
 		map[string]string{"test": "test2"},
 		"test",
 		"test2",
@@ -74,7 +76,7 @@ func TestStringRequirementSuccess(t *testing.T) {
 
 func TestBoolRequirementSuccess1(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": BOOL},
+		uhttp.R{"test": uhttp.BOOL},
 		map[string]string{"test": "true"},
 		"test",
 		true,
@@ -84,7 +86,7 @@ func TestBoolRequirementSuccess1(t *testing.T) {
 
 func TestBoolRequirementSuccess2(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": BOOL},
+		uhttp.R{"test": uhttp.BOOL},
 		map[string]string{"test": "false"},
 		"test",
 		false,
@@ -94,7 +96,7 @@ func TestBoolRequirementSuccess2(t *testing.T) {
 
 func TestBoolRequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": BOOL},
+		uhttp.R{"test": uhttp.BOOL},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -103,7 +105,7 @@ func TestBoolRequirementFail(t *testing.T) {
 
 func TestIntRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": INT},
+		uhttp.R{"test": uhttp.INT},
 		map[string]string{"test": "2"},
 		"test",
 		int(2),
@@ -113,7 +115,7 @@ func TestIntRequirementSuccess(t *testing.T) {
 
 func TestIntRequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": INT},
+		uhttp.R{"test": uhttp.INT},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -122,7 +124,7 @@ func TestIntRequirementFail(t *testing.T) {
 
 func TestInt32RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": INT32},
+		uhttp.R{"test": uhttp.INT32},
 		map[string]string{"test": "2"},
 		"test",
 		int32(2),
@@ -132,7 +134,7 @@ func TestInt32RequirementSuccess(t *testing.T) {
 
 func TestInt32RequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": INT32},
+		uhttp.R{"test": uhttp.INT32},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -141,7 +143,7 @@ func TestInt32RequirementFail(t *testing.T) {
 
 func TestInt64RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": INT64},
+		uhttp.R{"test": uhttp.INT64},
 		map[string]string{"test": "2"},
 		"test",
 		int64(2),
@@ -151,7 +153,7 @@ func TestInt64RequirementSuccess(t *testing.T) {
 
 func TestInt64RequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": INT64},
+		uhttp.R{"test": uhttp.INT64},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -160,7 +162,7 @@ func TestInt64RequirementFail(t *testing.T) {
 
 func TestFloat32RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": FLOAT32},
+		uhttp.R{"test": uhttp.FLOAT32},
 		map[string]string{"test": "2.2"},
 		"test",
 		float32(2.2),
@@ -170,7 +172,7 @@ func TestFloat32RequirementSuccess(t *testing.T) {
 
 func TestFloat32RequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": FLOAT32},
+		uhttp.R{"test": uhttp.FLOAT32},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -179,7 +181,7 @@ func TestFloat32RequirementFail(t *testing.T) {
 
 func TestFloat64RequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": FLOAT64},
+		uhttp.R{"test": uhttp.FLOAT64},
 		map[string]string{"test": "2.2"},
 		"test",
 		float64(2.2),
@@ -189,7 +191,7 @@ func TestFloat64RequirementSuccess(t *testing.T) {
 
 func TestFloat64RequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": FLOAT64},
+		uhttp.R{"test": uhttp.FLOAT64},
 		map[string]string{"test": "ture"},
 		"test",
 		t,
@@ -198,7 +200,7 @@ func TestFloat64RequirementFail(t *testing.T) {
 
 func TestShortDateRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": SHORT_DATE},
+		uhttp.R{"test": uhttp.SHORT_DATE},
 		map[string]string{"test": "2019-08-09"},
 		"test",
 		time.Date(2019, 8, 9, 0, 0, 0, 0, time.UTC),
@@ -208,7 +210,7 @@ func TestShortDateRequirementSuccess(t *testing.T) {
 
 func TestShortDateRequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": SHORT_DATE},
+		uhttp.R{"test": uhttp.SHORT_DATE},
 		map[string]string{"test": "2019-13-30"},
 		"test",
 		t,
@@ -217,7 +219,7 @@ func TestShortDateRequirementFail(t *testing.T) {
 
 func TestRFC3339DateRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": RFC3339_DATE},
+		uhttp.R{"test": uhttp.RFC3339_DATE},
 		map[string]string{"test": "2002-10-02T10:00:00-05:00"},
 		"test",
 		time.Date(2002, 10, 2, 10, 0, 0, 0, time.FixedZone("UTC-5", -5*60*60)),
@@ -227,7 +229,7 @@ func TestRFC3339DateRequirementSuccess(t *testing.T) {
 
 func TestRFC3339DateRequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": RFC3339_DATE},
+		uhttp.R{"test": uhttp.RFC3339_DATE},
 		map[string]string{"test": "2002-10-02T30:00:00-05:00"},
 		"test",
 		t,
@@ -236,7 +238,7 @@ func TestRFC3339DateRequirementFail(t *testing.T) {
 
 func TestDurationRequirementSuccess(t *testing.T) {
 	testRequirementSuccess(
-		R{"test": DURATION},
+		uhttp.R{"test": uhttp.DURATION},
 		map[string]string{"test": "10h"},
 		"test",
 		time.Hour*10,
@@ -246,7 +248,7 @@ func TestDurationRequirementSuccess(t *testing.T) {
 
 func TestDurationRequirementFail(t *testing.T) {
 	testRequirementFail(
-		R{"test": DURATION},
+		uhttp.R{"test": uhttp.DURATION},
 		map[string]string{"test": "5k"},
 		"test",
 		t,
@@ -254,32 +256,32 @@ func TestDurationRequirementFail(t *testing.T) {
 }
 
 func TestRequirementsInHandler(t *testing.T) {
-	u := NewUHTTP()
-	handler := NewHandler(
-		WithRequiredGet(R{
-			"string":      STRING,
-			"bool":        BOOL,
-			"int":         INT,
-			"int32":       INT32,
-			"int64":       INT64,
-			"float32":     FLOAT32,
-			"float64":     FLOAT64,
-			"shortDate":   SHORT_DATE,
-			"rfc3339Date": RFC3339_DATE,
-			"duration":    DURATION,
+	u := uhttp.NewUHTTP()
+	handler := uhttp.NewHandler(
+		uhttp.WithRequiredGet(uhttp.R{
+			"string":      uhttp.STRING,
+			"bool":        uhttp.BOOL,
+			"int":         uhttp.INT,
+			"int32":       uhttp.INT32,
+			"int64":       uhttp.INT64,
+			"float32":     uhttp.FLOAT32,
+			"float64":     uhttp.FLOAT64,
+			"shortDate":   uhttp.SHORT_DATE,
+			"rfc3339Date": uhttp.RFC3339_DATE,
+			"duration":    uhttp.DURATION,
 		}),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]interface{}{
-				"string":      GetAsString("string", r),
-				"bool":        GetAsBool("bool", r),
-				"int":         GetAsInt("int", r),
-				"int32":       GetAsInt32("int32", r),
-				"int64":       GetAsInt64("int64", r),
-				"float32":     GetAsFloat32("float32", r),
-				"float64":     GetAsFloat64("float64", r),
-				"shortDate":   GetAsTime("shortDate", r),
-				"rfc3339Date": GetAsTime("rfc3339Date", r),
-				"duration":    GetAsDuration("duration", r).String(),
+				"string":      uhttp.GetAsString("string", r),
+				"bool":        uhttp.GetAsBool("bool", r),
+				"int":         uhttp.GetAsInt("int", r),
+				"int32":       uhttp.GetAsInt32("int32", r),
+				"int64":       uhttp.GetAsInt64("int64", r),
+				"float32":     uhttp.GetAsFloat32("float32", r),
+				"float64":     uhttp.GetAsFloat64("float64", r),
+				"shortDate":   uhttp.GetAsTime("shortDate", r),
+				"rfc3339Date": uhttp.GetAsTime("rfc3339Date", r),
+				"duration":    uhttp.GetAsDuration("duration", r).String(),
 			}
 		}),
 	)

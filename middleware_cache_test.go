@@ -1,4 +1,4 @@
-package uhttp
+package uhttp_test
 
 import (
 	"fmt"
@@ -8,24 +8,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dunv/uhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCacheHit(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	counter1 := 0
-	handler1 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler1 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++
 			return map[string]int{"counter1": counter1}
 		}),
 	)
 	counter2 := 0
-	handler2 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler2 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter2++
 			return map[string]int{"counter2": counter2}
 		}),
@@ -35,18 +36,18 @@ func TestCacheHit(t *testing.T) {
 
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 1}`, map[string][]string{})
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, map[string][]string{})
-	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 1}`, map[string][]string{CACHE_HEADER: {"true"}})
-	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, map[string][]string{CACHE_HEADER: {"true"}})
-	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 1}`, map[string][]string{CACHE_HEADER: {"true"}})
-	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, map[string][]string{CACHE_HEADER: {"true"}})
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 1}`, map[string][]string{uhttp.CACHE_HEADER: {"true"}})
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, map[string][]string{uhttp.CACHE_HEADER: {"true"}})
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 1}`, map[string][]string{uhttp.CACHE_HEADER: {"true"}})
+	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, map[string][]string{uhttp.CACHE_HEADER: {"true"}})
 }
 
 func TestCacheNoCacheWhenNotOK(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	counter := 0
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter++
 			return fmt.Errorf("counter:%d", counter)
 		}),
@@ -59,12 +60,12 @@ func TestCacheNoCacheWhenNotOK(t *testing.T) {
 }
 
 func TestCacheForceCacheWhenNotOK(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	counter := 0
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithCacheFailedRequests(),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithCacheFailedRequests(),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter++
 			return fmt.Errorf("counter:%d", counter)
 		}),
@@ -77,19 +78,19 @@ func TestCacheForceCacheWhenNotOK(t *testing.T) {
 }
 
 func TestCacheExpiry(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	counter1 := 0
-	handler1 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler1 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++
 			return map[string]int{"counter1": counter1}
 		}),
 	)
 	counter2 := 0
-	handler2 := NewHandler(
-		WithCache(1*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler2 := uhttp.NewHandler(
+		uhttp.WithCache(1*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter2++
 			return map[string]int{"counter2": counter2}
 		}),
@@ -109,21 +110,21 @@ func TestCacheExpiry(t *testing.T) {
 }
 
 func TestCacheClear(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	u.ExposeCacheHandlers()
 
 	counter1 := 0
-	handler1 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler1 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++
 			return map[string]int{"counter1": counter1}
 		}),
 	)
 	counter2 := 0
-	handler2 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler2 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter2++
 			return map[string]int{"counter2": counter2}
 		}),
@@ -141,21 +142,21 @@ func TestCacheClear(t *testing.T) {
 }
 
 func TestCacheClearSpecific(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	u.ExposeCacheHandlers()
 
 	counter1 := 0
-	handler1 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler1 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++
 			return map[string]int{"counter1": counter1}
 		}),
 	)
 	counter2 := 0
-	handler2 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler2 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter2++
 			return map[string]int{"counter2": counter2}
 		}),
@@ -173,11 +174,11 @@ func TestCacheClearSpecific(t *testing.T) {
 }
 
 func TestExposeCacheManagementNotAvailable(t *testing.T) {
-	u := NewUHTTP()
-	handler1 := NewHandler(
-		WithCache(10*time.Second),
-		WithAutomaticCacheUpdates(200*time.Millisecond, nil, nil),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	u := uhttp.NewUHTTP()
+	handler1 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithAutomaticCacheUpdates(200*time.Millisecond, nil, nil),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all1": "ok"}
 		}),
 	)
@@ -188,7 +189,7 @@ func TestExposeCacheManagementNotAvailable(t *testing.T) {
 }
 
 func TestExposeCacheManagement(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	u.ExposeCacheHandlers()
 
 	longResponseLength := 100000
@@ -197,15 +198,15 @@ func TestExposeCacheManagement(t *testing.T) {
 		longResponse[i] = 'a'
 	}
 
-	handler1 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler1 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all1": "ok"}
 		}),
 	)
-	handler2 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler2 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"longerResponse": string(longResponse)}
 		}),
 	)
@@ -262,13 +263,13 @@ func TestExposeCacheManagement(t *testing.T) {
 }
 
 func TestCacheEncodings(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	u.ExposeCacheHandlers()
 
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithCachePersistEncodings(),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithCachePersistEncodings(),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all": "ok"}
 		}),
 	)
@@ -288,13 +289,13 @@ func TestCacheEncodings(t *testing.T) {
 }
 
 func TestCacheEncodingsNoBrotli(t *testing.T) {
-	u := NewUHTTP(WithBrotliCompression(false, 5))
+	u := uhttp.NewUHTTP(uhttp.WithBrotliCompression(false, 5))
 	u.ExposeCacheHandlers()
 
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithCachePersistEncodings(),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithCachePersistEncodings(),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all": "ok"}
 		}),
 	)
@@ -314,13 +315,13 @@ func TestCacheEncodingsNoBrotli(t *testing.T) {
 }
 
 func TestCacheEncodingsNoGzip(t *testing.T) {
-	u := NewUHTTP(WithGzipCompression(false, 5))
+	u := uhttp.NewUHTTP(uhttp.WithGzipCompression(false, 5))
 	u.ExposeCacheHandlers()
 
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithCachePersistEncodings(),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithCachePersistEncodings(),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all": "ok"}
 		}),
 	)
@@ -340,13 +341,13 @@ func TestCacheEncodingsNoGzip(t *testing.T) {
 }
 
 func TestCacheEncodingsNoDeflate(t *testing.T) {
-	u := NewUHTTP(WithDeflateCompression(false, 5))
+	u := uhttp.NewUHTTP(uhttp.WithDeflateCompression(false, 5))
 	u.ExposeCacheHandlers()
 
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithCachePersistEncodings(),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithCachePersistEncodings(),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all": "ok"}
 		}),
 	)
@@ -366,12 +367,12 @@ func TestCacheEncodingsNoDeflate(t *testing.T) {
 }
 
 func TestCacheNoEncodings(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	u.ExposeCacheHandlers()
 
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all": "ok"}
 		}),
 	)
@@ -403,12 +404,12 @@ func TestExposeCacheManagementMiddleware(t *testing.T) {
 		}
 	}
 
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	u.ExposeCacheHandlers(requireQueryStringMiddleware)
 
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"all": "ok"}
 		}),
 	)
@@ -426,20 +427,20 @@ func TestExposeCacheManagementMiddleware(t *testing.T) {
 }
 
 func TestCacheAutomatic(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	counter1 := 0
-	handler1 := NewHandler(
-		WithCache(10*time.Second),
-		WithAutomaticCacheUpdates(200*time.Millisecond, nil, nil),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler1 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithAutomaticCacheUpdates(200*time.Millisecond, nil, nil),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter1++
 			return map[string]int{"counter1": counter1}
 		}),
 	)
 	counter2 := 0
-	handler2 := NewHandler(
-		WithCache(10*time.Second),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler2 := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter2++
 			return map[string]int{"counter2": counter2}
 		}),
@@ -452,38 +453,38 @@ func TestCacheAutomatic(t *testing.T) {
 
 	// cache should be initialized automatically for handler1
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 1}`, map[string][]string{
-		CACHE_HEADER: {"true"},
+		uhttp.CACHE_HEADER: {"true"},
 	})
 
 	// no cache should be present for handler2
-	RequireHTTPBodyAndNotHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, []string{CACHE_HEADER})
+	RequireHTTPBodyAndNotHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, []string{uhttp.CACHE_HEADER})
 
 	// wait for automatic update
 	time.Sleep(200 * time.Millisecond)
 
 	// automatic update should have happened in the background
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler1", nil, `{"counter1": 2}`, map[string][]string{
-		CACHE_HEADER: {"true"},
+		uhttp.CACHE_HEADER: {"true"},
 	})
 
 	// cache for handler2 is still the old one
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler2", nil, `{"counter2": 1}`, map[string][]string{
-		CACHE_HEADER: {"true"},
+		uhttp.CACHE_HEADER: {"true"},
 	})
 }
 
 func TestCacheAutomaticWithParameters(t *testing.T) {
-	u := NewUHTTP()
+	u := uhttp.NewUHTTP()
 	counterParam0 := 0
 	counterParam1 := 0
 	counterParam2 := 0
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithAutomaticCacheUpdates(200*time.Millisecond, nil, []map[string]string{
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithAutomaticCacheUpdates(200*time.Millisecond, nil, []map[string]string{
 			{"param1": "param1"},
 			{"param2": "param2"},
 		}),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			if r.URL.Query().Get("param1") == "" && r.URL.Query().Get("param2") == "" {
 				counterParam0++
 			}
@@ -509,10 +510,10 @@ func TestCacheAutomaticWithParameters(t *testing.T) {
 	// cache should be initialized automatically. Since during the first cacheRun the one with param2 was not run yet -> counter == 0
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param1": []string{"param1"}},
 		`{"counterParam0": 0, "counterParam1": 1, "counterParam2": 0}`,
-		map[string][]string{CACHE_HEADER: {"true"}})
+		map[string][]string{uhttp.CACHE_HEADER: {"true"}})
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param2": []string{"param2"}},
 		`{"counterParam0": 0, "counterParam1": 1, "counterParam2": 1}`,
-		map[string][]string{CACHE_HEADER: {"true"}})
+		map[string][]string{uhttp.CACHE_HEADER: {"true"}})
 
 	// this request should not have been cached yet
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil,
@@ -524,25 +525,25 @@ func TestCacheAutomaticWithParameters(t *testing.T) {
 
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param1": []string{"param1"}},
 		`{"counterParam0": 1, "counterParam1": 2, "counterParam2": 1}`,
-		map[string][]string{CACHE_HEADER: {"true"}})
+		map[string][]string{uhttp.CACHE_HEADER: {"true"}})
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", url.Values{"param2": []string{"param2"}},
 		`{"counterParam0": 1, "counterParam1": 2, "counterParam2": 2}`,
-		map[string][]string{CACHE_HEADER: {"true"}})
+		map[string][]string{uhttp.CACHE_HEADER: {"true"}})
 
 	// should still deliver the old response, as the regular cache-time is 10s
 	RequireHTTPBodyAndHeader(t, u.ServeMux().ServeHTTP, http.MethodGet, "/cachedHandler", nil,
 		`{"counterParam0": 1, "counterParam1": 1, "counterParam2": 1}`,
-		map[string][]string{CACHE_HEADER: {"true"}})
+		map[string][]string{uhttp.CACHE_HEADER: {"true"}})
 
 }
 
-func setupCacheEncodingTest(t *testing.T) *UHTTP {
-	u := NewUHTTP()
+func setupCacheEncodingTest(t *testing.T) *uhttp.UHTTP {
+	u := uhttp.NewUHTTP()
 	counter := 0
-	handler := NewHandler(
-		WithCache(10*time.Second),
-		WithCachePersistEncodings(),
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler := uhttp.NewHandler(
+		uhttp.WithCache(10*time.Second),
+		uhttp.WithCachePersistEncodings(),
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			counter++
 			return map[string]int{"counter": counter}
 		}),
@@ -554,12 +555,12 @@ func setupCacheEncodingTest(t *testing.T) *UHTTP {
 func TestCachePersistedEncodingPlain(t *testing.T) {
 	u := setupCacheEncodingTest(t)
 	_, _, _, res := Run(t, u, http.MethodGet, "/test", map[string]string{"Accept-Encoding": ""})
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"counter": 1}`, string(body))
 	_, _, _, res = Run(t, u, http.MethodGet, "/test", map[string]string{"Accept-Encoding": ""})
-	body, err = decodeResponseBody(res)
+	body, err = uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"counter": 1}`, string(body))
@@ -568,12 +569,12 @@ func TestCachePersistedEncodingPlain(t *testing.T) {
 func TestCachePersistedEncodingGzip(t *testing.T) {
 	u := setupCacheEncodingTest(t)
 	_, _, _, res := Run(t, u, http.MethodGet, "/test", map[string]string{"Accept-Encoding": "gzip"})
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "gzip", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"counter": 1}`, string(body))
 	_, _, _, res = Run(t, u, http.MethodGet, "/test", map[string]string{"Accept-Encoding": "gzip"})
-	body, err = decodeResponseBody(res)
+	body, err = uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "gzip", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"counter": 1}`, string(body))
@@ -582,12 +583,12 @@ func TestCachePersistedEncodingGzip(t *testing.T) {
 func TestCachePersistedEncodingDeflate(t *testing.T) {
 	u := setupCacheEncodingTest(t)
 	_, _, _, res := Run(t, u, http.MethodGet, "/test", map[string]string{"Accept-Encoding": "deflate"})
-	body, err := decodeResponseBody(res)
+	body, err := uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "deflate", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"counter": 1}`, string(body))
 	_, _, _, res = Run(t, u, http.MethodGet, "/test", map[string]string{"Accept-Encoding": "deflate"})
-	body, err = decodeResponseBody(res)
+	body, err = uhttp.DecodeResponseBody(res)
 	require.NoError(t, err)
 	require.Equal(t, "deflate", res.Header.Get("Content-Encoding"))
 	require.JSONEq(t, `{"counter": 1}`, string(body))

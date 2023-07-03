@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/andybalholm/brotli v1.0.5
-	github.com/klauspost/compress v1.16.6
+	github.com/klauspost/compress v1.16.7
 	github.com/spf13/cobra v1.6.1
 )
 

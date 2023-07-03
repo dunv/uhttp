@@ -1,13 +1,15 @@
-package uhttp
+package uhttp_test
 
 import (
 	"net/http"
 	"testing"
+
+	"github.com/dunv/uhttp"
 )
 
 func TestParsePostModel(t *testing.T) {
-	u := NewUHTTP()
-	handler := NewHandler(WithPostModel(
+	u := uhttp.NewUHTTP()
+	handler := uhttp.NewHandler(uhttp.WithPostModel(
 		map[string]string{},
 		func(r *http.Request, model interface{}, ret *int) interface{} {
 			return model
@@ -17,12 +19,12 @@ func TestParsePostModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, u, t)
+	executeHandler(handler, http.MethodPost, http.StatusOK, requestBody, expectedResponseBody, u, t)
 }
 
 func TestParseGetModel(t *testing.T) {
-	u := NewUHTTP()
-	handler := NewHandler(WithGetModel(
+	u := uhttp.NewUHTTP()
+	handler := uhttp.NewHandler(uhttp.WithGetModel(
 		map[string]string{},
 		func(r *http.Request, model interface{}, ret *int) interface{} {
 			return model
@@ -32,12 +34,12 @@ func TestParseGetModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodGet, http.StatusOK, requestBody, expectedResponseBody, u, t)
+	executeHandler(handler, http.MethodGet, http.StatusOK, requestBody, expectedResponseBody, u, t)
 }
 
 func TestParseDeleteModel(t *testing.T) {
-	u := NewUHTTP()
-	handler := NewHandler(WithDeleteModel(
+	u := uhttp.NewUHTTP()
+	handler := uhttp.NewHandler(uhttp.WithDeleteModel(
 		map[string]string{},
 		func(r *http.Request, model interface{}, ret *int) interface{} {
 			return model
@@ -47,5 +49,5 @@ func TestParseDeleteModel(t *testing.T) {
 	requestBody := []byte(`{"test":"test"}`)
 	expectedResponseBody := []byte(`{"test":"test"}`)
 
-	ExecuteHandler(handler, http.MethodDelete, http.StatusOK, requestBody, expectedResponseBody, u, t)
+	executeHandler(handler, http.MethodDelete, http.StatusOK, requestBody, expectedResponseBody, u, t)
 }

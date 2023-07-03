@@ -1,4 +1,4 @@
-package uhttp
+package uhttp_test
 
 import (
 	"bytes"
@@ -8,10 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/dunv/uhttp"
 )
 
-func setupSinglePage(t *testing.T) *UHTTP {
-	u := NewUHTTP()
+func setupSinglePage(t *testing.T) *uhttp.UHTTP {
+	u := uhttp.NewUHTTP()
 
 	tempDir, err := os.MkdirTemp(os.TempDir(), "uhttpTest")
 	if err != nil {
@@ -65,7 +67,7 @@ func TestSinglePageAppHandlerReturnIndex(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/", nil)
 	w := httptest.NewRecorder()
-	staticFilesHandler(u)(w, req)
+	uhttp.StaticFilesHandler(u)(w, req)
 	res := w.Result()
 	response, _ := io.ReadAll(res.Body)
 
@@ -86,7 +88,7 @@ func TestSinglePageAppHandlerReturnActualFile(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
 	w := httptest.NewRecorder()
-	staticFilesHandler(u)(w, req)
+	uhttp.StaticFilesHandler(u)(w, req)
 	res := w.Result()
 	response, _ := io.ReadAll(res.Body)
 
@@ -108,9 +110,9 @@ func TestSinglePageAppHandlerReturnActualFileGzip(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
 	req.Header.Add("Accept-Encoding", "gzip")
 	w := httptest.NewRecorder()
-	staticFilesHandler(u)(w, req)
+	uhttp.StaticFilesHandler(u)(w, req)
 	res := w.Result()
-	responseDecoded, err := decodeResponseBody(res)
+	responseDecoded, err := uhttp.DecodeResponseBody(res)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -135,9 +137,9 @@ func TestSinglePageAppHandlerReturnActualFileBrotli(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
 	req.Header.Add("Accept-Encoding", "br")
 	w := httptest.NewRecorder()
-	staticFilesHandler(u)(w, req)
+	uhttp.StaticFilesHandler(u)(w, req)
 	res := w.Result()
-	responseDecoded, err := decodeResponseBody(res)
+	responseDecoded, err := uhttp.DecodeResponseBody(res)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -162,9 +164,9 @@ func TestSinglePageAppHandlerReturnActualFileDeflate(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/main.css", nil)
 	req.Header.Add("Accept-Encoding", "deflate")
 	w := httptest.NewRecorder()
-	staticFilesHandler(u)(w, req)
+	uhttp.StaticFilesHandler(u)(w, req)
 	res := w.Result()
-	responseDecoded, err := decodeResponseBody(res)
+	responseDecoded, err := uhttp.DecodeResponseBody(res)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

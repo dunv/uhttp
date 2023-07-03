@@ -23,13 +23,13 @@ func getParamsMiddleware(u *UHTTP, opts handlerOptions) func(next http.HandlerFu
 
 			paramMap := R{}
 
-			err := u.validateParams(opts.requiredGet, actual, paramMap, true)
+			err := u.ValidateParams(opts.requiredGet, actual, paramMap, true)
 			if err != nil {
 				u.RenderError(w, r, fmt.Errorf("%v", err))
 				return
 			}
 
-			err = u.validateParams(opts.optionalGet, actual, paramMap, false)
+			err = u.ValidateParams(opts.optionalGet, actual, paramMap, false)
 			if err != nil {
 				u.RenderError(w, r, fmt.Errorf("%v", err))
 			}

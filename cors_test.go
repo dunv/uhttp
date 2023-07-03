@@ -1,17 +1,18 @@
-package uhttp
+package uhttp_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/dunv/uhttp"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCORS(t *testing.T) {
-	u := NewUHTTP()
-	handler1 := NewHandler(
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	u := uhttp.NewUHTTP()
+	handler1 := uhttp.NewHandler(
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"hello": "world"}
 		}),
 	)
@@ -33,11 +34,11 @@ func TestCORS(t *testing.T) {
 }
 
 func TestNoCORS(t *testing.T) {
-	u := NewUHTTP(
-		WithCORS(""),
+	u := uhttp.NewUHTTP(
+		uhttp.WithCORS(""),
 	)
-	handler1 := NewHandler(
-		WithGet(func(r *http.Request, ret *int) interface{} {
+	handler1 := uhttp.NewHandler(
+		uhttp.WithGet(func(r *http.Request, ret *int) interface{} {
 			return map[string]string{"hello": "world"}
 		}),
 	)

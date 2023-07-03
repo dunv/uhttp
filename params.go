@@ -56,7 +56,7 @@ func (r R) Printable() (map[string]string, error) {
 	return printable, nil
 }
 
-func (u *UHTTP) validateParams(requirement R, actual map[string]string, destination R, required bool) error {
+func (u *UHTTP) ValidateParams(requirement R, actual map[string]string, destination R, required bool) error {
 	errors := []error{}
 	keys := uhelpers.StringKeysFromMap(requirement)
 	for _, key := range keys {

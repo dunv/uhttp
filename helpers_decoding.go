@@ -50,7 +50,7 @@ func decodeRequestBody(r *http.Request, model interface{}) error {
 	return nil
 }
 
-func decodeResponseBody(res *http.Response) ([]byte, error) {
+func DecodeResponseBody(res *http.Response) ([]byte, error) {
 	wrappedReader, err := DecodingReader(res.Header, res.Body)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func decodeResponseBody(res *http.Response) ([]byte, error) {
 	return decodedResponse, nil
 }
 
-func gzipEncodeRequestBody(body []byte) (io.ReadCloser, error) {
+func GzipEncodeRequestBody(body []byte) (io.ReadCloser, error) {
 	buffer := bytes.NewBuffer([]byte{})
 	writer, err := gzip.NewWriterLevel(buffer, 5)
 	if err != nil {
