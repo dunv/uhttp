@@ -10,7 +10,7 @@ import (
 )
 
 // ParseModel parses and adds a model from a requestbody if wanted
-func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
+func parseModelMiddleware(u *UHTTP, handlerOpts handlerOptions, postModel interface{}, getModel interface{}, deleteModel interface{}) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var reflectModel reflect.Value
@@ -38,6 +38,10 @@ func parseModelMiddleware(u *UHTTP, postModel interface{}, getModel interface{},
 						u.opts.logParseModelError("parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
 						return
 					}
+
+					// execute callback for rawRequestBody
+					handlerOpts.debugRawRequestBody(bodyBytes)
+
 					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 

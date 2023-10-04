@@ -38,6 +38,8 @@ type handlerOptions struct {
 	cacheAutomaticUpdatesParameters     []map[string]string
 	cacheMaxAge                         time.Duration
 
+	debugRawRequestBody func([]byte)
+
 	loggingDisable bool
 
 	// Read-only
@@ -61,6 +63,7 @@ func newFuncHandlerOption(f func(*handlerOptions)) *funcHandlerOption {
 func withDefaults() HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.cacheBypassHeader = "X-UHTTP-BYPASS-CACHE"
+		o.debugRawRequestBody = func([]byte) {}
 	})
 }
 
@@ -214,5 +217,12 @@ func WithCachePersistEncodings() HandlerOption {
 func WithDisableAccessLogging() HandlerOption {
 	return newFuncHandlerOption(func(o *handlerOptions) {
 		o.loggingDisable = true
+	})
+}
+
+// Register callback for raw request-body (for debugging)
+func WithDebugRawRequestBody(fn func([]byte)) HandlerOption {
+	return newFuncHandlerOption(func(o *handlerOptions) {
+		o.debugRawRequestBody = fn
 	})
 }

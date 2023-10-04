@@ -29,7 +29,7 @@ type PreProcessFunc func(ctx context.Context) error
 
 func (h Handler) WsReady(u *UHTTP) Middleware {
 	c := chain(
-		parseModelMiddleware(u, h.opts.postModel, h.opts.getModel, h.opts.deleteModel),
+		parseModelMiddleware(u, h.opts, h.opts.postModel, h.opts.getModel, h.opts.deleteModel),
 		getParamsMiddleware(u, h.opts),
 		// Do not add logging here: a WS connection has more states which should be logged separately e.g. in the handler
 	)
@@ -93,7 +93,7 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 	}
 
 	// Add parsers
-	c = chain(c, parseModelMiddleware(u, h.opts.postModel, h.opts.getModel, h.opts.deleteModel))
+	c = chain(c, parseModelMiddleware(u, h.opts, h.opts.postModel, h.opts.getModel, h.opts.deleteModel))
 	c = chain(c, getParamsMiddleware(u, h.opts))
 
 	// Add handler-specified middlewares
