@@ -36,12 +36,15 @@ func parseModelMiddleware(u *UHTTP, handlerOpts handlerOptions, postModel interf
 					if err != nil {
 						u.RenderErrorWithStatusCode(w, r, http.StatusInternalServerError, fmt.Errorf("Could not decode request body (%s)", err), false)
 						u.opts.logParseModelError("parseModelError [path: %s] Could not decode request body %s", r.RequestURI, err.Error())
+						// execute callback for rawRequestBody also in case of error
+						handlerOpts.debugRawRequestBody(bodyBytes)
 						return
 					}
 
 					// execute callback for rawRequestBody
 					handlerOpts.debugRawRequestBody(bodyBytes)
 
+					// restore body for further use
 					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 
