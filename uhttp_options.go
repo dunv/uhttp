@@ -130,24 +130,23 @@ func WithDeflateCompression(enable bool, level int) UhttpOption {
 	})
 }
 
-// func WithEncodingErrorLogLevel(level zapcore.Level) UhttpOption {
-// 	return newFuncUhttpOption(func(o *uhttpOptions) {
-// 		o.logEncodingError = level
-// 	})
-// }
+func WithLogEncodingError(fn func(template string, args ...interface{})) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.logEncodingError = fn
+	})
+}
 
-// func WithParseModelErrorLogLevel(level zapcore.Level) UhttpOption {
-// 	return newFuncUhttpOption(func(o *uhttpOptions) {
-// 		o.logParseModelError = level
-// 	})
-// }
+func WithLogParseModelError(fn func(template string, args ...interface{})) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.logParseModelError = fn
+	})
+}
 
-// func WithHandlerErrorLogLevel(logErrors bool, level zapcore.Level) UhttpOption {
-// 	return newFuncUhttpOption(func(o *uhttpOptions) {
-// 		o.logHandlerErrors = logErrors
-// 		o.logHandlerError = level
-// 	})
-// }
+func WithLogHandlerError(fn func(template string, args ...interface{})) UhttpOption {
+	return newFuncUhttpOption(func(o *uhttpOptions) {
+		o.logHandlerError = fn
+	})
+}
 
 func WithAddress(address string) UhttpOption {
 	return newFuncUhttpOption(func(o *uhttpOptions) {
