@@ -34,6 +34,9 @@ func (h Handler) WsReady(u *UHTTP) Middleware {
 		// Do not add logging here: a WS connection has more states which should be logged separately e.g. in the handler
 	)
 
+	// Add uhttp
+	c = chain(c, withUHTTP(u))
+
 	// Add original responseWriter
 	c = chain(c, withOriginalResponseWriter(u))
 
@@ -67,6 +70,9 @@ func (h Handler) handlerFuncExcludeMiddlewareByName(u *UHTTP, exclude *string) h
 		jsonResponseMiddleware(u),
 		addLoggingMiddleware(u, &h, false),
 	)
+
+	// Add uhttp
+	c = chain(c, withUHTTP(u))
 
 	// Add original responseWriter
 	c = chain(c, withOriginalResponseWriter(u))

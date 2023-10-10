@@ -10,6 +10,7 @@ const (
 	CtxKeyCache                     ContextKey = "uhttp.cache"
 	CtxKeyGetParams                 ContextKey = "uhttp.getParams"
 	CtxKeyResponseWriter            ContextKey = "uhttp.responseWriter"
+	CtxKeyUHTTP                     ContextKey = "uhttp.uhttp"
 	CtxKeyTest                      ContextKey = "uhttp.test"
 )
 
