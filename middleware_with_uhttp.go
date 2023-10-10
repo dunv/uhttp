@@ -9,7 +9,7 @@ import (
 func withUHTTP(u *UHTTP) Middleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			httpContext := context.WithValue(r.Context(), CtxKeyResponseWriter, u)
+			httpContext := context.WithValue(r.Context(), CtxKeyUHTTP, u)
 			next.ServeHTTP(w, r.WithContext(httpContext))
 		}
 	}
