@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -130,8 +131,8 @@ func (u *UHTTP) MetricsServeMux() (*http.ServeMux, error) {
 }
 
 func (u *UHTTP) AddContext(key ContextKey, value interface{}) error {
-	keys := ContextKeysFromMap(u.requestContext)
-	if !uhelpers.SliceContainsItem(keys, key) {
+	keys := uhelpers.KeysFromMap(u.requestContext)
+	if slices.Index(keys, key) == -1 {
 		u.requestContext[key] = value
 		return nil
 	}

@@ -148,7 +148,7 @@ func addLoggingMiddleware(u *UHTTP, h *Handler, isStaticFileAccess bool) func(ne
 			}
 
 			// Sort alphabetically so we have a consistent output
-			keys := uhelpers.StringKeysFromMap(logLineParams)
+			keys := uhelpers.KeysFromMap(logLineParams)
 			sort.Strings(keys)
 
 			// construct log

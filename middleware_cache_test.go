@@ -537,7 +537,7 @@ func TestCacheAutomaticWithParameters(t *testing.T) {
 
 }
 
-func setupCacheEncodingTest(t *testing.T) *uhttp.UHTTP {
+func setupCacheEncodingTest(_ *testing.T) *uhttp.UHTTP {
 	u := uhttp.NewUHTTP()
 	counter := 0
 	handler := uhttp.NewHandler(

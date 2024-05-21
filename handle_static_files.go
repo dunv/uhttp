@@ -213,10 +213,10 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		if !u.opts.silentStaticFileRegistration {
 			u.Log().Infof("Registered http static %s (%s, gzip:%s, br:%s, deflate:%s)",
 				pattern,
-				uhelpers.ByteCountIEC(int64(len(fileContent))),
-				uhelpers.ByteCountIEC(int64(len(cached.GzippedContent))),
-				uhelpers.ByteCountIEC(int64(len(cached.BrContent))),
-				uhelpers.ByteCountIEC(int64(len(cached.DeflateContent))),
+				uhelpers.FormatByteCountIEC(int64(len(fileContent))),
+				uhelpers.FormatByteCountIEC(int64(len(cached.GzippedContent))),
+				uhelpers.FormatByteCountIEC(int64(len(cached.BrContent))),
+				uhelpers.FormatByteCountIEC(int64(len(cached.DeflateContent))),
 			)
 		}
 		u.opts.serveMux.HandleFunc(pattern, StaticFilesHandler(u))

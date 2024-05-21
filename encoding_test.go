@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupEncodingTest(t *testing.T, enableBrotli, enableGzip, enableDeflate bool) *uhttp.UHTTP {
+func setupEncodingTest(_ *testing.T, enableBrotli, enableGzip, enableDeflate bool) *uhttp.UHTTP {
 	opts := []uhttp.UhttpOption{}
 	if !enableBrotli {
 		opts = append(opts, uhttp.WithBrotliCompression(false, 5))

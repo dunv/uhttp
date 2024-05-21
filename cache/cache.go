@@ -269,7 +269,7 @@ func (e CacheEntry) Stats(c *Cache) (CacheEntryStats, error) {
 	return CacheEntryStats{
 		UpdatedOn:          e.updatedOn.Format(time.RFC3339),
 		TTL:                time.Until(e.updatedOn.Add(c.maxAge)).Round(time.Second).String(),
-		EstimatedSize:      uhelpers.ByteCountIEC(int64(e.EstimatedSize())),
+		EstimatedSize:      uhelpers.FormatByteCountIEC(int64(e.EstimatedSize())),
 		EstimatedSizeBytes: e.EstimatedSize(),
 		StatusCode:         e.responseStatusCode,
 		CachedModel:        e.responseModel != nil,

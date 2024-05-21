@@ -58,7 +58,7 @@ func (r R) Printable() (map[string]string, error) {
 
 func (u *UHTTP) ValidateParams(requirement R, actual map[string]string, destination R, required bool) error {
 	errors := []error{}
-	keys := uhelpers.StringKeysFromMap(requirement)
+	keys := uhelpers.KeysFromMap(requirement)
 	for _, key := range keys {
 		// Publish an error only in the logs, if a param does already exist in the destination map
 		// it obviously points to a bug in the code not an error on the user's side
