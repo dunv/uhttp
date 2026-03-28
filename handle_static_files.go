@@ -116,7 +116,7 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 		// Cannot identify the following from the file itself
 		// Overrides (taken from)
 		// https://wiki.selfhtml.org/wiki/MIME-Type/%C3%9Cbersicht
-		if strings.HasSuffix(pattern, ".js") {
+		if strings.HasSuffix(pattern, ".js") || strings.HasSuffix(pattern, ".mjs") {
 			contentType = "text/javascript; charset=utf-8"
 		} else if strings.HasSuffix(pattern, ".css") {
 			contentType = "text/css; charset=utf-8"
@@ -124,6 +124,8 @@ func (u *UHTTP) RegisterStaticFilesHandler(root string) error {
 			contentType = "text/html; charset=utf-8"
 		} else if strings.HasSuffix(pattern, ".svg") {
 			contentType = "image/svg+xml; charset=utf-8"
+		} else if strings.HasSuffix(pattern, ".wasm") {
+			contentType = "application/wasm"
 		}
 
 		cached := cachedFile{
